@@ -106,6 +106,12 @@ cp "$CLAUDE_PLUGIN_ROOT/references/entity-type-context.md" \
 `entity-type-context.md` is project-agnostic — copy it as-is (override only for a
 Drupal 7 source). `project-config.md` is per-project.
 
+A third file, `.agents/references/migrate/issue-requirements.md`, is needed only by the
+"generate migration issue" flow of the analyst agent. It holds the project's migration
+issue template and its fixed Definition of Done. The plugin ships no template for it
+because both differ between projects: write it yourself, or let the agent ask for the
+conventions when it is missing.
+
 Without `project-config.md`, skills fall back to documented Drupal-convention defaults and
 ask you for anything project-specific.
 

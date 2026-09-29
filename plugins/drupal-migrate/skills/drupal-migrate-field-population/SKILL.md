@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-field-population
-description: Measure field population percentages for a source entity bundle — for each field, count how many active instances actually contain data, so fields at 0% can be flagged as non-migration candidates. Use after querying fields with drupal-migrate-query-fields, when deciding which fields are worth migrating.
+description: "Measure field population percentages for a source entity bundle — for each field, count how many active instances actually contain data, so fields at 0% can be flagged as non-migration candidates. Use after querying fields with drupal-migrate-query-fields, when deciding which fields are worth migrating."
 ---
 
 # Measure Field Population
@@ -47,6 +47,28 @@ FROM {main_table} m
 LEFT JOIN {field_data_prefix}{field_name} f ON f.entity_id = m.{id_column}
 WHERE m.{bundle_column} = '{bundle}';
 ```
+
+**Paragraphs (D8+):** the query above counts every paragraph row, including detached and
+historical instances, while Step 2 divides by the _active_ count. Restrict the numerator to
+the same active set `drupal-migrate-verify-active` uses (attached to the current revision
+of a published parent node via `{parent_field_name}`), otherwise percentages can exceed
+100% and orphaned data looks migratable:
+
+```sql
+SELECT
+  COUNT(DISTINCT p.id) AS active_instances,
+  COUNT(DISTINCT CASE WHEN f.{field_name}_{value_suffix} IS NOT NULL THEN p.id END) AS populated
+FROM node_field_data n
+JOIN node__{parent_field_name} ref
+  ON ref.entity_id = n.nid AND ref.revision_id = n.vid
+JOIN paragraphs_item_field_data p
+  ON p.id = ref.{parent_field_name}_target_id
+LEFT JOIN paragraph__{field_name} f ON f.entity_id = p.id
+WHERE p.type = '{bundle}' AND n.status = 1;
+```
+
+Run it once per parent field and sum the results. For nested paragraphs, replace the
+`n → ref → p` chain with the traversal from `drupal-migrate-verify-active` Step 2.
 
 > **Important**: Use `entity_id` only in the JOIN (not `revision_id`) to avoid false negatives from revision mismatches.
 > Count `DISTINCT … CASE` rather than `SUM(… IS NOT NULL)`: a multi-value field has several delta rows per entity, and `SUM` would count each populated entity once per delta, inflating `populated` past `total_instances`.

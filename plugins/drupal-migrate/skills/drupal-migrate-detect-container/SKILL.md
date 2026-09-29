@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-container
-description: Detect whether a source paragraph bundle is a group/container that holds child paragraph entities via entity_reference_revisions fields, and list its child bundles. Use before analysing a paragraph's fields when planning a migration — to discover nested paragraph hierarchies, e.g. "is X a container", "does the Y paragraph hold children", or to decide whether the full analysis must be repeated for child bundles. Supports both Drupal 7 and Drupal 8+ sources.
+description: 'Detect whether a source paragraph bundle is a group/container that holds child paragraph entities via entity_reference_revisions fields, and list its child bundles. Use before analysing a paragraph''s fields when planning a migration — to discover nested paragraph hierarchies, e.g. "is X a container", "does the Y paragraph hold children", or to decide whether the full analysis must be repeated for child bundles. Supports both Drupal 7 and Drupal 8+ sources.'
 ---
 
 # Detect Group / Container Pattern
@@ -72,9 +72,15 @@ is the container's `entity_reference_revisions` field from Step 1:
 SELECT COUNT(DISTINCT c.{child_ref_field}_target_id) AS active_children
 FROM {parent_table} n
 JOIN {parent_ref_prefix}{parent_field} ref ON ref.entity_id = n.{parent_id} AND ref.revision_id = n.{parent_vid}
-JOIN paragraph__{child_ref_field} c ON c.entity_id = ref.{parent_field}_target_id
+JOIN paragraph__{child_ref_field} c
+  ON c.entity_id = ref.{parent_field}_target_id
+ AND c.revision_id = ref.{parent_field}_target_revision_id
 WHERE n.{parent_status} = 1;
 ```
+
+> The `c.revision_id = ref.{parent_field}_target_revision_id` join restricts the children
+> to the container revision the published node actually references. Without it, children
+> removed in later container revisions are still counted.
 
 > This skill assumes the parent is a **node** (the case for paragraph hierarchies
 > in practice). Node defaults: `{parent_table}` = `node_field_data`, `{parent_ref_prefix}`

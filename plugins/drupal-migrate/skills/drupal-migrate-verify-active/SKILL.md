@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-verify-active
-description: Verify active vs orphaned paragraph instances by checking them against the current published revision of their parent nodes. Use after drupal-migrate-parent-context, before sizing a paragraph bundle's migration scope, when asked "how many of this paragraph are actually in use", or when total DB count and real usage may diverge because of orphaned revisions. Canonical source of the paragraph "active" count.
+description: 'Verify active vs orphaned paragraph instances by checking them against the current published revision of their parent nodes. Use after drupal-migrate-parent-context, before sizing a paragraph bundle''s migration scope, when asked "how many of this paragraph are actually in use", or when total DB count and real usage may diverge because of orphaned revisions. Canonical source of the paragraph "active" count.'
 ---
 
 # Verify Active vs Orphaned Paragraph Instances
@@ -35,6 +35,7 @@ option and any project-specific table-name overrides before querying.
 
 - **bundle**: the paragraph bundle machine name
 - **parent_field_name**: the field on the parent entity that references this paragraph (from `drupal-migrate-parent-context`)
+- **child_ref_field** _(nested only)_: the parent paragraph's `entity_reference_revisions` field that holds this bundle (from `drupal-migrate-parent-context` / `drupal-migrate-detect-container`)
 - **total_instances**: total count from `drupal-migrate-count-instances`
 
 ## Steps
@@ -64,24 +65,33 @@ GROUP BY n.type;
 
 ### Step 2 — Handle nested paragraphs
 
-If the paragraph's parent is another paragraph (not a node directly), trace
-through the parent paragraph up to the root node, joining the node on both
-`entity_id`/`revision_id` again:
+If the paragraph's parent is another paragraph (not a node directly), start from the
+published node, follow `{parent_field_name}` to the parent paragraph **at the revision
+the node references**, then follow the parent's `{child_ref_field}` at that same
+revision. Do not infer membership from `child.parent_id`: a child removed from the
+parent's current revision keeps its `parent_id` in `paragraphs_item_field_data` and
+would be counted as active.
 
 ```sql
 SELECT n.type AS node_bundle,
   COUNT(DISTINCT child.id)  AS active_instances,
   COUNT(DISTINCT n.nid) AS parent_nodes
-FROM {para_table} child
-JOIN {para_table} parent
-  ON parent.id = child.parent_id AND child.parent_type = 'paragraph'
+FROM {main_table} n
 JOIN {field_data_prefix}{parent_field_name} ref
-  ON ref.{parent_field_name}_target_id = parent.id
-JOIN {main_table} n
-  ON n.nid = ref.entity_id AND n.vid = ref.revision_id
+  ON ref.entity_id = n.nid AND ref.revision_id = n.vid
+JOIN {para_table} parent
+  ON parent.id = ref.{parent_field_name}_target_id
+JOIN paragraph__{child_ref_field} cref
+  ON cref.entity_id = parent.id
+ AND cref.revision_id = ref.{parent_field_name}_target_revision_id
+JOIN {para_table} child
+  ON child.id = cref.{child_ref_field}_target_id
 WHERE child.type = '{bundle}' AND n.status = 1
 GROUP BY n.type;
 ```
+
+For deeper nesting, repeat the `parent → cref` pair once per level, always joining the
+next level's field table on the `*_target_revision_id` selected one level up.
 
 ### Step 3 — Compute orphaned count
 

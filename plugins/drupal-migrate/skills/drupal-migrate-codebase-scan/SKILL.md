@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-codebase-scan
-description: Scan the source codebase of a migration into Drupal and classify each custom code unit by disposition — replicate as a Drupal module, triage (needs a decision), do-not-port, or security (delete + report). Reads custom plugins/modules/themes and loose files to determine what each does and where it lands. Use during Phase 1 as-is analysis when the full source codebase is available and you are asked to "scan the custom code", "triage the plugins", "what custom code is there", or "classify the codebase". Explicitly handles the DB-only case (skips and records why). Writes the custom-code disposition into the as-is corpus per the drupal-migrate-analysis-docs skill.
+description: 'Scan the source codebase of a migration into Drupal and classify each custom code unit by disposition — replicate as a Drupal module, triage (needs a decision), do-not-port, or security (delete + report). Reads custom plugins/modules/themes and loose files to determine what each does and where it lands. Use during Phase 1 as-is analysis when the full source codebase is available and you are asked to "scan the custom code", "triage the plugins", "what custom code is there", or "classify the codebase". Explicitly handles the DB-only case (skips and records why). Writes the custom-code disposition into the as-is corpus per the drupal-migrate-analysis-docs skill.'
 ---
 
 # Codebase scan (custom-code disposition)

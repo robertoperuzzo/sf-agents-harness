@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-db-discover
-description: Discover and validate the source database connection for a migration into Drupal. Use after drupal-migrate-detect-source, at the start of any source-database analysis, or whenever a later drupal-migrate-* step needs to confirm the source DB is reachable. Reads the project config for the connection and the read-only access method (drush for a Drupal source; wp db query / ddev / mysql for WordPress; generic for another CMS), then tests connectivity. Source-agnostic — does not assume drush.
+description: "Discover and validate the source database connection for a migration into Drupal. Use after drupal-migrate-detect-source, at the start of any source-database analysis, or whenever a later drupal-migrate-* step needs to confirm the source DB is reachable. Reads the project config for the connection and the read-only access method (drush for a Drupal source; wp db query / ddev / mysql for WordPress; generic for another CMS), then tests connectivity. Source-agnostic — does not assume drush."
 ---
 
 # Discover Source Database Connection

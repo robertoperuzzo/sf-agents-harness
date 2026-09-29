@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-ia-audit
-description: Produce the as-is information-architecture document for a migration into Drupal — the source site's structure and URL state today. Captures the navigation menus, the URL/permalink scheme, and the redirect + liveness state (which paths are live, redirected, or gone), and for a multisite source classifies subsite liveness. Use during Phase 1 as-is analysis when asked to "audit the IA", "map the site structure/menus", "what's the URL/permalink structure", "build the redirect map", or "classify subsite liveness". Writes an as-is IA/liveness doc per the drupal-migrate-analysis-docs skill.
+description: 'Produce the as-is information-architecture document for a migration into Drupal — the source site''s structure and URL state today. Captures the navigation menus, the URL/permalink scheme, and the redirect + liveness state (which paths are live, redirected, or gone), and for a multisite source classifies subsite liveness. Use during Phase 1 as-is analysis when asked to "audit the IA", "map the site structure/menus", "what''s the URL/permalink structure", "build the redirect map", or "classify subsite liveness". Writes an as-is IA/liveness doc per the drupal-migrate-analysis-docs skill.'
 ---
 
 # Information-architecture audit (as-is)

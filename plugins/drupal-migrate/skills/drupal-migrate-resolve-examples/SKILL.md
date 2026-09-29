@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-resolve-examples
-description: Resolve live URLs for example nodes from the source Drupal database — one representative node per parent bundle. Compulsory step in every full source analysis. Does NOT take screenshots (use drupal-migrate-live-screenshots for that).
+description: "Resolve live URLs for example nodes from the source Drupal database — one representative node per parent bundle. Compulsory step in every full source analysis. Does NOT take screenshots (use drupal-migrate-live-screenshots for that)."
 ---
 
 # Resolve live example URLs
@@ -66,10 +66,10 @@ LIMIT 1;
 
 **For `taxonomy_term` and `media` entity types** — both resolve the same way: find a published node that references the entity. Substitute per type:
 
-| Entity type     | `{ref_id_column}` | `{ref_source_table}`       | bundle filter         |
+| Entity type     | `{ref_id_column}` | `{ref_source_table}`       | `{ref_bundle_column}` |
 | --------------- | ----------------- | -------------------------- | --------------------- |
-| `taxonomy_term` | `tid`             | `taxonomy_term_field_data` | `vid = '{bundle}'`    |
-| `media`         | `mid`             | `media_field_data`         | `bundle = '{bundle}'` |
+| `taxonomy_term` | `tid`             | `taxonomy_term_field_data` | `vid`                 |
+| `media`         | `mid`             | `media_field_data`         | `bundle`              |
 
 ```sql
 -- First discover which node__field_* tables reference this entity
@@ -79,14 +79,15 @@ WHERE TABLE_SCHEMA = DATABASE()
   AND TABLE_NAME LIKE 'node__field_%'
   AND COLUMN_NAME = '{field_name}_target_id';
 
--- Then find referencing nodes (try the first discovered field, stop on first hit)
+-- Then find referencing nodes (try the first discovered field, stop on first hit).
+-- Join the bundle's source table to the reference table and filter there, so any
+-- referenced entity of the bundle qualifies; limit only the resulting nodes.
 SELECT DISTINCT n.nid, n.type
 FROM node_field_data n
-JOIN node__{field_name} f ON f.entity_id = n.nid
-WHERE f.{field_name}_target_id IN (
-  SELECT {ref_id_column} FROM {ref_source_table} WHERE {bundle_filter} LIMIT 1
-)
-AND n.status = 1
+JOIN node__{field_name} f ON f.entity_id = n.nid AND f.revision_id = n.vid
+JOIN {ref_source_table} r ON r.{ref_id_column} = f.{field_name}_target_id
+WHERE r.{ref_bundle_column} = '{bundle}'
+  AND n.status = 1
 LIMIT 3;
 ```
 

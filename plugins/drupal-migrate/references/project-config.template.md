@@ -123,6 +123,21 @@ Pick the strategy your project uses and delete the others:
 
 ---
 
+## Content Verification
+
+Consumed by `drupal-migrate-verify-content`. Without these values the non-interactive
+analyst cannot verify migrated pages.
+
+| Setting                | Value                                                                     |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Source base URL (base) | `<https://www.example.com>`                                               |
+| Language URL rule      | `<separate domain / path prefix>`                                         |
+| Other-language bases   | `<lang: https://en.example.com>` or `<lang: https://www.example.com/en>`  |
+| Destination base URL   | `<https://new-site.loc>` or the discovery command that prints it          |
+| Internal HTTP host     | `<http://web-container>` (destination reachable from the tools container) |
+
+---
+
 ## URL Scope Support Table (optional)
 
 Document only if your migration scope is driven by a support/lookup table.

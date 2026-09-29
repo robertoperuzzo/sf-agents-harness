@@ -4,11 +4,11 @@
     {
       "id": 0,
       "prompt": "Verify the migration of {SOURCE_URL} -- check redirects, content, and translations.",
-      "expected_output": "A structured Markdown report. The skill first loads project-config.md to resolve the source bases, destination base URL, drush runner, DB key, and (if defined) the scope/support table. It then runs Phase 0 (resolve intent), Phase 1 (redirect checks on the new site), Phase 2 (base-language content comparison via browser navigation), Phase 3 (translation checks for any non-base language defined in project-config), and Phase 4 (overall verdict). The report follows the single URL report format from the skill.",
+      "expected_output": "A structured Markdown report. The skill first loads project-config.md to resolve the source bases, destination base URL, drush runner, DB key, and (if defined) the scope/support table. It then runs Phase 0 (resolve intent), Phase 1 (redirect checks on the new site), Phase 2 (base-language content comparison via browser navigation), Phase 3 (translation checks for any non-base language defined in project-config), skips Phase 4 (non-migrate check does not apply to a migrate URL), and Phase 5 (structured report with the overall verdict). The report follows the single URL report format from the skill.",
       "expectations": [
         "Report reads .agents/references/migrate/project-config.md before any verification step",
         "Report resolves project-specific values (source bases, destination base URL, drush runner) from config rather than hardcoding them",
-        "Report follows the skill's phase-based structure (Phase 0 through Phase 4)",
+        "Report follows the skill's phase-based structure (Phase 0 through Phase 5, with Phase 4 skipped for a migrate URL)",
         "Report uses the scope/support table for intent only when project-config defines one, and otherwise derives intent without it",
         "Report queries the source DB exclusively via the configured drush runner and drush sql:query, never the mysql client",
         "Report performs no data writes (read-only)"
@@ -18,7 +18,7 @@
     {
       "id": 1,
       "prompt": "I need to verify that old pages marked as non-migrate are returning 410 Gone. Check {SOURCE_URL} on the new site.",
-      "expected_output": "A report covering Phase 0 (resolve intent showing the configured no-migrate status with expected code 410), Phase 5 (HTTP check on the new site confirming the 410 response via the configured internal HTTP host), and Phase 4 (overall verdict). It must NOT attempt content comparison or browser navigation for a non-migrate page.",
+      "expected_output": "A report covering Phase 0 (resolve intent showing the configured no-migrate status with expected code 410), Phase 4 (non-migrate HTTP check on the new site confirming the 410 response via the configured internal HTTP host), and Phase 5 (structured report with the overall verdict). It must NOT attempt content comparison or browser navigation for a non-migrate page.",
       "expectations": [
         "Report identifies the URL as non-migrate using the action/status values defined in project-config",
         "Report checks HTTP status via the configured internal HTTP host and confirms the expected Gone response",

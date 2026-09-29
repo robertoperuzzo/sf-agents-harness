@@ -1,16 +1,6 @@
 ---
 name: drupal-migrate-verify-content
-description: >-
-  Verify migrated content by navigating source and destination website pages,
-  comparing content through LLM reasoning, checking HTTP redirects, and
-  validating translations. Use this skill whenever the user asks to "verify
-  migration", "check migrated content", "compare source and destination pages",
-  "verify redirects", or provides a source URL to validate after migration.
-  Also trigger when the user mentions "migration QA", "migration acceptance",
-  "content verification", "post-migration check", or wants to confirm that
-  content from the old site was correctly imported. This includes
-  checking multilingual translations, verifying 301 redirect chains, and
-  confirming 410 Gone responses for non-migrated pages.
+description: 'Verify migrated content by navigating source and destination website pages, comparing content through LLM reasoning, checking HTTP redirects, and validating translations. Use this skill whenever the user asks to "verify migration", "check migrated content", "compare source and destination pages", "verify redirects", or provides a source URL to validate after migration. Also trigger when the user mentions "migration QA", "migration acceptance", "content verification", "post-migration check", or wants to confirm that content from the old site was correctly imported. This includes checking multilingual translations, verifying 301 redirect chains, and confirming 410 Gone responses for non-migrated pages.'
 ---
 
 # Migration Content Verification
@@ -32,16 +22,16 @@ Read **`.agents/references/migrate/project-config.md`** before anything else. Re
 these variables from it; if the file is missing or a value is absent, ask the user and
 do not guess:
 
-| Variable                                  | Source section in project-config.md             | Example                                                                       |
-| ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
-| `{drush_runner}`                          | Database Connection → Connection command        | `docker compose run --rm <tools> ash -c`                                      |
-| `{migrate_db_key}`                        | Database Connection → Database key              | `<source_db_key>`                                                             |
-| `{source_bases}`                          | Source System / Live URL Resolution             | `https://www.example.com` (+ secondary-lang domain/prefix)                    |
-| `{dest_base_url}`                         | ask, or run the project's URL-discovery command | `https://<new-site>.loc`                                                      |
-| `{internal_http_host}`                    | Database Connection / infra notes               | `http://<web-container>`                                                      |
-| `{languages}` + URL rule                  | Source System / Output Language                 | base lang + secondary lang (path prefix or separate domain)                   |
-| `{scope_table}` + columns + status values | URL Scope Support Table                         | table `<scope_table>`; `<action_col>` ∈ {migrate, no-migrate}; `<status_col>` |
-| `{url_map_table}` _(optional)_            | Migration Infrastructure                        | `<source_url_map>`                                                            |
+| Variable                                  | Source section in project-config.md      | Example                                                                       |
+| ----------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
+| `{drush_runner}`                          | Database Connection → Connection command | `docker compose run --rm <tools> ash -c`                                      |
+| `{migrate_db_key}`                        | Database Connection → Database key       | `<source_db_key>`                                                             |
+| `{source_bases}`                          | Content Verification                     | `https://www.example.com` (+ secondary-lang domain/prefix)                    |
+| `{dest_base_url}`                         | Content Verification                     | `https://<new-site>.loc`                                                      |
+| `{internal_http_host}`                    | Content Verification                     | `http://<web-container>`                                                      |
+| `{languages}` + URL rule                  | Content Verification                     | base lang + secondary lang (path prefix or separate domain)                   |
+| `{scope_table}` + columns + status values | URL Scope Support Table                  | table `<scope_table>`; `<action_col>` ∈ {migrate, no-migrate}; `<status_col>` |
+| `{url_map_table}` _(optional)_            | Migration Infrastructure                 | `<source_url_map>`                                                            |
 
 If the project defines **no scope/support table**, skip Phase 0's table lookup and instead
 derive intent directly: treat a provided URL as expected-to-exist unless the user says it
@@ -69,6 +59,26 @@ One or more **source URLs** from the old site, or an issue reference whose body 
 example URLs. Accepted: a single URL, a list of URLs, or an issue id (use `glab`/`gh` to
 fetch the body and extract URLs matching the `{source_bases}`).
 
+### Input validation (mandatory before any query)
+
+URLs come from users or issue bodies and are later substituted into SQL and shell
+commands. Never substitute a raw value. For every URL:
+
+1. **Match a configured base.** The URL must start with one of `{source_bases}`
+   (scheme + host, plus the language path prefix when the URL rule uses one). Reject
+   any URL that matches none of them and tell the user.
+2. **Record the language.** The matched base (separate domain) or path prefix gives
+   `{langcode}` for this URL, per the language URL rule in project-config.md. Use that
+   `{langcode}` in every later query, alias lookup, and content check for this URL; the
+   base language is only the fallback when no rule matches.
+3. **Derive `{relative_path}`** by stripping the matched base. Accept it only if it
+   matches `^[A-Za-z0-9/._~-]+$` (an already-decoded path with no query string). Stop on
+   anything else, including quotes, `%`, `$`, backticks, spaces, or `..`.
+4. **Escape for `LIKE`.** Replace `_` with `\_` before building a `LIKE '%…%'`
+   pattern, so the underscore is matched literally.
+
+The same rules apply to `{source_path}` in Phase 1.
+
 ---
 
 ## Workflow Overview
@@ -86,11 +96,11 @@ Phase 5: Produce report     -- Structured verification output
 
 ## Phase 0 — Resolve Intent
 
-If `{scope_table}` is defined, query it to learn the migration plan for this URL. Strip a
-base in `{source_bases}` from the URL to get the relative path, then:
+If `{scope_table}` is defined, query it to learn the migration plan for this URL. Use the
+validated `{relative_path}` and the `{langcode}` detected in Input validation:
 
 ```bash
-{drush_runner} "drush sql:query --database={migrate_db_key} \"SELECT <action_col>, <status_col>, node_id, content_type, final_url, langcode FROM {scope_table} WHERE url LIKE '%{relative_path}%' AND langcode='<base_lang>' LIMIT 5\""
+{drush_runner} "drush sql:query --database={migrate_db_key} \"SELECT <action_col>, <status_col>, node_id, content_type, final_url, langcode FROM {scope_table} WHERE url LIKE '%{relative_path}%' AND langcode='{langcode}' LIMIT 5\""
 ```
 
 Interpret using the status values from project-config.md:
@@ -122,7 +132,7 @@ the destination node ID.
 ### 1b. Destination URL alias
 
 ```bash
-{drush_runner} "drush path:lookup /node/{nid} --language=<base_lang>"
+{drush_runner} "drush path:lookup /node/{nid} --language={langcode}"
 ```
 
 ### 1c. Collect redirects for this entity
@@ -293,12 +303,12 @@ new site (typically `410`).
 **Action:** {action_value}
 **Date:** {current_date}
 
-### Redirects ({base_lang})
+### Redirects ({langcode})
 
 | Old Path | Expected | Actual | Target | Status |
 | -------- | -------- | ------ | ------ | ------ |
 
-### Content ({base_lang})
+### Content ({langcode})
 
 | Check | Status | Notes |
 | ----- | ------ | ----- |
