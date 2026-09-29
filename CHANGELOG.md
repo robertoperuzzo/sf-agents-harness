@@ -15,6 +15,7 @@ Changes are grouped by date.
 ### Changed
 
 - `sf-writing-style` skill: hosts, domains, ports, labels, versions, and cloud resource names are now shown as code, and issues and comments bold the problem, wanted result, or required action. A new platform reference covers GitHub and GitLab references and task lists, parent issues on trackers without native epics, and Slack formatting for Markdown connectors and raw `mrkdwn`. The `gh` and `glab` skills carry the same emphasis and identifier rule.
+- CI: the `validate-and-check` workflow now runs on every pull request instead of only on sync-related paths, so pull requests that touch other files are no longer blocked by a missing required check.
 
 ## [2026-10-19]
 
