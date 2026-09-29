@@ -111,12 +111,15 @@ ask you for anything project-specific.
 
 ## Install
 
-Add the marketplace, then install:
+Add the `sf-agents-harness` marketplace (defined in `.claude-plugin/marketplace.json` at
+the root of this repository), then install:
 
 ```
-/plugin marketplace add <git-url-or-path-to-this-repo>
-/plugin install drupal-migrate@sparkfabrik-drupal-migrate
+/plugin marketplace add sparkfabrik/sf-agents-harness
+/plugin install drupal-migrate@sf-agents-harness
 ```
+
+For a local checkout, pass the repository path instead of the GitHub slug.
 
 ## Dependencies (host project provides)
 

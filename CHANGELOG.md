@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project has no semantic versioning — the latest commit is the current version.
 Changes are grouped by date.
 
+## [2026-09-29]
+
+### Added
+
+- `drupal-migrate` Claude Code plugin (`plugins/drupal-migrate/`): source-agnostic toolkit for content migrations into Drupal from WordPress, Drupal 7/8+, another CMS, or a database dump. Bundles the `drupal-migration-analyst` agent, 21 atomic `drupal-migrate-*` skills covering source detection, as-is analysis, mapping triage, tech analysis, and post-migration content verification, plus reference templates. Installable from the new `sf-agents-harness` plugin marketplace (`.claude-plugin/marketplace.json`).
+
 ## [2026-07-09]
 
 ### Changed
