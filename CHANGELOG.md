@@ -14,7 +14,7 @@ Changes are grouped by date.
 
 ### Changed
 
-- CI: the `validate-and-check` workflow now runs on every pull request instead of only on sync-related paths, so pull requests that touch other files are no longer blocked by a missing required check.
+- CI: the `validate-and-check` workflow now also runs when a pull request changes `plugins/` or the plugin marketplace, so plugin pull requests get the required status check.
 
 ## [2026-09-28]
 
