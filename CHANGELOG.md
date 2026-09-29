@@ -8,6 +8,10 @@ Changes are grouped by date.
 
 ## [2026-10-22]
 
+### Added
+
+- `drupal-migrate` Claude Code plugin (`plugins/drupal-migrate/`): source-agnostic toolkit for content migrations into Drupal from WordPress, Drupal 7/8+, another CMS, or a database dump. Bundles the `drupal-migration-analyst` agent, 21 atomic `drupal-migrate-*` skills covering source detection, as-is analysis, mapping triage, tech analysis, and post-migration content verification, plus reference templates. Installable from the new `sf-agents-harness` plugin marketplace (`.claude-plugin/marketplace.json`).
+
 ### Changed
 
 - `sf-writing-style` skill: hosts, domains, ports, labels, versions, and cloud resource names are now shown as code, and issues and comments bold the problem, wanted result, or required action. A new platform reference covers GitHub and GitLab references and task lists, parent issues on trackers without native epics, and Slack formatting for Markdown connectors and raw `mrkdwn`. The `gh` and `glab` skills carry the same emphasis and identifier rule.
