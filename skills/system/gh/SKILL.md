@@ -7,6 +7,33 @@ description: 'Invoke whenever the user is working with GitHub. Trigger on any of
 
 Use the `gh` CLI for ALL GitHub-related tasks including working with issues, pull requests, Actions workflows, releases, and repositories. If given a GitHub URL, use `gh` to get the information needed.
 
+## Write short, plain text
+
+Apply these rules whenever you draft or send a title, description, comment, review, changelog, or release note, including through the API. They apply even when `sf-writing-style` has not been loaded.
+
+- **Content.** PR/MR descriptions lead with what changes, understandable without the task conversation. Add one sentence of context only when omitting it would make the change hard to understand or review. Issues state the problem and wanted result. Comments answer the point. Changelog entries state one change each.
+- **Length.** Let the change determine the layout; a small fix can fit in one sentence. Default maximum: 80 words for an uncomplicated PR/MR description, 120 for an issue, 60 for a comment, and one sentence per changelog entry. These are team defaults, not targets or public standards. Preserve essential information even when it needs more words. Complex descriptions may expand to cover major scope, required actions, and useful validation. Attribution and reference lines do not count.
+- **Leave out.** No implementation details, even in a single sentence: file paths, internal function names, internal variables, source lines, test counts, diagnoses, or proposed fixes. Omit workarounds, investigation history, rejected approaches, and repeated summaries. Keep public interface names, commands, configuration keys, and identifiers only when they help a reviewer understand the contract or a required user action. Do not move omitted detail into unsolicited comments.
+- **Select facts.** Investigation notes and the diff are input, not a checklist to summarize. For an issue, keep the symptom and wanted result. For a PR/MR, keep the changed behavior, essential context and required action. For a comment, answer only the question.
+- **Evidence.** Use only supplied facts or results you observed. Omit unknowns. An error does not establish side effects, data loss, partial success, or affected environments. Do not invent causes, sample values, test cases, or reproduction results.
+- **Plain English.** Use familiar words and concrete verbs. Keep necessary technical names exact. No invented jargon or padding. Use complete sentences in prose; parallel bullet items may be short phrases.
+- **Layout.** Open with the main change. Bold a short key phrase, not a whole sentence. Put distinct features or changes in bullets instead of a comma-packed paragraph. Use headings only to separate useful sections, not generic labels like "MR description". One uncomplicated behavior change needs no list; a feature with several visible parts should list those parts. No empty sections, mandatory headings, bullet counts, or minimum length. State each fact once; do not restate the fix as its opposite in the old behavior unless the comparison is needed.
+- **Supporting evidence.** Include supplied screenshots when they clarify a visible change; label before/after only when both are supplied. Include a short, verified validation result when it helps assess the change. Do not dump commands, logs, or test counts, or invent screenshots or results.
+- **Exceptions.** Include essential breaking changes and required user actions. Expand only for these essentials, essential context, necessary validation, explicitly requested detail, or required template fields, using the fewest words needed. A direct question about how or why deserves a direct answer.
+
+Before posting, read the actual outgoing text. Cut every sentence that does not state the change, problem, answer, essential context, required action, or useful verified evidence. Remove code locations and test inventories unless explicitly requested. Check each factual claim against the final diff and current evidence; remove stale claims when scope changes. Describe this diff; omit already-merged changes and workflow history unless explicitly requested. Can a reader outside the conversation identify what changes, any required action, and what was actually verified? Then check the length and remove repetition. Reading the diff is required; narrating it is not. Rewrite commit-generated descriptions before posting. Return the description itself, without code fences, block quotes, or commentary about omitted details unless requested.
+
+Example of a small fix: "Rejects empty passwords with a validation message instead of returning a 500 error."
+
+Example of a feature with several visible parts (copy the layout, not these facts):
+
+> Adds **export controls**:
+>
+> - Date-range selection.
+> - CSV download.
+
+The lead sentence names the feature; the bullets name its parts. The description remains short without becoming a bare paragraph.
+
 ## Before you start
 
 1. **Detect GitHub URLs**: if the user provided a URL containing "github.com", this is a GitHub resource. Extract the owner and repo from the URL and proceed with `gh` commands using `-R owner/repo`.
@@ -74,54 +101,36 @@ Issues and PRs both use `#` prefix.
 
 ## Writing on behalf of the user
 
-Whenever you create or post content on GitHub on behalf of the user -- including **PR descriptions** (`gh pr create`), **issue descriptions** (`gh issue create`), **comments** (`gh pr comment`, `gh issue comment`), **reviews** (`gh pr review`), or **`gh api` body fields** -- you **must** prepend the following header to make it clear the content was authored by an AI agent acting on behalf of the user:
+Every piece of content you create on GitHub carries this attribution header: PR and issue descriptions, comments, reviews, and `gh api` body fields.
 
 ```
-> :robot: _This was written by an AI agent on behalf of @<username>._
+> :robot: _This was written by an AI agent on behalf of @<username> (<agentname>/<full-model-id>)._
 ```
 
-Before writing any content, **always fetch the username first** and embed it in the header. Do not hardcode a username or leave the placeholder unfilled:
+Fetch the username, never hardcode it. For `<agentname>/<full-model-id>` substitute your own runtime identity: the harness you run in as the agent name, lowercase, and the model ID exactly as your runtime reports it, never a friendly name. Same string as the `Assisted-by` trailer in `sf-commit-convention`, so keep the two identical.
+
+Leave the header out only when the user asks you to, for instance on a project whose policy rejects AI-assisted content. Never suggest it, never decide it yourself, never swap in a softer marker.
+
+Fetch and post in one command: a separate command runs in its own shell, so the variable is empty by the time you post and the header renders `on behalf of @ (...)` with no username.
 
 ```bash
-# Step 1: fetch the username (do this once per session)
 GH_USERNAME=$(gh api user --jq '.login')
-
-# Step 2: use it in the content
-gh pr create \
-  --title "feat: add dark mode" \
-  --body "> :robot: _This was written by an AI agent on behalf of @${GH_USERNAME}._
-
-## Summary
-
-- Adds dark mode toggle to settings page
-- ..."
-```
-
-**Example** -- adding a comment to issue #42:
-
-```bash
-gh issue comment 42 \
-  --body "> :robot: _This was written by an AI agent on behalf of @${GH_USERNAME}._
-
-## Triage
+gh issue comment 42 --body "> :robot: _This was written by an AI agent on behalf of @${GH_USERNAME} (claude-code/claude-opus-5)._
 
 Root cause identified: ..."
 ```
 
-This applies to **every** piece of content the agent creates, regardless of length or context. Never skip the header.
+Never single-quote a heredoc delimiter (`<<'EOF'`): it blocks expansion and emits the literal `$GH_USERNAME`.
 
-> **Heredoc warning:** when using `cat <<EOF` to build the body, **never** single-quote the delimiter (`<<'EOF'`). Single-quoted heredocs suppress variable expansion and produce the literal string `$GH_USERNAME` instead of the resolved value. Always use an unquoted delimiter:
->
-> ```bash
-> gh pr create --title "feat: add dark mode" --body "$(cat <<EOF
-> > :robot: _This was written by an AI agent on behalf of @${GH_USERNAME}._
->
-> ## Summary
->
-> - Adds dark mode toggle to settings page
-> EOF
-> )"
-> ```
+```bash
+GH_USERNAME=$(gh api user --jq '.login')
+gh pr create --title "feat: add dark mode" --body "$(cat <<EOF
+> :robot: _This was written by an AI agent on behalf of @${GH_USERNAME} (claude-code/claude-opus-5)._
+
+Adds a dark mode toggle to the settings page.
+EOF
+)"
+```
 
 > **Issue auto-linking:** GitHub renders bare `#N` as a clickable link to issue N. Use backticks (`` `#18` ``) when referring to issue numbers as text (examples, tables, logs). Leave `#N` bare only when it should link to an actual issue (e.g., `Closes #42`).
 
@@ -129,11 +138,11 @@ This applies to **every** piece of content the agent creates, regardless of leng
 
 These rules apply to every issue title and description, pull request title and description, comment, review, and commit message you write.
 
-**Write in plain, professional prose.** Issue and pull request titles and descriptions, comments and reviews, and commit messages must always be written in normal, complete, well-structured English: full sentences, articles, and proper markdown. They are durable, outward-facing documents that other people read and that GitHub renders in its UI; compression hurts readability and looks unprofessional. This rule **overrides any active terse output style for the duration of writing these artifacts.** A session-level style may inject a per-turn reminder such as `CAVEMAN MODE ACTIVE` (drop articles, fragments OK, short synonyms); that reminder applies to your conversational replies, not to the artifacts. When you compose an issue/PR title or body, a comment, a review, or a commit message, write full prose regardless of the active style, then resume the terse conversational style for your surrounding chat replies. Do not run any command to toggle the style off; just write the artifact in plain prose regardless of what reminder is present.
+Apply [Write short, plain text](#write-short-plain-text) before every write. Conversational styles such as caveman do not apply to published text.
 
 **Use the full path for cross-project references.** When you reference an issue or pull request that lives in a _different_ repository than the one you are writing in, use the full `owner/repo#123` form rather than a bare `#123`. A bare `#123` (or a short form) only resolves within the same repository and will not render as a link from another repository. Apply this in prose and in footers alike (`Closes:`, `Refs:`). For example, to reference the platform-team board from a code repository, write `sparkfabrik-innovation-team/board#4379`, never a bare `board#4379` or `#4379`. Within the same repository, a bare `#123` is correct and renders as a link.
 
-**Avoid AI-slop writing tells.** Do not use the em dash (—) or en dash (–) as a sentence connector; rewrite with a period, comma, colon, or parentheses instead. Prefer clear structure over dense run-on paragraphs: use real line breaks, short paragraphs, and lists, and keep sentences plain and direct. Write like a human engineer, not a generated summary.
+Load `sf-writing-style` for additional writing guidance. Before drafting or publishing a PR description, read and apply the PR/MR description reference required by that skill. The rules above still apply when `sf-writing-style` is unavailable. Never use em or en dashes outside quotations or code.
 
 ---
 
@@ -256,9 +265,9 @@ Breaking changes append `!` before the colon: `feat(api)!: change response forma
 **PR creation checklist** (follow this carefully):
 
 1. **Inspect branch state**: `git status`, `git log <base>...HEAD --oneline`, `git diff <base>...HEAD`
-2. **Draft title/description from the actual diff** -- reference specific files, functions, behaviors. Do not just restate the user's request.
+2. **Draft from the actual diff**: state what changes, using the writing rules above. Include identifiers only for the changed interface or a required user action.
 3. **Push**: `git push -u origin HEAD` if not yet pushed.
-4. **Create**: `gh pr create` with all relevant flags.
+4. **Check and create**: apply the final writing check to the PR description, then run `gh pr create` with all relevant flags.
 5. **Return the PR URL** to the user.
 
 ### Reviewing and managing PRs
@@ -328,8 +337,9 @@ Each comment has an `id` field. Top-level review comments have no `in_reply_to_i
 Use the dedicated replies endpoint:
 
 ```bash
+GH_USERNAME=$(gh api user --jq '.login')
 gh api -X POST repos/{owner}/{repo}/pulls/15/comments/<comment_id>/replies \
-  -f body="> :robot: _This was written by an AI agent on behalf of @${GH_USERNAME}._
+  -f body="> :robot: _This was written by an AI agent on behalf of @${GH_USERNAME} (claude-code/claude-opus-5)._
 
 The null check is needed because..."
 ```

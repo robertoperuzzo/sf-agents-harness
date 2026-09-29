@@ -12,6 +12,219 @@ Changes are grouped by date.
 
 - `drupal-migrate` Claude Code plugin (`plugins/drupal-migrate/`): source-agnostic toolkit for content migrations into Drupal from WordPress, Drupal 7/8+, another CMS, or a database dump. Bundles the `drupal-migration-analyst` agent, 21 atomic `drupal-migrate-*` skills covering source detection, as-is analysis, mapping triage, tech analysis, and post-migration content verification, plus reference templates. Installable from the new `sf-agents-harness` plugin marketplace (`.claude-plugin/marketplace.json`).
 
+## [2026-09-28]
+
+### Changed
+
+- OpenSpec commands and skills for Claude Code, GitHub Copilot, and OpenCode: regenerate with OpenSpec CLI 1.13.2.
+
+## [2026-09-22]
+
+### Added
+
+- `security-audit` skill in the `security` category: multi-phase security audits with independently verified, machine-readable findings. Synced from [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill).
+
+### Changed
+
+- OpenSpec commands and skills for Claude Code, GitHub Copilot, and OpenCode: regenerate with OpenSpec CLI 1.13.1, adding the `propose` and `update` workflows. A weekly workflow now keeps them current.
+
+## [2026-09-21]
+
+### Changed
+
+- `sf-writing-style`, `gh` and `glab` now scale PR/MR descriptions to the change, preserving reviewer-relevant scope, breaking changes, required actions, and verified validation without file-level narration.
+- Upstream skill sync: refresh `system/playwright-cli` from the declared source repository.
+
+## [2026-09-14]
+
+### Changed
+
+- `sf-writing-style` now gives detailed issue tasks short bold outcomes for faster scanning while keeping simple checklists plain.
+
+### Fixed
+
+- `glab` now requires issue template discovery, selects clear matches automatically, and asks only when several templates fit.
+
+## [2026-09-10]
+
+### Changed
+
+- `sf-writing-style`, `gh` and `glab` now use bold text, lists and sections where they make short descriptions easier to scan, with relevant screenshots and verified validation. Descriptions retain essential context and match the final scope, with public writing guidance linked as references.
+
+## [2026-09-09]
+
+### Changed
+
+- `gh` and `glab` now require short, plain issues, PR/MR descriptions, and comments even when `sf-writing-style` is not loaded.
+- `sf-writing-style` now limits short artifacts to essential, supported facts and excludes implementation stories and repeated summaries.
+
+### Removed
+
+- `system/figma-bridge` skill. Spark Showroom is the bridge between Figma and code (`extract_design_layer`, `extract_component`, `verify_component`); no skill in this repository calls the Figma MCP directly any more.
+- `drupal/drupal-sdc-generation` skill. sf-drupal-harness ships the skill with the same name, built on the Showroom component briefs, and wins the sync wherever both are installed.
+
+## [2026-09-07]
+
+### Changed
+
+- Upstream skill sync: refresh `angular/angular-developer` and `system/playwright-cli` from the declared source repositories.
+- `glab` and `gh` skills: the AI attribution header now names the agent and model that wrote the content (`> :robot: _This was written by an AI agent on behalf of @user (claude-code/claude-opus-5)._`), using the same identity as the `Assisted-by` commit trailer.
+- `glab` and `gh` skills: the attribution header can be omitted, but only when explicitly asked for. The agent never proposes leaving it out.
+
+### Fixed
+
+- `glab` and `gh` skills: the username for the AI attribution header is now fetched in the same command that posts the content. The previous two-step example relied on a shell variable surviving between commands, which produced a header with an empty `@` mention.
+
+## [2026-09-02]
+
+### Changed
+
+- `spark-http-proxy` skill: `hosts describe` is documented as reading the container live (image, status, routed port and backend, network, reachability, mounts, redacted command)
+
+## [2026-09-01]
+
+### Changed
+
+- `spark-http-proxy` skill: the certificate commands are documented as the `certs` topic (`list`, `describe`, `generate`, `delete`); `certs describe` is the first step on a certificate warning, and the deprecated `generate-mkcert`, `list-certs` and `remove-cert` warnings are explained as expected
+- `security-assessment` and `agentic-security-audit` skills: moved from `skills/system/` to a new optional `security` category. They are no longer installed by default; enable them with `ajust sf-harness-category enable security` or `sjust sf-harness-category enable security`
+
+## [2026-09-01]
+
+### Added
+
+- `spark-http-proxy` skill: document `hosts`, which reports what the proxy serves and the directory local containers run from
+
+## [2026-08-31]
+
+### Changed
+
+- `spark-http-proxy` skill: `tailscale-peers --refresh` replaces the removed `tailscale-refresh-peers`
+- `spark-http-proxy` skill: the peer table has two groups, `PROXY` and `EXCLUDED`, with the reason in a `STATUS` column
+
+### Removed
+
+- `spark-http-proxy` skill: the `evals/` directory, because nothing in this repository runs it (see #159)
+
+- Upstream skill sync: refresh `angular/angular-developer` from the declared source repository.
+
+## [2026-08-30]
+
+### Added
+
+- `spark-http-proxy`: cover tailnet peer routing, which makes a hostname served on one machine reachable under the same name from the other machines of the same Tailscale account. New `references/peer-routing.md` with how to turn it on, how to read the discovery report, why a hostname is not reachable yet, what `not this proxy` means, and what differs on macOS.
+- `spark-http-proxy`: cover why HTTPS to a peer hostname is untrusted. TLS terminates locally, so the machine doing the reaching needs the certificate, and a wildcard covers exactly one label, so `*.spark.loc` does not cover `macos.test.spark.loc`.
+
+### Fixed
+
+- `spark-http-proxy`: the Linux DNS drop-in was documented as pointing at the Docker bridge `172.17.0.1:19322` in a file named `docker-dev-dns.conf`. It is `127.0.0.1:19322` in `/etc/systemd/resolved.conf.d/http-proxy.conf`, so advice based on the old text sent users to a target that does not answer.
+
+## [2026-08-24]
+
+### Changed
+
+- Upstream skill sync: refresh `angular/angular-developer`, `system/domain-modeling`, and `system/grilling` from the declared source repositories.
+
+## [2026-08-17]
+
+### Changed
+
+- Upstream skill sync: refresh `system/domain-modeling`, `system/grill-me`, `system/grill-with-docs`, and `system/grilling` from the declared source repositories.
+
+## [2026-08-13]
+
+### Changed
+
+- Taught the `spark-http-proxy` skill about `VIRTUAL_PATH`, which mounts a container under a path of its `VIRTUAL_HOST` so a browser-served frontend and its API can share one origin locally. Covers the compose shape, that matching is by path segment and nothing is stripped, that a certificate covers a hostname rather than a path, and the failure modes that do not produce a 404: a stopped mounted container falling through to the domain's container, and any `traefik.` label disabling both variables.
+
+## [2026-08-07]
+
+### Added
+
+- Added upstream-synced `grilling`, `grill-me`, `domain-modeling`, and `grill-with-docs` skills for structured plan interviews and inline domain documentation.
+
+### Changed
+
+- Generalized the `sf-writing-style` skill interaction rules: it is now the explicit baseline for every prose-writing skill (harness or locally installed), with the previously named skills kept as examples.
+- Updated upstream skill sync workflows to use `actions/checkout@v7`.
+
+### Fixed
+
+- `glab` skill: require loading before every GitLab command or write, expose attribution, reference, host, and safety policy in the trigger description, and add trigger plus attribution regression evals.
+
+## [2026-08-06]
+
+### Changed
+
+- Expanded the `sf-writing-style` trigger scope to cover tool-mediated human-facing prose, including issue and PR/MR content, comments, reviews, Slack messages, progress updates, release notes, and incident updates.
+
+## [2026-08-05]
+
+### Fixed
+
+- `spark-http-proxy` skill: add the missing catalog description so it shows up in the `sjust sf-agents-status` DESCRIPTION column, and list it among the available system skills.
+- Documentation: list `adr-creator`, `adversarial-verify`, and `figma-bridge` among the available system skills.
+
+## [2026-08-04]
+
+### Added
+
+- `sf-container-build` skill: design, modify, review, and debug container images with explicit platform and libc contracts, per-platform runtime tests, trusted artifact and package repository verification, rootless runtime guidance, generated-file ownership checks, and SparkFabrik build conventions.
+
+## [2026-08-03]
+
+### Changed
+
+- Upstream skill sync: refresh `system/playwright-cli` from the declared source repository.
+
+## [2026-07-30]
+
+### Added
+
+- Angular skill category: official `angular-developer` and `angular-new-app` skills synchronized from `angular/skills`, ready for global opt-in through Sparkdock.
+
+### Changed
+
+- Upstream skill sync: support category-specific destinations and use a main-only GitHub environment with a repository-scoped App token to automatically squash-merge validated scheduled sync PRs with dated changelog entries. Manual dispatches remain review-only.
+
+## [2026-07-25]
+
+### Added
+
+- `security-assessment` skill: orchestrate a Vulnerability Assessment track (static code and dependency scanning, Docker scan containers, manual review) and a Penetration Testing track (live recon and exploitation, hardened Nuclei runner, Drupal runbook) into one standalone branded HTML report with per-check pass/fail evidence.
+
+### Removed
+
+- `code-security-audit` skill: replaced by `security-assessment`, which absorbs its scan workflow and stack references.
+
+## [2026-07-23]
+
+### Added
+
+- `sf-writing-style` skill: canonical SparkFabrik writing style for every markdown and prose artifact (READMEs, docs, MR/issue descriptions, comments, changelogs). Aired short paragraphs, bulleted lists with bold lead-ins, a total ban on em and en dashes, an AI-slop blacklist, and bundled before/after rewrite examples.
+
+### Changed
+
+- `gh` and `glab` skills: the inline plain-prose and AI-slop authoring sections are now compact stubs that keep the terse-style override and the dash ban, and point to `sf-writing-style` for the full ruleset.
+- `doc-coauthoring` skill: gains a custom section pointing the drafting and quality-check passes to `sf-writing-style`.
+
+## [2026-07-21]
+
+### Added
+
+- `glab` skill: documents creating groups and subgroups (`POST groups` with `parent_id`) and transferring a project to another namespace, including the `transfer_locations` pre-check and the gotcha that current GitLab (18.x) requires `PUT`, not `POST`, on the transfer route.
+
+## [2026-07-14]
+
+### Added
+
+- `postmortem-writing` skill: guided workflow for writing blameless postmortems of software incidents and product failures. Covers summary, quantified impact, UTC timeline, detection, root cause and contributing-factor analysis (Five Whys), resolution, severity classification, and specific owned action items.
+
+## [2026-07-10]
+
+### Changed
+
+- `glab` skill: updating an MR or issue description now requires re-fetching the live description first, because `--description` replaces the entire body and a session-cached copy would erase edits made since creation.
+
 ## [2026-07-09]
 
 ### Changed

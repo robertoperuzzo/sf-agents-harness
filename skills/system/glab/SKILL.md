@@ -1,11 +1,40 @@
 ---
 name: glab
-description: 'Invoke whenever the user is working with GitLab. Trigger on any of these signals: a URL containing "gitlab" (gitlab.com or any self-hosted instance like gitlab.sparkfabrik.com), a git remote pointing to GitLab (git@gitlab.com:... or https://gitlab...), the !N merge-request notation (!15, !42), or words like "merge request", "MR", "glab", or "gitlab". Handles issues, merge requests, CI/CD pipelines, releases, and reading files from GitLab repos. Always use glab—not WebFetch or curl—for any GitLab URL because GitLab requires authentication. Do not invoke for GitHub tasks (use the gh skill instead).'
+description: 'MUST be loaded before any GitLab-related action, including `glab auth status`, any other `glab` command, or composing and sending GitLab issue or merge request content. If repository inspection reveals a GitLab remote, load this skill before the next GitLab action. Trigger on the words "GitLab" or "glab", GitLab URLs or remotes, issues, merge requests, MRs, !N references, pipelines, releases, and repository files. This skill carries mandatory, non-derivable policy: issue template discovery before creation, AI attribution on every write, fully-qualified references, self-hosted host targeting, safe mutation rules, and CLI/API traps. Use `glab`, not `gh`, WebFetch, or curl, except where the skill explicitly requires curl for uploads. Do not invoke for GitHub tasks.'
 ---
 
 # glab CLI Skill
 
 Use the `glab` CLI for ALL GitLab-related tasks including working with issues, merge requests, CI/CD pipelines, and releases. If given a GitLab URL, use `glab` to get the information needed.
+
+## Write short, plain text
+
+Apply these rules whenever you draft or send a title, description, comment, review, changelog, or release note, including through the API. They apply even when `sf-writing-style` has not been loaded.
+
+- **Content.** PR/MR descriptions lead with what changes, understandable without the task conversation. Add one sentence of context only when omitting it would make the change hard to understand or review. Issues state the problem and wanted result. Comments answer the point. Changelog entries state one change each.
+- **Length.** Let the change determine the layout; a small fix can fit in one sentence. Default maximum: 80 words for an uncomplicated PR/MR description, 120 for an issue, 60 for a comment, and one sentence per changelog entry. These are team defaults, not targets or public standards. Preserve essential information even when it needs more words. Complex descriptions may expand to cover major scope, required actions, and useful validation. Attribution and reference lines do not count.
+- **Leave out.** No implementation details, even in a single sentence: file paths, internal function names, internal variables, source lines, test counts, diagnoses, or proposed fixes. Omit workarounds, investigation history, rejected approaches, and repeated summaries. Keep public interface names, commands, configuration keys, and identifiers only when they help a reviewer understand the contract or a required user action. Do not move omitted detail into unsolicited comments.
+- **Select facts.** Investigation notes and the diff are input, not a checklist to summarize. For an issue, keep the symptom and wanted result. For a PR/MR, keep the changed behavior, essential context and required action. For a comment, answer only the question.
+- **Evidence.** Use only supplied facts or results you observed. Omit unknowns. An error does not establish side effects, data loss, partial success, or affected environments. Do not invent causes, sample values, test cases, or reproduction results.
+- **Plain English.** Use familiar words and concrete verbs. Keep necessary technical names exact. No invented jargon or padding. Use complete sentences in prose; parallel bullet items may be short phrases.
+- **Layout.** Open with the main change. Bold a short key phrase, not a whole sentence. Put distinct features or changes in bullets instead of a comma-packed paragraph. Use headings only to separate useful sections, not generic labels like "MR description". One uncomplicated behavior change needs no list; a feature with several visible parts should list those parts. No empty sections, mandatory headings, bullet counts, or minimum length. State each fact once; do not restate the fix as its opposite in the old behavior unless the comparison is needed.
+- **Supporting evidence.** Include supplied screenshots when they clarify a visible change; label before/after only when both are supplied. Include a short, verified validation result when it helps assess the change. Do not dump commands, logs, or test counts, or invent screenshots or results.
+- **Exceptions.** Include essential breaking changes and required user actions. Expand only for these essentials, essential context, necessary validation, explicitly requested detail, or required template fields, using the fewest words needed. A direct question about how or why deserves a direct answer.
+
+Before posting, read the actual outgoing text. Cut every sentence that does not state the change, problem, answer, essential context, required action, or useful verified evidence. Remove code locations and test inventories unless explicitly requested. Check each factual claim against the final diff and current evidence; remove stale claims when scope changes. Describe this diff; omit already-merged changes and workflow history unless explicitly requested. Can a reader outside the conversation identify what changes, any required action, and what was actually verified? Then check the length and remove repetition. Reading the diff is required; narrating it is not. Rewrite commit-generated descriptions before posting. Return the description itself, without code fences, block quotes, or commentary about omitted details unless requested.
+
+Example of a small fix: "Rejects empty passwords with a validation message instead of returning a 500 error."
+
+Example of a feature with several visible parts (copy the layout, not these facts):
+
+> Adds **export controls**:
+>
+> - Date-range selection.
+> - CSV download.
+
+The lead sentence names the feature; the bullets name its parts. The description remains short without becoming a bare paragraph.
+
+Load `sf-writing-style` for additional writing guidance. Before drafting or publishing an MR description, read and apply the PR/MR description reference required by that skill. The rules above still apply when `sf-writing-style` is unavailable.
 
 ## Before you start
 
@@ -156,76 +185,47 @@ This is especially important for **cross-project references**. A bare `#42` or s
 
 This rule applies **only to written content** (descriptions, comments, closing keywords). CLI arguments like `glab issue view 42` target the current project implicitly and do not need qualification.
 
-### Write in plain, professional prose
+### Writing rules
 
-Issue and merge request titles and descriptions, comments and notes, and commit messages must always be written in normal, complete, well-structured English: full sentences, articles, and proper markdown. They are durable, outward-facing documents that other people read and that GitLab renders in its UI; compression hurts readability and looks unprofessional. This rule **overrides any active terse output style for the duration of writing these artifacts.** A session-level style may inject a per-turn reminder such as `CAVEMAN MODE ACTIVE` (drop articles, fragments OK, short synonyms); that reminder applies to your conversational replies, not to the artifacts. When you compose an issue/MR title or body, a comment, a note, or a commit message, write full prose regardless of the active style, then resume the terse conversational style for your surrounding chat replies. Do not run any command to toggle the style off; just write the artifact in plain prose regardless of what reminder is present.
+Apply [Write short, plain text](#write-short-plain-text) before every write. Conversational styles such as caveman do not apply to published text.
 
-### Avoid AI-slop writing tells
-
-- Do not use the em dash (—) or en dash (–) as a sentence connector; rewrite with a period, comma, colon, or parentheses instead.
-- Prefer clear structure over dense run-on paragraphs: use real line breaks, short paragraphs, and lists, and keep sentences plain and direct. Write like a human engineer, not a generated summary.
+Load `sf-writing-style` for additional writing guidance. The rules above apply independently and take priority for these short artifacts. Never use em or en dashes outside quotations or code.
 
 ---
 
 ## Writing on behalf of the user
 
-Whenever you create or post content on GitLab on behalf of the user — including **MR descriptions** (`glab mr create`), **issue descriptions** (`glab issue create`), **comments/notes** (`glab issue note`, `glab mr note`), or **`glab api` body fields** — you **must** prepend the following header to make it clear the content was authored by an AI agent acting on behalf of the user:
+Every piece of content you create on GitLab carries this attribution header: MR and issue descriptions, comments and notes, and `glab api` body fields.
 
 ```
-> :robot: _This was written by an AI agent on behalf of @<username>._
+> :robot: _This was written by an AI agent on behalf of @<username> (<agentname>/<full-model-id>)._
 ```
 
-To get the current authenticated username run:
+Fetch the username, never hardcode it. For `<agentname>/<full-model-id>` substitute your own runtime identity: the harness you run in as the agent name, lowercase, and the model ID exactly as your runtime reports it, never a friendly name. Same string as the `Assisted-by` trailer in `sf-commit-convention`, so keep the two identical.
+
+Leave the header out only when the user asks you to, for instance on a project whose policy rejects AI-assisted content. Never suggest it, never decide it yourself, never swap in a softer marker.
+
+Fetch and post in one command: a separate command runs in its own shell, so the variable is empty by the time you post and the header renders `on behalf of @ (...)` with no username. `glab api` has no `--jq` flag (that is a `gh` feature), so pipe to `jq`.
 
 ```bash
-GITLAB_HOST=<hostname> glab api user | jq -r '.username'
-```
-
-> **Note:** `glab api` does not support `--jq` (that's a `gh` feature). Always pipe to `jq` instead.
-
-Before writing any content, **always fetch the username first** and embed it in the header. Do not hardcode a username or leave the placeholder unfilled:
-
-```bash
-# Step 1: fetch the username (do this once per session)
-GL_USERNAME=$(GITLAB_HOST=<hostname> glab api user | jq -r '.username')
-
-# Step 2: use it in the content
-GITLAB_HOST=gitlab.example.com glab mr create \
-  --title "feat: add dark mode" \
-  --description "> :robot: _This was written by an AI agent on behalf of @${GL_USERNAME}._
-
-## Summary
-
-- Adds dark mode toggle to settings page
-- ..."
-```
-
-**Example** — adding a note to issue #42:
-
-```bash
-GITLAB_HOST=gitlab.example.com glab issue note 42 \
-  -R group/project \
-  --message "> :robot: _This was written by an AI agent on behalf of @${GL_USERNAME}._
-
-## Triage
+GL_USERNAME=$(GITLAB_HOST=gitlab.example.com glab api user | jq -r '.username')
+GITLAB_HOST=gitlab.example.com glab issue note 42 -R group/project \
+  --message "> :robot: _This was written by an AI agent on behalf of @${GL_USERNAME} (claude-code/claude-opus-5)._
 
 Root cause identified: ..."
 ```
 
-This applies to **every** piece of content the agent creates, regardless of length or context. Never skip the header.
+Never single-quote a heredoc delimiter (`<<'EOF'`): it blocks expansion and emits the literal `$GL_USERNAME`.
 
-> **Heredoc warning:** when using `cat <<EOF` to build the body, **never** single-quote the delimiter (`<<'EOF'`). Single-quoted heredocs suppress variable expansion and produce the literal string `$GL_USERNAME` instead of the resolved value. Always use an unquoted delimiter:
->
-> ```bash
-> glab mr create --title "feat: add dark mode" --description "$(cat <<EOF
-> > :robot: _This was written by an AI agent on behalf of @${GL_USERNAME}._
->
-> ## Summary
->
-> - Adds dark mode toggle to settings page
-> EOF
-> )"
-> ```
+```bash
+GL_USERNAME=$(GITLAB_HOST=gitlab.example.com glab api user | jq -r '.username')
+GITLAB_HOST=gitlab.example.com glab mr create --title "feat: add dark mode" --description "$(cat <<EOF
+> :robot: _This was written by an AI agent on behalf of @${GL_USERNAME} (claude-code/claude-opus-5)._
+
+Adds a dark mode toggle to the settings page.
+EOF
+)"
+```
 
 > **Issue auto-linking:** GitLab renders a bare reference as a clickable link, but a backticked one renders as inline code and does not link. Use backticks when referring to a number as text (examples, tables, logs), and leave it bare when it should link to an actual issue (e.g., `Closes #42`). See "Fully-qualified references" above for the full rule, including cross-project paths and GitHub-style refs.
 
@@ -285,14 +285,15 @@ glab issue reopen 42
 
 ### Issue template selection
 
-Many GitLab projects define issue templates (stored in `.gitlab/issue_templates/`) that encode the team's expected structure -- sections to fill, checklists, labels via quick actions. Skipping these creates issues that don't match the project's conventions and forces manual cleanup.
+Project issue templates are mandatory input. Never skip them because the user did not name one.
 
-Before creating any issue, check for templates:
+Before every issue creation:
 
-1. **List templates**: `glab api projects/:id/templates/issues` -- returns `[{key, name}, ...]`. If empty or 404, the project has none; proceed without a template.
-2. **Present choices**: show the available template names and ask the user which one to use.
-3. **Fetch the selected template**: `glab api projects/:id/templates/issues/<key>` -- returns `{name, content}` with the full markdown body.
-4. **Fill in the template**: use the template content as the issue description. Ask the user for any information the template sections require that they haven't provided yet.
+1. **List templates.** Run `glab api projects/:id/templates/issues`. It returns `[{key, name}, ...]`. An empty response or 404 means the project has no templates, so proceed without one.
+2. **Select a template.** Use a template named by the user. Otherwise, select a clear subject match without asking. If only generic variants fit, choose the shortest one that covers the known goal, tasks, constraints, acceptance criteria, and validation needs. Ask only when two or more templates plausibly fit and the choice changes the issue structure or quick actions.
+3. **Fetch the template.** Run `glab api projects/:id/templates/issues/<key>`. It returns `{name, content}` with the full Markdown body.
+4. **Fill the template.** Preserve required headings, checklists, and project instructions such as time tracking. Do not infer that a section is optional because the user did not supply content for it. Remove hints, placeholder text, explicitly optional empty sections, and mutually exclusive quick actions that do not apply. Keep an applicable quick action only when the available facts support it. Ask only for missing information required to create a correct issue.
+5. **Check before creation.** Do not run `glab issue create` until template discovery completed and either a template was applied, the user was asked to resolve a real ambiguity, or the project was confirmed to have no templates.
 
 To list just the template names: `glab api projects/:id/templates/issues | jq '.[].name'`.
 
@@ -354,9 +355,9 @@ Breaking changes append `!` before the colon: `feat(api)!: change response forma
 **MR creation checklist** (follow this carefully):
 
 1. **Inspect branch state**: `git status`, `git log <base>...HEAD --oneline`, `git diff <base>...HEAD`
-2. **Draft title/description from the actual diff** -- reference specific files, functions, behaviors. Do not just restate the user's request.
+2. **Draft from the actual diff**: state what changes, using the writing rules above. Include identifiers only for the changed interface or a required user action.
 3. **Push**: `git push -u origin HEAD` if not yet pushed.
-4. **Create**: `glab mr create` with all relevant flags.
+4. **Check and create**: apply the final writing check to the MR description, then run `glab mr create` with all relevant flags.
 5. **Return the MR URL** to the user.
 
 ### Reviewing and managing MRs
@@ -374,6 +375,18 @@ glab mr rebase 15                   # rebase onto target
 glab mr update 15 --add-label "reviewed"
 glab mr close 15                    # close without merging
 ```
+
+> **`--description` replaces, never patches.** `glab mr update N --description` (and `glab issue update`, and `glab api -X PUT ... -f description=`) overwrites the entire body. Before any description update, re-fetch the current live content — never reuse a copy cached in the session from creation time, because reviewers, bots, or quick actions may have edited it in between, and your stale copy would silently erase their changes. Fetch the raw markdown (use `glab api`, not `glab mr view`, which formats the output for display), apply your edit to it, then send the merged result:
+>
+> ```bash
+> # 1. Fetch the current raw description
+> glab api projects/:id/merge_requests/15 | jq -r '.description' > /tmp/mr-desc.md
+> # 2. Edit /tmp/mr-desc.md (append or modify only the section you need)
+> # 3. Push the merged result back
+> glab mr update 15 --description "$(cat /tmp/mr-desc.md)"
+> ```
+>
+> Preserve any existing AI-attribution header and any content you did not author.
 
 > **`close`/`reopen` do NOT accept `--message`**: unlike `gh pr close --comment`, `glab mr close` and `glab mr reopen` only accept `--repo` -- there is no `--message` or `--comment` flag. The same applies to `glab issue close` and `glab issue reopen`. To close (or reopen) with an explanation, add a note first as a separate command:
 >
@@ -665,6 +678,8 @@ GITLAB_HOST=<hostname> glab mr update 4 --description "## Screenshot
 ![image](/uploads/<hash>/image.png)"
 ```
 
+When adding the screenshot to an existing description, follow the re-fetch rule from "Reviewing and managing MRs": fetch the current raw description first and append to it — `--description` replaces the whole body.
+
 ---
 
 ## `glab api` -- last resort for advanced operations
@@ -718,5 +733,44 @@ GITLAB_HOST=gitlab.example.com glab api \
 ```
 
 Placeholder variables (auto-resolved inside a git repo): `:id`, `:fullpath`, `:repo`.
+
+### Creating groups and subgroups
+
+There is no `glab` subcommand for group creation -- use `glab api` with `POST groups`. To create a **subgroup**, pass the parent group's numeric id via `parent_id`:
+
+```bash
+# Resolve the parent group id first (URL-encode the path, slashes as %2F):
+GITLAB_HOST=gitlab.example.com glab api "groups/team%2Fresearch" | jq '.id'
+
+# Create the subgroup under that parent:
+GITLAB_HOST=gitlab.example.com glab api -X POST groups \
+  -f name="AI Research" \
+  -f path="ai-research" \
+  -f parent_id=196 \
+  -f description="Research group for PoCs." \
+  -f visibility="private"
+```
+
+`name` is the human-readable display name; `path` is the URL slug (lowercase, hyphens). A subgroup's `visibility` cannot be more open than its parent (a `private` parent cannot contain a `public` subgroup). Omit `parent_id` to create a top-level group.
+
+### Transferring a project to another namespace
+
+Validate the target first, then transfer. `transfer_locations` returns every namespace the current user is allowed to move the project into, with both `id` and `full_path`:
+
+```bash
+# 1. List valid target namespaces:
+glab api "projects/:id/transfer_locations" \
+  | jq '.[] | {id, full_path}'
+
+# 2. Transfer to the target namespace (numeric group id):
+glab api -X PUT "projects/<project-id>/transfer" -f namespace=<group-id>
+```
+
+> **Method gotcha (PUT, not POST):** the historical GitLab API docs describe this endpoint as `POST /projects/:id/transfer`, but current GitLab (verified on 18.11 with glab 1.106) does not register the route for `POST` -- a `POST` returns a bare `{"error":"404 Not Found"}` while `PUT` reaches the handler. Use `PUT`. If a `PUT` unexpectedly 404s on an older instance, fall back to `POST`.
+
+The transfer preserves the project's numeric id, history, issues, and MRs, and GitLab leaves a redirect from the old path. Two follow-ups are still required:
+
+- **Update local git remotes** to the new `path_with_namespace` (returned in the transfer response). The old SSH/HTTPS URL keeps working via the redirect, but the canonical path has changed.
+- You need **Owner** (or Maintainer, depending on instance settings) on both the project and the target namespace. If `transfer_locations` does not list your intended target, you lack the rights or the target violates a constraint (for example a visibility mismatch), and the transfer will fail.
 
 For comprehensive API patterns (GraphQL, pagination, groups, advanced queries), read `references/api-patterns.md`.
