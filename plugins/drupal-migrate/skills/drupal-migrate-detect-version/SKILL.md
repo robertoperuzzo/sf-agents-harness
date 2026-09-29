@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-version
-description: Detect the Drupal version of the source migration database (Drupal 7, 8, 9, or 10). Use after discovering the database connection with drupal-migrate-db-discover. Checks for version-specific table signatures.
+description: "Detect the Drupal version of the source migration database (Drupal 7 vs Drupal 8+, with the exact core major when the source codebase is available). Use after discovering the database connection with drupal-migrate-db-discover. Checks for version-specific table signatures."
 ---
 
 # Detect Source Drupal Version
@@ -48,21 +48,21 @@ Execute via (substitute the `{drush_option}` from Step 1):
 docker compose run --rm <tools-container> ash -c "drush sql:query {drush_option} \"SELECT IF(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'field_config_instance'), 'drupal7', IF(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'config'), 'drupal8+', 'unknown')) AS source_version;\""
 ```
 
-### Step 3 — Determine specific version (optional, Drupal 8+ only)
+### Step 3 — Determine the core major (optional, Drupal 8+ with codebase only)
 
-If the source is Drupal 8+, you can further identify the major version:
+The database does not record the core major: `core.extension` lists enabled modules and
+`system.site` holds site settings, neither carries a core version. Read it from the
+delivered code instead (`project-config.md` → "Source codebase path"):
 
-```sql
-SELECT data FROM config WHERE name = 'core.extension' LIMIT 1;
+```bash
+# Drupal::VERSION constant
+grep -m1 "const VERSION" <codebase>/web/core/lib/Drupal.php
+# or the locked package
+jq -r '.packages[] | select(.name == "drupal/core") | .version' <codebase>/composer.lock
 ```
 
-The `core_version_requirement` in the serialized data indicates D8 (`^8`), D9 (`^9`), or D10 (`^10`).
-
-Alternatively, check the `system` config:
-
-```sql
-SELECT data FROM config WHERE name = 'system.site' LIMIT 1;
-```
+Report the major as `core_major` (8, 9, 10, 11). For a **DB-only** source, report
+`drupal8+` and state that the exact major is unknown.
 
 ### Step 4 — Report results
 
@@ -71,7 +71,7 @@ Output:
 ```
 Source Drupal version: {version}
 - Drupal 7: field metadata in the field_config_instance table
-- Drupal 8+: field metadata PHP-serialized in the config table (major version from core.extension)
+- Drupal 8+: field metadata PHP-serialized in the config table (core major from the codebase, or unknown for DB-only)
 ```
 
 If `unknown`, warn:
@@ -85,6 +85,7 @@ Then **STOP** and ask the user to confirm the source system.
 ## Output
 
 - **source_version**: `drupal7`, `drupal8+`, or `unknown`
+- **core_major** _(optional)_: `8`, `9`, `10`, or `11`, only when the codebase is available
 - **field_query_strategy**: `field_config_instance` (D7) or `config_table` (D8+)
 
 ---

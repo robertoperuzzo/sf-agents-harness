@@ -1,14 +1,6 @@
 ---
 name: drupal-migrate-analysis-docs
-description: >-
-  Organize the documentation produced during a Drupal content migration so it stays readable
-  and scoped. Use whenever you are writing up, structuring, or reorganizing migration
-  analysis — "where should this migration doc go", "structure the migration documentation",
-  "document the source site", "the migration docs are a mess", or before creating any new
-  migration analysis file. Defines the as-is (current-state) vs to-be (analysis/planning)
-  split, the plain-docs vs OpenSpec-change split, the no-duplication/reference rule, and
-  when to use Mermaid diagrams. Source-agnostic: applies to WordPress→Drupal, Drupal→Drupal,
-  or any source.
+description: 'Organize the documentation produced during a Drupal content migration so it stays readable and scoped. Use whenever you are writing up, structuring, or reorganizing migration analysis — "where should this migration doc go", "structure the migration documentation", "document the source site", "the migration docs are a mess", or before creating any new migration analysis file. Defines the as-is (current-state) vs to-be (analysis/planning) split, the plain-docs vs OpenSpec-change split, the no-duplication/reference rule, and when to use Mermaid diagrams. Source-agnostic: applies to WordPress→Drupal, Drupal→Drupal, or any source.'
 ---
 
 # Organize migration analysis documentation

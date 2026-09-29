@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-tech-analysis
-description: Read a Drupal content-migration GitLab issue and produce a precise checkbox TO DO list of the technical tasks needed to implement it, grounded in the project's actual codebase. Use when the user gives a GitLab issue number for a migration — "do a tech analysis of issue #210", "analyse issue 175 technically", "what do we need to implement for issue #42?".
+description: 'Read a Drupal content-migration GitLab issue and produce a precise checkbox TO DO list of the technical tasks needed to implement it, grounded in the project''s actual codebase. Use when the user gives a GitLab issue number for a migration — "do a tech analysis of issue'
 ---
 
 # Technical Analysis of a Migration Issue

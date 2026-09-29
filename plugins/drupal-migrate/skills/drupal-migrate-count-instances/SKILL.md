@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-count-instances
-description: Count how many instances of a Drupal entity bundle (node, paragraph, taxonomy term, media, or user) exist in a source migration database, using revision-safe COUNT(DISTINCT) queries that avoid inflation from revisions and language variants. Use this whenever migration planning needs a count — "how many X are there", "count the Y paragraphs", sizing a bundle before migrating it, or checking whether a bundle has any data at all. Reports both total and active (published) counts.
+description: 'Count how many instances of a Drupal entity bundle (node, paragraph, taxonomy term, media, or user) exist in a source migration database, using revision-safe COUNT(DISTINCT) queries that avoid inflation from revisions and language variants. Use this whenever migration planning needs a count — "how many X are there", "count the Y paragraphs", sizing a bundle before migrating it, or checking whether a bundle has any data at all. Reports both total and active (published) counts.'
 ---
 
 # Count Source Entity Instances
@@ -61,11 +61,27 @@ WHERE {bundle_column} = '{bundle}'
 GROUP BY {bundle_column};
 ```
 
+**Drupal 8+ (users):** `user` has no bundle column (`{bundle_column}` is `—` in the
+shared reference), so the parameterized query above does not apply. Count without a
+bundle predicate and skip the anonymous account:
+
+```sql
+SELECT COUNT(DISTINCT uid) AS instances
+FROM users_field_data
+WHERE uid > 0;
+```
+
 **Drupal 7 (nodes):**
 
 ```sql
 SELECT type, COUNT(DISTINCT nid) AS instances
 FROM node WHERE type = '{bundle}' GROUP BY type;
+```
+
+**Drupal 7 (users):**
+
+```sql
+SELECT COUNT(DISTINCT uid) AS instances FROM users WHERE uid > 0;
 ```
 
 **Drupal 7 (taxonomy terms):**
@@ -87,13 +103,21 @@ ORDER BY TABLE_NAME;
 
 ### Step 2 — Count active (published) instances
 
-For entity types that have a `{status_column}` (node, taxonomy_term, media, user),
+For entity types that have a `{status_column}` (node, taxonomy_term, media),
 follow the exact query in `entity-type-context.md` → "Active Definition Per Entity Type":
 
 ```sql
 SELECT COUNT(DISTINCT {id_column}) AS active_instances
 FROM {main_table}
 WHERE {bundle_column} = '{bundle}' AND {status_column} = 1;
+```
+
+For `user` (no bundle column):
+
+```sql
+SELECT COUNT(DISTINCT uid) AS active_instances
+FROM users_field_data
+WHERE uid > 0 AND status = 1;
 ```
 
 > **Paragraphs** have no meaningful status column — "active" means attached to a

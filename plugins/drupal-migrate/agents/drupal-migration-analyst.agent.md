@@ -1,6 +1,6 @@
 ---
 name: drupal-migration-analyst
-description: Full-lifecycle, source-agnostic migration analyst for migrations into Drupal. Orchestrates a content migration through three macro-phases — as-is source analysis, mapping triage, and implementation — by reading the accumulated migration docs to recover prior decisions, running atomic drupal-migrate-* skills, and producing structured reports and issue requirements. Source can be WordPress, Drupal 7/8+, another CMS, or a database alone. Invoke with an explicit phase/intent and any known inputs (source bundle, destination bundle, language, save path) in the prompt — it runs non-interactively and returns a single report ending with the migration roadmap state.
+description: "Full-lifecycle, source-agnostic migration analyst for migrations into Drupal. Orchestrates a content migration through three macro-phases — as-is source analysis, mapping triage, and implementation — by reading the accumulated migration docs to recover prior decisions, running atomic drupal-migrate-* skills, and producing structured reports and issue requirements. Source can be WordPress, Drupal 7/8+, another CMS, or a database alone. Invoke with an explicit phase/intent and any known inputs (source bundle, destination bundle, language, save path) in the prompt — it runs non-interactively and returns a single report ending with the migration roadmap state."
 tools: Read, Write, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 ---
 
@@ -98,7 +98,7 @@ by reading:
 | File                                                | Purpose                                                                                                                                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `.agents/references/migrate/project-config.md`      | **Config.** Source system (technology, single/multisite, codebase-available vs DB-only), DB connection + access method, URL resolution, custom SQL, reference paths, default language. Overrides skill defaults. |
-| `.agents/references/migrate/issue-requirements.md`  | Migration **issue description template** (structure + the fixed Definition of Done).                                                                                                                             |
+| `.agents/references/migrate/issue-requirements.md`  | Migration **issue description template** (structure + the fixed Definition of Done). Written per project by the team; the plugin ships no template because the Definition of Done differs between projects.      |
 | `.agents/references/migrate/entity-type-context.md` | Entity-type context reference for source bundles (Drupal source).                                                                                                                                                |
 
 Browse the rest of `.agents/references/migrate/` for additional insight when a question
@@ -363,9 +363,11 @@ for issue #N", "plan issue #N".
 **Workflow:**
 
 1. Read project references + recover the corpus state.
-2. The issue content (title, description, requirements) **must be supplied in the
-   invocation** — this agent does not fetch from any tracker. If absent, stop and
-   request it.
+2. Obtain the issue content (title, description, requirements). Use it from the
+   invocation when supplied. Otherwise, if `project-config.md` → "Issue Tracker"
+   defines the tool and repository flag and the auth check passes, fetch it
+   (`glab issue view N <flag>` or `gh issue view N <flag>`). If neither is possible,
+   stop and request the body.
 3. _(if the source analysis for the referenced bundle is missing)_ run the relevant
    Phase 1 analysis.
 4. `drupal-migrate-tech-analysis` — produce the TO DO list.
@@ -536,7 +538,7 @@ Re-invoke with these in the prompt.
 - **Bundle not found:** state the bundle doesn't exist in the source; suggest verifying
   the name.
 - **Missing destination:** mapping = TBD; omit mapping checkboxes.
-- **Issue content not provided** (tech analysis): stop and request it — no tracker
+- **Issue content not provided and no tracker configured** (tech analysis): stop and request it — no tracker
   access.
 - **Skill not loaded:** perform its documented steps inline.
 - **Reference file missing:** report which one; continue without inventing its content.

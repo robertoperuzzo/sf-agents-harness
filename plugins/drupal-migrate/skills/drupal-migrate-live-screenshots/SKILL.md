@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-live-screenshots
-description: Take browser screenshots of live example pages resolved by drupal-migrate-resolve-examples. Optional step — only run after explicit user confirmation. Browser-tool-agnostic — uses the playwright-cli skill if enabled, else a Playwright (or other browser) MCP server, else asks the user which browser tool to use.
+description: "Take browser screenshots of live example pages resolved by drupal-migrate-resolve-examples. Optional step — only run after explicit user confirmation. Browser-tool-agnostic — uses the playwright-cli skill if enabled, else a Playwright (or other browser) MCP server, else asks the user which browser tool to use."
 ---
 
 # Live screenshots of example pages

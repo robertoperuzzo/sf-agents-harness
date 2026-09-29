@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-platform-audit
-description: Produce the as-is platform document for a migration into Drupal — the source platform exactly as it is today. Captures the CMS version, hosting/PHP/DB engine, single-site vs multisite (with subsite count), the active module/plugin inventory with verified activation state, and the custom-code list. Use during Phase 1 as-is analysis after drupal-migrate-detect-source, when asked to "document the platform", "inventory the plugins/modules", "what version is the source", or "audit the as-is platform". Writes as-is/platform.md per the drupal-migrate-analysis-docs skill.
+description: 'Produce the as-is platform document for a migration into Drupal — the source platform exactly as it is today. Captures the CMS version, hosting/PHP/DB engine, single-site vs multisite (with subsite count), the active module/plugin inventory with verified activation state, and the custom-code list. Use during Phase 1 as-is analysis after drupal-migrate-detect-source, when asked to "document the platform", "inventory the plugins/modules", "what version is the source", or "audit the as-is platform". Writes as-is/platform.md per the drupal-migrate-analysis-docs skill.'
 ---
 
 # Platform audit (as-is)

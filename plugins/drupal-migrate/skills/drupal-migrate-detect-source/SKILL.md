@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-source
-description: Identify the source system of a migration into Drupal before any analysis — the source technology (WordPress, Drupal 7, Drupal 8+, or another CMS), whether it is single-site or multisite, whether the full codebase is available or only a database dump, and which read-only DB access method to use (drush / wp-cli / ddev / mysql). Use as the very first step of any migration analysis, before db-discover and before any source query. Returns routing facts that every later skill depends on; writes no documentation.
+description: "Identify the source system of a migration into Drupal before any analysis — the source technology (WordPress, Drupal 7, Drupal 8+, or another CMS), whether it is single-site or multisite, whether the full codebase is available or only a database dump, and which read-only DB access method to use (drush / wp-cli / ddev / mysql). Use as the very first step of any migration analysis, before db-discover and before any source query. Returns routing facts that every later skill depends on; writes no documentation."
 ---
 
 # Detect the migration source system
@@ -47,12 +47,12 @@ ls includes/bootstrap.inc modules/system/system.module 2>/dev/null
 **Database table signatures** (run with the access method from Step 4; substitute the
 detected runner):
 
-| Signature table(s) present | Source |
-| --- | --- |
-| `{prefix}posts`, `{prefix}options`, `{prefix}postmeta` | WordPress |
+| Signature table(s) present                                                | Source                  |
+| ------------------------------------------------------------------------- | ----------------------- |
+| `{prefix}posts`, `{prefix}options`, `{prefix}postmeta`                    | WordPress               |
 | `{prefix}blogs`, `{prefix}site`, `{prefix}sitemeta` (alongside the above) | WordPress **multisite** |
-| `field_config_instance` | Drupal 7 |
-| `config` (PHP-serialized field metadata), `key_value` | Drupal 8+ |
+| `field_config_instance`                                                   | Drupal 7                |
+| `config` (PHP-serialized field metadata), `key_value`                     | Drupal 8+               |
 
 If neither codebase nor DB matches a known signature, the source is **another CMS** or
 custom — report what was found and **stop**, asking the user to confirm.
@@ -83,12 +83,12 @@ Determine **what was delivered** and **how to query it**, read-only:
 - **DB access method** — pick the project's configured read-only path; do not default to
   drush:
 
-  | Source / environment | Read-only access method |
-  | --- | --- |
-  | Drupal, project drush runner | `drush sql:query --database=<key> '<SELECT>'` |
-  | WordPress under DDEV | `ddev wp db query '<SELECT>'` |
-  | WordPress with wp-cli | `wp db query '<SELECT>'` |
-  | Raw dump in a DB container | read-only `mysql`/`mariadb` client against the import |
+  | Source / environment         | Read-only access method                               |
+  | ---------------------------- | ----------------------------------------------------- |
+  | Drupal, project drush runner | `drush sql:query --database=<key> '<SELECT>'`         |
+  | WordPress under DDEV         | `ddev wp db query '<SELECT>'`                         |
+  | WordPress with wp-cli        | `wp db query '<SELECT>'`                              |
+  | Raw dump in a DB container   | read-only `mysql`/`mariadb` client against the import |
 
   Confirm the method actually runs a trivial read (e.g. `SELECT 1`) — the deeper
   connection validation is `drupal-migrate-db-discover`'s job; here you only confirm the

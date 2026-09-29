@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-scan-destination
-description: Scan destination Drupal config YAML and project analysis documents to propose source-to-destination field mappings for a migration, and pick the destination bundle/component for a source's data. Use after querying source fields, when you need to know which destination bundle/fields a source bundle maps to — "what does this paragraph map to", "propose mappings for X", "which paragraph type fits this section", or before writing a migration's process section. When Playwright is enabled and the source is a website, it can navigate the source page (local copy or live) to read its layout and match each section to the closest destination paragraph type. Read-only; never edits config.
+description: 'Scan destination Drupal config YAML and project analysis documents to propose source-to-destination field mappings for a migration, and pick the destination bundle/component for a source''s data. Use after querying source fields, when you need to know which destination bundle/fields a source bundle maps to — "what does this paragraph map to", "propose mappings for X", "which paragraph type fits this section", or before writing a migration''s process section. When Playwright is enabled and the source is a website, it can navigate the source page (local copy or live) to read its layout and match each section to the closest destination paragraph type. Read-only; never edits config.'
 ---
 
 # Scan Destination Fields and Propose Mappings

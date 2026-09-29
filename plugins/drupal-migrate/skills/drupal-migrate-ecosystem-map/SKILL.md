@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-ecosystem-map
-description: Produce the as-is ecosystem document for a migration into Drupal — the external systems the source site integrates with today (CRM, mailing, form back-ends, analytics, payment, single sign-on). Captures each integration's direction, mechanism, and the data that crosses the boundary, with a topology diagram. Use during Phase 1 as-is analysis when asked to "map the integrations", "what external systems does the site talk to", "document the ecosystem", or "find the CRM/mail/forms hooks". Writes as-is/ecosystem.md per the drupal-migrate-analysis-docs skill.
+description: 'Produce the as-is ecosystem document for a migration into Drupal — the external systems the source site integrates with today (CRM, mailing, form back-ends, analytics, payment, single sign-on). Captures each integration''s direction, mechanism, and the data that crosses the boundary, with a topology diagram. Use during Phase 1 as-is analysis when asked to "map the integrations", "what external systems does the site talk to", "document the ecosystem", or "find the CRM/mail/forms hooks". Writes as-is/ecosystem.md per the drupal-migrate-analysis-docs skill.'
 ---
 
 # Ecosystem map (as-is)

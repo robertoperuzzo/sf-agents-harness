@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-content-inventory
-description: Produce the as-is content-inventory document for a migration into Drupal — the content volumes the source holds today. Counts entities per content type / post type (published vs total), measures multilingual coverage, and for a multisite source breaks volume down per site. Use during Phase 1 as-is analysis when asked to "inventory the content", "how many posts/nodes are there", "what content types exist", or "measure the multilingual coverage". Writes as-is/content-inventory.md per the drupal-migrate-analysis-docs skill.
+description: 'Produce the as-is content-inventory document for a migration into Drupal — the content volumes the source holds today. Counts entities per content type / post type (published vs total), measures multilingual coverage, and for a multisite source breaks volume down per site. Use during Phase 1 as-is analysis when asked to "inventory the content", "how many posts/nodes are there", "what content types exist", or "measure the multilingual coverage". Writes as-is/content-inventory.md per the drupal-migrate-analysis-docs skill.'
 ---
 
 # Content inventory (as-is)
