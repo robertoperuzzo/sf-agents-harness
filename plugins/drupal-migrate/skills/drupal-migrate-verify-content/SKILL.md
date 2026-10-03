@@ -71,13 +71,23 @@ commands. Never substitute a raw value. For every URL:
    `{langcode}` for this URL, per the language URL rule in project-config.md. Use that
    `{langcode}` in every later query, alias lookup, and content check for this URL; the
    base language is only the fallback when no rule matches.
-3. **Derive `{relative_path}`** by stripping the matched base. Accept it only if it
-   matches `^[A-Za-z0-9/._~-]+$` (an already-decoded path with no query string). Stop on
+3. **Derive `{relative_path}`** by stripping the matched base, then normalize it once:
+   remove every leading `/` and any trailing `/`, so the value never starts or ends
+   with a slash (`https://www.example.com/news/item/` → `news/item`). The site root
+   yields an empty string. Accept the result only if it is empty or matches
+   `^[A-Za-z0-9/._~-]+$` (an already-decoded path with no query string). Stop on
    anything else, including quotes, `%`, `$`, backticks, spaces, or `..`.
 4. **Escape for `LIKE`.** Replace `_` with `\_` before building a `LIKE '%…%'`
-   pattern, so the underscore is matched literally.
+   pattern, so the underscore is matched literally. For the root page (empty path)
+   match the exact base URL instead of a `LIKE '%%'` pattern, which would match every row.
 
-The same rules apply to `{source_path}` in Phase 1.
+**URL construction rule.** Every later URL is `{base}/{relative_path}`, where `{base}`
+(`{source_base}`, `{internal_http_host}`) has no trailing slash and `{relative_path}`
+has no leading slash. For the root page use `{base}/`. Apply the same normalization to
+every path read from the database (`{redirect_path}`, `{destination_alias}`,
+`{lang_destination_alias}`): strip the leading `/` once, then build `{base}/{path}`.
+Never concatenate a base with a path that still starts with `/`, which produces
+`//path` and can be routed differently by the server.
 
 ---
 
@@ -123,7 +133,7 @@ Also query the other-language row(s) to know which translations to expect in Pha
 If `{url_map_table}` is defined:
 
 ```bash
-{drush_runner} "drush sql:query --database={migrate_db_key} \"SELECT destination_entity_id, destination_entity_type, destination_url FROM {url_map_table} WHERE source_url LIKE '%{source_path}%' LIMIT 5\""
+{drush_runner} "drush sql:query --database={migrate_db_key} \"SELECT destination_entity_id, destination_entity_type, destination_url FROM {url_map_table} WHERE source_url LIKE '%{relative_path}%' LIMIT 5\""
 ```
 
 Otherwise resolve via the `final_url`/`node_id` from Phase 0, or ask the user. Result is
@@ -167,7 +177,7 @@ LLM comparison. Navigate both pages and compare substance, not structure.
 ### 2a. Source page (old site)
 
 ```bash
-playwright-cli open {source_base}/{source_path}
+playwright-cli open {source_base}/{relative_path}
 playwright-cli snapshot --filename=.playwright-cli/verify-source-base.yaml
 ```
 
@@ -251,7 +261,7 @@ Same process as Phase 2, adapted to the language:
 ```bash
 playwright-cli open {lang_source_url}
 playwright-cli snapshot --filename=.playwright-cli/verify-source-<lang>.yaml
-playwright-cli goto {internal_http_host}{lang_destination_alias}
+playwright-cli goto {internal_http_host}/{lang_destination_alias}
 playwright-cli snapshot --filename=.playwright-cli/verify-dest-<lang>.yaml
 ```
 
@@ -279,7 +289,7 @@ new site (typically `410`).
 ### 4b. HTTP-check on the new site
 
 ```bash
-{drush_runner} "curl -sI -o /dev/null -w '%{http_code}' {internal_http_host}/{source_path}"
+{drush_runner} "curl -sI -o /dev/null -w '%{http_code}' {internal_http_host}/{relative_path}"
 ```
 
 | Actual | Expected | Verdict                                      |
