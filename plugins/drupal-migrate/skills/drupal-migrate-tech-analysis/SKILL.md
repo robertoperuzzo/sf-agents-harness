@@ -1,43 +1,59 @@
 ---
 name: drupal-migrate-tech-analysis
-description: 'Read a Drupal content-migration GitLab issue and produce a precise checkbox TO DO list of the technical tasks needed to implement it, grounded in the project''s actual codebase. Use when the user gives a GitLab issue number for a migration — "do a tech analysis of issue'
+description: 'Read a Drupal content-migration issue (GitLab or GitHub, or issue content supplied directly) and produce a precise checkbox TO DO list of the technical tasks needed to implement it, grounded in the project''s actual codebase. Use when the user gives an issue number for a migration — "do a tech analysis of issue 175", "technical breakdown of #42", "what do we need for issue #N".'
 ---
 
 # Technical Analysis of a Migration Issue
 
-Read a GitLab issue and produce a precise, technically complete checkbox TO DO list for its implementation, grounded in the actual project codebase and the project's migration conventions.
+Read a migration issue and produce a precise, technically complete checkbox TO DO list for its implementation, grounded in the actual project codebase and the project's migration conventions.
 
 ## Project Configuration
 
 Read `.agents/references/migrate/project-config.md` first — it supplies every project-specific value this skill needs:
 
-- **Issue Tracker** → the `glab` repository flag and auth check
+- **Issue Tracker** → the tracker tool (`glab` or `gh`), its repository flag, and the auth check
 - **Migration Infrastructure — Where To Look** → where custom migration modules, migration YAML, and destination config live (paths vary per project)
 - **Issue Output Language** → the language to write the TO DO list in
 - **Migration Patterns** / **Scope Exclusions** → project conventions and fields/bundles to exclude
 - the **destination Drupal version** (the new site; D8+)
 
-If that file is absent, ask the user for the GitLab repository identifier and the relevant code paths before proceeding. Do not hardcode another project's paths.
+If that file is absent, ask the user for the issue tracker (GitLab or GitHub), the repository identifier, and the relevant code paths before proceeding. Do not hardcode another project's paths.
 
 ## Input
 
-The user provides a GitLab issue number (e.g. `#175`, `175`, `issue 175`). Extract the number and proceed. If none is given, ask:
+Either of:
+
+- **Issue content** already fetched by the caller (for example the orchestrating agent):
+  title, description, labels, milestone, comments. Use it as-is and skip Step 1.
+- An **issue number** (e.g. `#175`, `175`, `issue 175`). Extract the number and proceed.
+
+If neither is given, ask:
 
 > "Which issue do you want to analyse? Please provide the issue number (e.g. 175 or #175)."
 
 ## Steps
 
-### Step 1 — Fetch the issue from GitLab
+### Step 1 — Fetch the issue from the configured tracker
 
-Use the `glab` skill (or `glab` directly) with the repository flag from project config:
+Skip this step when the issue content was supplied in the invocation.
+
+Read the **Issue Tracker** section of project-config.md: `{tracker_tool}` is `glab`
+(GitLab) or `gh` (GitHub), `{repo_flag}` is the repository flag (e.g.
+`-R "<group>/<project>"` or `--repo owner/name`). Use the matching skill (`glab` or
+`gh`) and run the command for that tool only:
 
 ```bash
+# GitLab
 glab issue view <issue-number> --comments --per-page 50 {repo_flag} -F json
+
+# GitHub
+gh issue view <issue-number> --comments {repo_flag} --json title,body,labels,milestone,comments
 ```
 
-`{repo_flag}` comes from the **Issue Tracker** section of project-config.md (e.g. `-R "<group>/<project>"`).
-
-- If `glab` is missing or returns an auth error, tell the user and suggest `glab auth status`, then **STOP**.
+- If the tracker section is missing, ask the user which tracker and repository to use,
+  then **STOP** until answered.
+- If `{tracker_tool}` is missing or returns an auth error, tell the user and suggest the
+  tool's auth check (`glab auth status` / `gh auth status`), then **STOP**.
 - If the issue is not found, tell the user, then **STOP**.
 
 Parse the JSON and extract: **Title**, **Description** body, **labels**, **milestone**, all **comments**.
@@ -148,7 +164,7 @@ After presenting, add:
 - Be specific: use the project's actual machine names, file paths, and class names — resolve placeholders from project-config.md, never emit them literally.
 - If the destination bundle can't be determined, ask the user.
 - If the issue already has a TO DO list, acknowledge it and produce a more detailed version.
-- Do not modify the GitLab issue — output only.
+- Do not modify the issue — output only.
 - Write the output in the language set by project-config.md → **Issue Output Language**.
 - Run codebase-exploration queries in parallel.
-- Always use the repository flag from project config in `glab` commands.
+- Always use the tracker tool and repository flag from project config; never assume GitLab or GitHub.

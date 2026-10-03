@@ -314,6 +314,14 @@ integrations", "analyse bundle X").
 8. `drupal-migrate-resolve-examples` (**compulsory** in a full entity analysis)
 9. _(only if invocation requests)_ `drupal-migrate-live-screenshots`
 
+> **Drupal 7 source.** The shared entity-type reference and the default queries are
+> D8+. When `drupal-migrate-detect-version` reports `drupal7`, pass
+> `source_version: drupal7` to every step and apply each skill's "Drupal 7
+> differences" section (`count-instances`, `parent-context`, `verify-active`,
+> `detect-container`, `query-fields`, `field-population`, `resolve-examples`). A D7
+> `media` request is out of scope (files live in `file_managed`); record it as such
+> instead of running the media steps.
+
 > Phase 1 captures **what the source is**, not what Drupal will do with it. No target
 > mapping, migration YAML, plugin replacement suggestions, or task breakdowns — those
 > are Phase 2 and Phase 3. Keep as-is docs frozen and citable.

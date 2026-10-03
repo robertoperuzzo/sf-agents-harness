@@ -63,6 +63,15 @@ GROUP BY n.type;
 > **Key**: the `ref.revision_id = n.vid` join is what restricts the count to the
 > **current** node revision. Drop it and you re-introduce orphaned revisions.
 
+**Drupal 7 differences.** The shared reference is D8+. On a D7 source (Paragraphs 7.x)
+substitute: `node` for `{main_table}` (columns `nid`, `vid`, `type`, `status`);
+`field_data_{parent_field_name}` for `{field_data_prefix}{parent_field_name}`, joined
+on `ref.entity_id = n.nid AND ref.revision_id = n.vid AND ref.entity_type = 'node'`;
+`paragraphs_item` for `{para_table}` (columns `item_id`, `revision_id`, `bundle`); and
+the reference columns `{parent_field_name}_value` (item id) and
+`{parent_field_name}_revision_id`. Nested paragraphs (Step 2) use the same
+`field_data_{child_ref_field}` form with `entity_type = 'paragraphs_item'`.
+
 ### Step 2 — Handle nested paragraphs
 
 If the paragraph's parent is another paragraph (not a node directly), start from the

@@ -120,6 +120,23 @@ FROM users_field_data
 WHERE uid > 0 AND status = 1;
 ```
 
+**Drupal 7:** the shared reference is D8+; use these instead.
+
+```sql
+-- nodes: the `node` table carries `status`
+SELECT COUNT(DISTINCT nid) AS active_instances
+FROM node WHERE type = '{bundle}' AND status = 1;
+
+-- users: `users_field_data` does not exist on D7
+SELECT COUNT(DISTINCT uid) AS active_instances
+FROM users WHERE uid > 0 AND status = 1;
+```
+
+D7 `taxonomy_term_data` has no `status` column, so every term is published: report
+`active_instances = instances` from Step 1 and note "D7 terms have no status; active =
+total" in the report. D7 `media` does not exist as an entity type (files live in
+`file_managed`); treat a `media` request on a D7 source as out of scope and say so.
+
 > **Paragraphs** have no meaningful status column — "active" means attached to a
 > published parent node's current revision. Use `drupal-migrate-verify-active` for that count.
 

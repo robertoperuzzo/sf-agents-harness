@@ -72,16 +72,20 @@ LIMIT 1;
 | `media`         | `mid`             | `media_field_data`         | `bundle`              |
 
 ```sql
--- First discover which node__field_* tables reference this entity
-SELECT TABLE_NAME
+-- Step A: enumerate every node reference field. No field name is known yet, so
+-- list all `*_target_id` columns in node__field_* tables; each row yields one
+-- candidate `{field_name}` (strip the `node__` prefix from TABLE_NAME).
+SELECT TABLE_NAME, COLUMN_NAME
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = DATABASE()
-  AND TABLE_NAME LIKE 'node__field_%'
-  AND COLUMN_NAME = '{field_name}_target_id';
+  AND TABLE_NAME LIKE 'node\_\_field\_%'
+  AND COLUMN_NAME LIKE '%\_target\_id'
+ORDER BY TABLE_NAME;
 
--- Then find referencing nodes (try the first discovered field, stop on first hit).
--- Join the bundle's source table to the reference table and filter there, so any
--- referenced entity of the bundle qualifies; limit only the resulting nodes.
+-- Step B: test each candidate in turn against the requested bundle; stop on the
+-- first query that returns rows. Join the bundle's source table to the reference
+-- table and filter there, so any referenced entity of the bundle qualifies; limit
+-- only the resulting nodes.
 SELECT DISTINCT n.nid, n.type
 FROM node_field_data n
 JOIN node__{field_name} f ON f.entity_id = n.nid AND f.revision_id = n.vid
@@ -91,7 +95,22 @@ WHERE r.{ref_bundle_column} = '{bundle}'
 LIMIT 3;
 ```
 
+Candidates that reference another entity type (for example a `node` or `user`
+reference) return no rows for a taxonomy/media bundle and are skipped naturally. If
+`drupal-migrate-query-fields` already listed the reference fields of the parent bundle,
+test those first.
+
 > Prefer nodes with a clean path alias (i.e., an entry exists in `path_alias`).
+
+**Drupal 7 differences.** The queries above are D8+. On a D7 source substitute:
+`node` for `node_field_data` (same `nid`, `type`, `status` columns);
+`field_data_{field_name}` for `node__{field_name}`, joined on `entity_id = n.nid`
+with `entity_type = 'node'` (D7 field tables have no `revision_id` join; use
+`field_revision_{field_name}` joined on `revision_id = n.vid` when revision accuracy
+matters); `taxonomy_term_data` with `vid` resolved through `taxonomy_vocabulary.machine_name`
+for the taxonomy source table; and the reference column `{field_name}_tid` (taxonomy)
+or `{field_name}_target_id` (entityreference). In Step A enumerate columns ending in
+`_tid` or `_target_id` across `field_data_field_%` tables.
 
 #### 3. Resolve URL alias from `path_alias`
 
@@ -109,6 +128,19 @@ LIMIT 1;
 ```
 
 If no alias is found in the base language, retry with `langcode = 'en'`, then fall back to the canonical path `/node/{nid}`.
+
+**Drupal 7:** there is no `path_alias` table; query `url_alias` instead:
+
+```sql
+SELECT alias
+FROM url_alias
+WHERE source = 'node/{nid}'
+  AND language IN ('{base_langcode}', 'und')
+ORDER BY pid DESC
+LIMIT 1;
+```
+
+D7 aliases have no leading slash; prepend `/` before building the URL.
 
 > **UUID query** (when needed): Always use `{base_table}`, not `{main_table}`:
 >
@@ -149,7 +181,7 @@ This table populates the **Live examples** section of the Source Analysis Report
 
 ## Error Handling
 
-- **`path_alias` table missing**: Fall back to canonical `/node/{nid}` paths. Note the fallback in the output.
+- **`path_alias` table missing**: On a D7 source use `url_alias` (see step 3). Otherwise fall back to canonical `/node/{nid}` paths and note the fallback in the output.
 - **No alias found after 3 attempts**: Mark entry as `URL not found`. Do not block the analysis.
 - **Base URL unknown**: Ask the user once: _"What is the base URL of the production source site?"_
 - **No active parent nodes**: Skip URL resolution for that bundle and note it in the output.
