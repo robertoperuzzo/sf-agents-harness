@@ -84,6 +84,37 @@ GROUP BY n.type
 ORDER BY node_count DESC;
 ```
 
+### Drupal 7 differences
+
+Paragraphs 7.x stores no parent columns on the item: `paragraphs_item` has `item_id`,
+`revision_id`, `bundle`, `field_name`, `archived`. The host relationship lives in the
+host field tables `field_data_{field_name}` (`entity_type`, `bundle`, `entity_id`,
+`{field_name}_value` = item id, `{field_name}_revision_id`). Replace Steps 1–3 with:
+
+```sql
+-- Step 1 (D7): which host fields hold this bundle
+SELECT field_name, COUNT(DISTINCT item_id) AS instances
+FROM paragraphs_item
+WHERE bundle = '{bundle}' AND archived = 0
+GROUP BY field_name
+ORDER BY instances DESC;
+
+-- Step 2 (D7): host entity types and bundles, one query per field_name from Step 1
+SELECT h.entity_type AS parent_type, h.bundle AS parent_bundle,
+  COUNT(DISTINCT p.item_id) AS instances
+FROM paragraphs_item p
+JOIN field_data_{field_name} h
+  ON h.{field_name}_value = p.item_id AND h.deleted = 0
+WHERE p.bundle = '{bundle}'
+GROUP BY h.entity_type, h.bundle
+ORDER BY instances DESC;
+```
+
+A `parent_type` of `paragraphs_item` means a nested paragraph. For Step 3 (D7) take that
+host row's `entity_id` as the parent item id, read its `field_name` from
+`paragraphs_item`, and repeat the Step 2 query on that field to reach the grandparent;
+stop when `entity_type = 'node'` and group by the node `type`.
+
 ### Step 4 — Report results
 
 Output the parent context table (generic example shown — substitute real values):
@@ -107,5 +138,5 @@ Output the parent context table (generic example shown — substitute real value
 
 - This skill is only for paragraph entity types — skip for nodes, taxonomy terms, users
 - Always use `COUNT(DISTINCT id)` for paragraph counts
-- If `paragraphs_item_field_data` doesn't exist, try `paragraphs_item` (Drupal 7) and adjust queries
+- If `paragraphs_item_field_data` doesn't exist the source is Drupal 7: use the "Drupal 7 differences" queries, not a table rename (D7 has no parent columns on the item)
 - Report all parent contexts, even if some have very low instance counts — this helps identify edge cases

@@ -27,8 +27,12 @@ Check for an existing IA/liveness doc; update/cite rather than rewrite.
 
 Extract the menu structure:
 
-- **WordPress:** menus from `{prefix}term_taxonomy` (`nav_menu`) + `{prefix}posts`
-  (`nav_menu_item`) and their `postmeta` ordering/parent rows.
+- **WordPress:** menus are `nav_menu` terms in `{prefix}term_taxonomy`; items are
+  `nav_menu_item` posts in `{prefix}posts`, assigned to their menu through
+  `{prefix}term_relationships` (`object_id` = item post ID, `term_taxonomy_id` = the
+  menu). Order comes from `posts.menu_order`, hierarchy from the
+  `_menu_item_menu_item_parent` row in `{prefix}postmeta`. Join all three to place each
+  item in the right menu before rebuilding the tree.
 - **Drupal:** `menu_link_content` + menu config.
 
 Record the top-level structure and depth — enough to rebuild navigation, not every leaf.

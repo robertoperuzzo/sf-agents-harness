@@ -29,7 +29,11 @@ table names, column names, or logic, resolve variables from the tables below.
 
 These fields exist on every entity of the given type. They are NOT stored in
 `{field_data_prefix}` tables — they live directly in `{main_table}` or `{base_table}`.
-Mark them as Population 100%, Required ✓ in field reports.
+A column that exists is not a column that holds a value: mark **Required ✓** only for
+columns the entity cannot be saved without (`title`, `name`, `langcode`, `status`,
+`uid`, `created`, `changed`, `uuid`), and **measure population** of the others
+(`description__value`, `sticky`, `promote`, `weight`, `mail`) with
+`drupal-migrate-field-population` instead of asserting 100%.
 
 ### `node`
 

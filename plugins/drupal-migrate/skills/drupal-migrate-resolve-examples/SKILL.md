@@ -82,10 +82,20 @@ WHERE TABLE_SCHEMA = DATABASE()
   AND COLUMN_NAME LIKE '%\_target\_id'
 ORDER BY TABLE_NAME;
 
--- Step B: test each candidate in turn against the requested bundle; stop on the
--- first query that returns rows. Join the bundle's source table to the reference
--- table and filter there, so any referenced entity of the bundle qualifies; limit
--- only the resulting nodes.
+-- Step A2: keep only candidates whose storage targets the requested entity type.
+-- Node, term and media IDs overlap, so a numeric join alone cannot tell a node
+-- reference holding 7 from term 7. Read the target type from the storage config
+-- (one row per candidate; `{field_name}` without the `node__` prefix):
+SELECT name, data
+FROM config
+WHERE name = CONCAT('field.storage.node.', '{field_name}')
+  AND data LIKE CONCAT('%s:11:"target_type";s:', LENGTH('{entity_type}'), ':"', '{entity_type}', '"%');
+-- Keep the candidate only when this returns a row. Discard the others.
+
+-- Step B: test each remaining candidate in turn against the requested bundle; stop
+-- on the first query that returns rows. Join the bundle's source table to the
+-- reference table and filter there, so any referenced entity of the bundle
+-- qualifies; limit only the resulting nodes.
 SELECT DISTINCT n.nid, n.type
 FROM node_field_data n
 JOIN node__{field_name} f ON f.entity_id = n.nid AND f.revision_id = n.vid
@@ -95,10 +105,10 @@ WHERE r.{ref_bundle_column} = '{bundle}'
 LIMIT 3;
 ```
 
-Candidates that reference another entity type (for example a `node` or `user`
-reference) return no rows for a taxonomy/media bundle and are skipped naturally. If
-`drupal-migrate-query-fields` already listed the reference fields of the parent bundle,
-test those first.
+Never skip Step A2: a candidate of the wrong target type can still return rows by ID
+collision and would yield a page that never references the requested entity. If
+`drupal-migrate-query-fields` already listed the reference fields and their target types,
+use that list instead of Steps A/A2.
 
 > Prefer nodes with a clean path alias (i.e., an entry exists in `path_alias`).
 
@@ -110,7 +120,9 @@ with `entity_type = 'node'` (D7 field tables have no `revision_id` join; use
 matters); `taxonomy_term_data` with `vid` resolved through `taxonomy_vocabulary.machine_name`
 for the taxonomy source table; and the reference column `{field_name}_tid` (taxonomy)
 or `{field_name}_target_id` (entityreference). In Step A enumerate columns ending in
-`_tid` or `_target_id` across `field_data_field_%` tables.
+`_tid` or `_target_id` across `field_data_field_%` tables; for Step A2 read
+`field_config.type` (`taxonomy_term_reference` targets terms) and, for `entityreference`,
+the `target_type` inside `field_config.data`.
 
 #### 3. Resolve URL alias from `path_alias`
 

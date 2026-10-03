@@ -22,16 +22,31 @@ Read **`.agents/references/migrate/project-config.md`** before anything else. Re
 these variables from it; if the file is missing or a value is absent, ask the user and
 do not guess:
 
-| Variable                                  | Source section in project-config.md      | Example                                                                       |
-| ----------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
-| `{drush_runner}`                          | Database Connection → Connection command | `docker compose run --rm <tools> ash -c`                                      |
-| `{migrate_db_key}`                        | Database Connection → Database key       | `<source_db_key>`                                                             |
-| `{source_bases}`                          | Content Verification                     | `https://www.example.com` (+ secondary-lang domain/prefix)                    |
-| `{dest_base_url}`                         | Content Verification                     | `https://<new-site>.loc`                                                      |
-| `{internal_http_host}`                    | Content Verification                     | `http://<web-container>`                                                      |
-| `{languages}` + URL rule                  | Content Verification                     | base lang + secondary lang (path prefix or separate domain)                   |
-| `{scope_table}` + columns + status values | URL Scope Support Table                  | table `<scope_table>`; `<action_col>` ∈ {migrate, no-migrate}; `<status_col>` |
-| `{url_map_table}` _(optional)_            | Migration Infrastructure                 | `<source_url_map>`                                                            |
+| Variable                                  | Source section in project-config.md       | Example                                                                                                                                                   |
+| ----------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{dest_runner}`                           | Content Verification → Destination runner | `docker compose run --rm <tools> ash -c` (runs `drush`/`curl` on the new site)                                                                            |
+| `{source_query}`                          | Database Connection → Query command       | Drupal: `{dest_runner} "drush sql:query --database=<key> \"<SQL>\""`; WordPress: `ddev wp db query '<SQL>'`; other: the read-only client documented there |
+| `{source_bases}`                          | Content Verification                      | `https://www.example.com` (+ secondary-lang domain/prefix)                                                                                                |
+| `{dest_base_url}`                         | Content Verification                      | `https://<new-site>.loc`                                                                                                                                  |
+| `{internal_http_host}`                    | Content Verification                      | `http://<web-container>`                                                                                                                                  |
+| `{languages}` + URL rule                  | Content Verification                      | base lang + secondary lang (path prefix or separate domain)                                                                                               |
+| `{scope_table}` + columns + status values | URL Scope Support Table                   | table `<scope_table>`; `<action_col>` ∈ {migrate, no-migrate}; `<status_col>`                                                                             |
+| `{url_map_table}` _(optional)_            | Migration Infrastructure                  | `<source_url_map>`                                                                                                                                        |
+
+Two execution paths, never mixed:
+
+- **Source lookups** (`{scope_table}`, `{url_map_table}`) run through `{source_query}`,
+  the read-only method `drupal-migrate-db-discover` established for the source
+  (`drush sql:query --database=<key>` for a Drupal source, `wp db query` for WordPress, a
+  read-only client for anything else). Project-config.md says in the "URL Scope Support
+  Table" section which database holds these tables; when they live in the destination
+  database, `{source_query}` for them is `{dest_runner} "drush sql:query \"<SQL>\""`.
+- **Destination commands** (`drush path:lookup`, `redirect` and `node_field_data`
+  queries, container-side `curl`) always run through `{dest_runner}`, which is the new
+  Drupal site's tools container and needs no source database key.
+
+A WordPress source has no Drush database key; the skill must still work with
+`{source_query}` = `wp db query` and `{dest_runner}` for the destination.
 
 If the project defines **no scope/support table**, skip Phase 0's table lookup and instead
 derive intent directly: treat a provided URL as expected-to-exist unless the user says it
@@ -43,11 +58,11 @@ should be gone, and confirm redirects/aliases against the live destination.
 
 1. **Old site reachable**: every base in `{source_bases}` responds.
 2. **New site reachable**: `{dest_base_url}` resolved (discovery command or user).
-3. **Source DB reachable** (only if `{scope_table}`/`{url_map_table}` are used):
-   ```bash
-   {drush_runner} "drush sql:query --database={migrate_db_key} 'SELECT 1'"
-   ```
-4. **playwright-cli available**: `command -v playwright-cli`; fallback `npx -y @playwright/cli`.
+3. **Source lookups reachable** (only if `{scope_table}`/`{url_map_table}` are used):
+   run `{source_query}` with `SELECT 1`.
+4. **Destination runner works**: `{dest_runner} "drush status --field=bootstrap"`
+   reports `Successful`.
+5. **playwright-cli available**: `command -v playwright-cli`; fallback `npx -y @playwright/cli`.
 
 If any prerequisite fails, inform the user and stop. Do not work around missing infra.
 
@@ -64,30 +79,51 @@ fetch the body and extract URLs matching the `{source_bases}`).
 URLs come from users or issue bodies and are later substituted into SQL and shell
 commands. Never substitute a raw value. For every URL:
 
-1. **Match a configured base.** The URL must start with one of `{source_bases}`
-   (scheme + host, plus the language path prefix when the URL rule uses one). Reject
-   any URL that matches none of them and tell the user.
+1. **Match a configured base by parsed origin, not by string prefix.** Parse the URL
+   into scheme, host, port and pathname. The origin (`scheme://host[:port]`) must equal
+   the origin of one of `{source_bases}` exactly; `https://example.com.attacker.test`
+   does not match `https://example.com` even though the string starts with it. When the
+   base carries a language path prefix (`/en`), the pathname must equal it or continue
+   with `/` right after it (`/en/news` matches, `/english` does not). Reject any URL that
+   matches none of the bases and tell the user.
 2. **Record the language.** The matched base (separate domain) or path prefix gives
    `{langcode}` for this URL, per the language URL rule in project-config.md. Use that
    `{langcode}` in every later query, alias lookup, and content check for this URL; the
    base language is only the fallback when no rule matches.
-3. **Derive `{relative_path}`** by stripping the matched base, then normalize it once:
-   remove every leading `/` and any trailing `/`, so the value never starts or ends
-   with a slash (`https://www.example.com/news/item/` → `news/item`). The site root
-   yields an empty string. Accept the result only if it is empty or matches
-   `^[A-Za-z0-9/._~-]+$` (an already-decoded path with no query string). Stop on
-   anything else, including quotes, `%`, `$`, backticks, spaces, or `..`.
-4. **Escape for `LIKE`.** Replace `_` with `\_` before building a `LIKE '%…%'`
-   pattern, so the underscore is matched literally. For the root page (empty path)
-   match the exact base URL instead of a `LIKE '%%'` pattern, which would match every row.
+3. **Derive two paths and keep both.**
+   - `{source_pathname}`: the full pathname from the parsed URL, including any language
+     prefix, with leading and trailing `/` removed (`https://example.com/en/news/item/`
+     → `en/news/item`). This is what the old URL looked like to the server and what
+     redirects on the new site are keyed by; use it for every **destination** HTTP check.
+   - `{relative_path}`: `{source_pathname}` with the matched base's language prefix
+     removed (`news/item`). Use it to rebuild **source** URLs for other languages and
+     to match scope/url-map rows when those tables store base-relative paths.
+     The site root yields an empty string for both. Accept each value only if it is empty
+     or matches `^[A-Za-z0-9/._~-]+$` (an already-decoded path with no query string).
+     Stop on anything else, including quotes, `%`, `$`, backticks, spaces, or `..`.
+4. **Build an exact lookup key, never a substring.** Scope and url-map rows are matched
+   with `=` against the complete normalized value in the form the table stores (full URL
+   `{source_url}`, or `/{source_pathname}`, or `/{relative_path}`; project-config.md →
+   "URL Scope Support Table" says which). Compare both with and without a trailing `/`
+   when the table is inconsistent. A `LIKE '%news/item%'` pattern also matches
+   `news/item-old` and `news/item/child` and would silently pick the wrong migration
+   action or destination entity. If a `LIKE` is unavoidable (unknown storage form), anchor
+   it to a segment boundary (`url = '…' OR url LIKE '…/%'`) and escape `_` as `\_`.
 
-**URL construction rule.** Every later URL is `{base}/{relative_path}`, where `{base}`
-(`{source_base}`, `{internal_http_host}`) has no trailing slash and `{relative_path}`
-has no leading slash. For the root page use `{base}/`. Apply the same normalization to
-every path read from the database (`{redirect_path}`, `{destination_alias}`,
-`{lang_destination_alias}`): strip the leading `/` once, then build `{base}/{path}`.
-Never concatenate a base with a path that still starts with `/`, which produces
-`//path` and can be routed differently by the server.
+**URL construction rule.** Every later URL is `{base}/{path}`, where `{base}`
+(`{source_base}`, `{dest_base_url}`, `{internal_http_host}`) has no trailing slash and
+`{path}` has no leading slash. For the root page use `{base}/`. Never concatenate a base
+with a path that still starts with `/`, which produces `//path` and can be routed
+differently by the server.
+
+**Database-derived paths are untrusted too.** `{redirect_path}`, `{destination_alias}`,
+`{lang_destination_alias}` and any `final_url` / `destination_url` read from a table were
+written by migrations and editors and are interpolated into shell commands below. Before
+use, strip the leading `/` once and apply the **same allow-list** as step 3
+(`^[A-Za-z0-9/._~-]+$`, or empty). Skip the path and record `FAIL — unsafe path` for
+anything else (a stored `'`, `;`, `$(`, backtick or space would change the command).
+Pass each completed URL to `curl` and `playwright-cli` as one single-quoted argument and
+build the inner `{dest_runner}` command the same way, so no shell layer re-interprets it.
 
 ---
 
@@ -107,10 +143,14 @@ Phase 5: Produce report     -- Structured verification output
 ## Phase 0 — Resolve Intent
 
 If `{scope_table}` is defined, query it to learn the migration plan for this URL. Use the
-validated `{relative_path}` and the `{langcode}` detected in Input validation:
+exact lookup key from Input validation step 4 (`{lookup_key}`) and the `{langcode}`
+detected there; run it through `{source_query}`:
 
-```bash
-{drush_runner} "drush sql:query --database={migrate_db_key} \"SELECT <action_col>, <status_col>, node_id, content_type, final_url, langcode FROM {scope_table} WHERE url LIKE '%{relative_path}%' AND langcode='{langcode}' LIMIT 5\""
+```sql
+SELECT <action_col>, <status_col>, node_id, content_type, final_url, langcode
+FROM {scope_table}
+WHERE (url = '{lookup_key}' OR url = '{lookup_key}/') AND langcode = '{langcode}'
+LIMIT 5;
 ```
 
 Interpret using the status values from project-config.md:
@@ -130,10 +170,13 @@ Also query the other-language row(s) to know which translations to expect in Pha
 
 ### 1a. Resolve the destination entity
 
-If `{url_map_table}` is defined:
+If `{url_map_table}` is defined, run through `{source_query}` with the same exact key:
 
-```bash
-{drush_runner} "drush sql:query --database={migrate_db_key} \"SELECT destination_entity_id, destination_entity_type, destination_url FROM {url_map_table} WHERE source_url LIKE '%{relative_path}%' LIMIT 5\""
+```sql
+SELECT destination_entity_id, destination_entity_type, destination_url
+FROM {url_map_table}
+WHERE source_url = '{lookup_key}' OR source_url = '{lookup_key}/'
+LIMIT 5;
 ```
 
 Otherwise resolve via the `final_url`/`node_id` from Phase 0, or ask the user. Result is
@@ -142,13 +185,13 @@ the destination node ID.
 ### 1b. Destination URL alias
 
 ```bash
-{drush_runner} "drush path:lookup /node/{nid} --language={langcode}"
+{dest_runner} "drush path:lookup /node/{nid} --language={langcode}"
 ```
 
 ### 1c. Collect redirects for this entity
 
 ```bash
-{drush_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri = 'internal:/node/{nid}' ORDER BY language, redirect_source__path\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri = 'internal:/node/{nid}' ORDER BY language, redirect_source__path\""
 ```
 
 > If the query errors with an unknown `redirect` table, the Redirect module is not
@@ -157,16 +200,22 @@ the destination node ID.
 
 ### 1d. HTTP-check each redirect path
 
-For each redirect path plus the original source path, check the response on the **new
-site** from inside the container network (avoids SSL/DNS issues):
+For each redirect path plus the original `{source_pathname}` (the full old path,
+language prefix included), check the response on the **new site** from inside the
+container network (avoids SSL/DNS issues). Run two requests: the first hop alone, then
+the chain followed to its end:
 
 ```bash
-{drush_runner} "curl -sI -o /dev/null -w '%{http_code} %{redirect_url}' {internal_http_host}/{redirect_path}"
+{dest_runner} "curl -sI -o /dev/null -w '%{http_code} %{redirect_url}' '{internal_http_host}/{redirect_path}'"
+{dest_runner} "curl -sIL --max-redirs 5 -o /dev/null -w '%{num_redirects} %{http_code} %{url_effective}' '{internal_http_host}/{redirect_path}'"
 ```
 
-Expected: preserved alias → `200`; redirected path → `301`→`200` at target. `404` =
-**FAIL** (missing redirect). `301` to wrong target = **FAIL**. Record path, expected,
-actual, target, PASS/FAIL.
+Expected: preserved alias → first hop `200`; redirected path → first hop `301` **and**
+final status `200` at the expected `url_effective`. `404` on either request = **FAIL**
+(missing redirect or dead target). `301` to the wrong target, a final status other than
+`200`, or `--max-redirs` exhausted (loop) = **FAIL**. Record path, expected, first-hop
+code and `Location`, final code, effective URL, PASS/FAIL. Without `-L` a `301` to a
+`404` looks like a pass.
 
 ---
 
@@ -177,7 +226,7 @@ LLM comparison. Navigate both pages and compare substance, not structure.
 ### 2a. Source page (old site)
 
 ```bash
-playwright-cli open {source_base}/{relative_path}
+playwright-cli open '{source_base}/{relative_path}'
 playwright-cli snapshot --filename=.playwright-cli/verify-source-base.yaml
 ```
 
@@ -188,9 +237,13 @@ meta info (dates, categories).
 ### 2b. Destination page (new site)
 
 ```bash
-playwright-cli goto {internal_http_host}/{destination_alias}
+playwright-cli goto '{dest_base_url}/{destination_alias}'
 playwright-cli snapshot --filename=.playwright-cli/verify-dest-base.yaml
 ```
+
+> `playwright-cli` runs on the **host**, so it must use `{dest_base_url}`.
+> `{internal_http_host}` (for example `http://web-container`) resolves only inside the
+> tools container and is reserved for the container-side `curl` checks.
 
 ### 2c. Compare content
 
@@ -236,7 +289,7 @@ From Phase 0 you know whether an other-language row exists in `{scope_table}` (o
 table, whether the user expects a translation). If not expected, confirm none was created:
 
 ```bash
-{drush_runner} "drush sql:query \"SELECT langcode FROM node_field_data WHERE nid={dest_nid} AND langcode='<lang>'\""
+{dest_runner} "drush sql:query \"SELECT langcode FROM node_field_data WHERE nid={dest_nid} AND langcode='<lang>'\""
 ```
 
 - not expected AND absent → **PASS**
@@ -245,13 +298,23 @@ table, whether the user expects a translation). If not expected, confirm none wa
 
 ### 3b. Source URL for the language
 
-Build from the language's URL rule in project-config.md — a separate domain
-(`https://www.example.edu/{path}`) or a prefix (`{source_base}/en/{path}`).
+Translated pages do not share a slug (`/it/chi-siamo` ↔ `/en/about-us`), so never derive
+`{lang_source_url}` by swapping the domain or language prefix on the base-language path.
+Resolve the real one, in this order:
+
+1. The other-language row(s) fetched in Phase 0 from `{scope_table}` (same `node_id`,
+   `langcode = '<lang>'`): its `url` is the translation's source URL.
+2. The `{url_map_table}` row whose `destination_entity_id` is `{dest_nid}` and whose
+   language matches.
+3. If neither exists, ask the user for the translated source URL; do not guess it.
+
+Validate the resolved URL exactly like the input (origin match, allow-list, both paths)
+before using it.
 
 ### 3c. Destination URL for the language
 
 ```bash
-{drush_runner} "drush path:lookup /node/{dest_nid} --language=<lang>"
+{dest_runner} "drush path:lookup /node/{dest_nid} --language=<lang>"
 ```
 
 ### 3d. Navigate + compare
@@ -259,9 +322,9 @@ Build from the language's URL rule in project-config.md — a separate domain
 Same process as Phase 2, adapted to the language:
 
 ```bash
-playwright-cli open {lang_source_url}
+playwright-cli open '{lang_source_url}'
 playwright-cli snapshot --filename=.playwright-cli/verify-source-<lang>.yaml
-playwright-cli goto {internal_http_host}/{lang_destination_alias}
+playwright-cli goto '{dest_base_url}/{lang_destination_alias}'
 playwright-cli snapshot --filename=.playwright-cli/verify-dest-<lang>.yaml
 ```
 
@@ -270,7 +333,7 @@ Apply the Phase 2 checklist.
 ### 3e. Language-specific redirects
 
 ```bash
-{drush_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri = 'internal:/node/{dest_nid}' AND language = '<lang>'\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri = 'internal:/node/{dest_nid}' AND language = '<lang>'\""
 ```
 
 HTTP-check each like Phase 1d. If the `redirect` table is absent (see Phase 1c), skip this step.
@@ -288,8 +351,10 @@ new site (typically `410`).
 
 ### 4b. HTTP-check on the new site
 
+The old URL is checked as the server saw it, language prefix included:
+
 ```bash
-{drush_runner} "curl -sI -o /dev/null -w '%{http_code}' {internal_http_host}/{relative_path}"
+{dest_runner} "curl -sI -o /dev/null -w '%{http_code}' '{internal_http_host}/{source_pathname}'"
 ```
 
 | Actual | Expected | Verdict                                      |
@@ -374,8 +439,12 @@ then individual reports. Surface FAILs and WARNs prominently.
   from project-config.md.
 - **Never skip the intent check** when a scope table exists.
 - **Close the browser** between URLs in batch mode.
-- **Query via `{drush_runner}` + `drush sql:query`.** Never use the `mysql` client directly.
-- **Internal HTTP checks via `{internal_http_host}`.** Old-site URLs via playwright-cli
-  from the host.
+- **Source lookups via `{source_query}`, destination commands via `{dest_runner}`.**
+  Never use the `mysql` client directly against a Drupal database.
+- **Container-side `curl` via `{internal_http_host}`; browser navigation via
+  `{dest_base_url}` (new site) and `{source_bases}` (old site).** `playwright-cli` runs
+  on the host and cannot resolve the internal host.
+- **Exact URL matching.** No substring `LIKE` against scope or url-map tables.
+- **Validate every path**, user-supplied or database-derived, before it reaches a shell.
 - **Report honestly.** Ambiguous comparison → WARN, not a forced PASS/FAIL.
 - **Do not fabricate content.** If a page is unreadable, say so.

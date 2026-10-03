@@ -11,7 +11,7 @@
       "name": "drupal-migrate",
       "source": "./plugins/drupal-migrate",
       "description": "Source-agnostic Drupal content-migration toolkit: analyst agent, source-analysis skills, content verification.",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "keywords": ["drupal", "migration", "wordpress-to-drupal", "drupal-to-drupal"]
     }
   ]
