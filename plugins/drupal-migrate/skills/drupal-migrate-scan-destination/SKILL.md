@@ -33,9 +33,9 @@ If no destination bundle is given, resolve it in this order — projects map
 bundles differently, so don't guess:
 
 1. Check the component-mapping CSVs / analysis documents declared in
-   `.agents/references/migrate/project-config.md` (the section that points
-   to analysis documents). These often state the source→destination bundle
-   directly. Read the CSV path from there — never hardcode a filename.
+   `.agents/references/migrate/project-config.md` → **Reference Documentation**.
+   These often state the source→destination bundle directly. Read the CSV path from
+   there — never hardcode a filename.
 2. List available destination bundles from the project's config sync directory
    (path per `project-config.md`):
    ```bash
@@ -58,8 +58,9 @@ instead of hardcoding the prefix pattern:
 **`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
 
 The config sync directory itself is a project value — read it from
-`.agents/references/migrate/project-config.md`. Below, `{config_sync_dir}`
-is that directory.
+`.agents/references/migrate/project-config.md` → **Migration Infrastructure — Where To
+Look**, together with `{migration_module_dir}` and `{theme_components_dir}`. Below,
+`{config_sync_dir}` is that directory.
 
 ## Visual component matching (Playwright, optional)
 
@@ -157,9 +158,9 @@ Extract `cardinality` from each storage config.
 
 ### Step 2 — Check analysis documents
 
-Read the analysis documents declared in `project-config.md` for any
-pre-determined mappings (component-mapping CSV and any other mapping reference
-files). Cross-reference the source bundle against these — a declared mapping is
+Read the analysis documents declared in `project-config.md` → **Reference
+Documentation** for any pre-determined mappings (component-mapping CSV and any other
+mapping reference files). Cross-reference the source bundle against these — a declared mapping is
 authoritative and outranks heuristic matching.
 
 ### Step 3 — Check existing migration configs

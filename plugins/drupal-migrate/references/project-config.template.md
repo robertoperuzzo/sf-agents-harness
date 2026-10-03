@@ -5,8 +5,10 @@ The skills read this file to adapt their behavior to your project.
 
 **Install location**: copy this template to `.agents/references/migrate/project-config.md`
 in your project and fill in the real values. Delete sections that do not apply, but
-keep the headings the skills look for (Database Connection, Live URL Resolution,
-URL Scope Support Table, Scope Exclusions).
+keep the headings the skills look for: Source System Overview, Database Connection,
+Issue Tracker, Live URL Resolution, Content Verification, URL Scope Support Table,
+Source URL Map Table, Migration Infrastructure — Where To Look, Reference Documentation,
+Migration Patterns, Scope Exclusions, Base Content Language, Output Language.
 
 > **Living codebase**: migration modules evolve (plugins, derivers, migrations get
 > added/renamed). Do **not** enumerate them here — point to the folders where they
@@ -149,15 +151,48 @@ Document only if your migration scope is driven by a support/lookup table.
 - **URL storage form**: `<full URL / path with language prefix / base-relative path>`, with
   or without trailing slash — lookups use exact `=` matching, so this must be precise.
 - **Where the data lives / how it is built**: `<command or import process>`
-- **Columns**: `<col1, col2, ...>`
+- **Columns** — `drupal-migrate-verify-content` substitutes these names into its queries,
+  so name each role (write `none` for a role the table lacks):
+
+  | Role               | Column name in `<TABLE>` |
+  | ------------------ | ------------------------ |
+  | `url_col`          | `<url>`                  |
+  | `langcode_col`     | `<langcode>`             |
+  | `action_col`       | `<action>`               |
+  | `status_col`       | `<status>`               |
+  | `node_id_col`      | `<node_id>`              |
+  | `content_type_col` | `<content_type / none>`  |
+  | `final_url_col`    | `<final_url / none>`     |
+
 - **Status semantics**: e.g. rows marked `<DO_NOT_MIGRATE_VALUE>` are skipped; pages with
-  that status are expected to return `<410 Gone / redirect>`.
+  that status are expected to return `<410 Gone / redirect>`. Name the migrate and
+  no-migrate values of `action_col` exactly.
 - **Scope-check query**:
   ```sql
-  SELECT <status_col>, <action_col>, url, title
+  SELECT <status_col>, <action_col>, <url_col>, title
   FROM <TABLE>
-  WHERE node_id = {nid};
+  WHERE <node_id_col> = {nid};
   ```
+
+---
+
+## Source URL Map Table (optional)
+
+Document only if the migration writes a source→destination URL map (a table the
+migrations fill with the destination entity for each source URL). Consumed by
+`drupal-migrate-verify-content` to resolve the destination entity.
+
+- **Table name**: `<TABLE>`
+- **Which database holds it**: `<source DB (key …) / destination DB>`
+- **Columns**:
+
+  | Role                 | Column name in `<TABLE>`    |
+  | -------------------- | --------------------------- |
+  | `map_source_url_col` | `<source_url>`              |
+  | `map_langcode_col`   | `<langcode / none>`         |
+  | `map_dest_id_col`    | `<destination_entity_id>`   |
+  | `map_dest_type_col`  | `<destination_entity_type>` |
+  | `map_dest_url_col`   | `<destination_url / none>`  |
 
 ---
 
@@ -170,13 +205,32 @@ copying. Override here only if your source is **Drupal 7** or uses non-standard 
 
 ## Migration Infrastructure — Where To Look
 
-| What                               | Where                           | How to explore              |
-| ---------------------------------- | ------------------------------- | --------------------------- |
-| Module overview, patterns          | `<module>/README.md`            | read first                  |
-| Migration execution order          | `<order file>`                  | authoritative run order     |
-| Migration YAMLs                    | `<migrations dir>`              | per-entity migrations       |
-| Source/process/destination plugins | `<src/Plugin/migrate/...>`      | read class `id` annotations |
-| Run commands                       | `<Makefile / RoboFile / drush>` | how migrations are executed |
+Consumed by `drupal-migrate-tech-analysis` and `drupal-migrate-scan-destination`. The
+`{…_dir}` placeholders those skills use resolve from this table.
+
+| What                                                  | Where                                    | How to explore                                 |
+| ----------------------------------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| Custom migration module (`{custom_module_dir}`)       | `<web/modules/custom/<module>>`          | read `README.md` first                         |
+| Migration execution order                             | `<order file>`                           | authoritative run order                        |
+| Migration YAMLs (`{migration_module_dir}/migrations`) | `<migrations dir>`                       | per-entity migrations                          |
+| Source/process/destination plugins                    | `<src/Plugin/migrate/...>`               | read class `id` annotations                    |
+| Destination config sync (`{config_sync_dir}`)         | `<config/sync>`                          | field/display YAML                             |
+| Theme components (`{theme_components_dir}`)           | `<web/themes/custom/<theme>/components>` | how paragraphs render; `none` if not SDC-based |
+| Run commands                                          | `<Makefile / RoboFile / drush>`          | how migrations are executed                    |
+
+---
+
+## Reference Documentation (optional)
+
+Project analysis documents the skills consult before proposing mappings. Consumed by
+`drupal-migrate-scan-destination` (Step 2) and `drupal-migrate-tech-analysis` (Step 3).
+A mapping declared here outranks any heuristic match.
+
+| Document                     | Path                          | Purpose                                     |
+| ---------------------------- | ----------------------------- | ------------------------------------------- |
+| Component-mapping CSV        | `<doc/Migrate/...csv / none>` | source section → destination paragraph type |
+| Field-mapping reference docs | `<doc/Migrate/... / none>`    | pre-agreed source→destination field mapping |
+| Other reference docs         | `<path / none>`               | `<what it answers>`                         |
 
 ---
 

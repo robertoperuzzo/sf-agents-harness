@@ -6,13 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project has no semantic versioning — the latest commit is the current version.
 Changes are grouped by date.
 
-## [2026-10-01]
-
-### Changed
-
-- `playwright-cli` now tells agents to close the browser sessions they open before ending a task.
-
-## [2026-09-29]
+## [2026-10-03]
 
 ### Added
 
@@ -20,7 +14,13 @@ Changes are grouped by date.
 
 ### Changed
 
-- CI: the `validate-and-check` workflow now also runs when a pull request changes `plugins/` or the plugin marketplace, so plugin pull requests get the required status check.
+- CI: the `validate-and-check` job now also runs when a pull request changes `plugins/` or the plugin marketplace, so plugin pull requests get the required status check.
+
+## [2026-10-01]
+
+### Changed
+
+- `playwright-cli` now tells agents to close the browser sessions they open before ending a task.
 
 ## [2026-09-28]
 
