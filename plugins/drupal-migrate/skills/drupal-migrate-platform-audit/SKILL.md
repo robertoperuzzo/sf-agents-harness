@@ -28,8 +28,13 @@ than rewrite. Use the access method from db-discover for every query.
 
 Collect the version and runtime facts:
 
-- **CMS version** — WordPress: `{prefix}options` `db_version` / a version constant in the
-  codebase; Drupal: `core.extension` / `system.schema`.
+- **CMS release** — read it from delivered code or package metadata only: WordPress
+  `wp-includes/version.php` (`$wp_version`); Drupal `core/lib/Drupal.php`
+  (`const VERSION`) or `composer.lock` (`drupal/core`), as `drupal-migrate-detect-version`
+  Step 3 does. Database values (`{prefix}options.db_version`, `core.extension`,
+  `system.schema`) identify schema or extension state, not the release; never record them
+  as the version. For a **DB-only** source report the exact release as `unknown` and
+  record only the major detected by `drupal-migrate-detect-version`.
 - **DB engine + version**, **source PHP version** (from the codebase or the delivery
   notes), **uploads/media volume** (directory size), **users count**.
 - **Topology** — single vs multisite and the registered-site count (from

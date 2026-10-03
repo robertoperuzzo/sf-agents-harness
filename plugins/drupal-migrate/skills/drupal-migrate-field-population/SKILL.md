@@ -48,6 +48,22 @@ LEFT JOIN {field_data_prefix}{field_name} f ON f.entity_id = m.{id_column}
 WHERE m.{bundle_column} = '{bundle}';
 ```
 
+**Users (D8+):** `user` has no `{bundle_column}` (it is `—` in the shared reference), so
+the template above expands to invalid SQL. Drop the bundle predicate and skip the
+anonymous account, matching the `drupal-migrate-count-instances` denominator:
+
+```sql
+SELECT
+  COUNT(DISTINCT m.uid) AS total_instances,
+  COUNT(DISTINCT CASE WHEN f.{field_name}_{value_suffix} IS NOT NULL THEN m.uid END) AS populated
+FROM users_field_data m
+LEFT JOIN user__{field_name} f ON f.entity_id = m.uid
+WHERE m.uid > 0;
+```
+
+Apply the same `WHERE m.uid > 0` predicate (no bundle filter) to the batch query below
+when the entity type is `user`.
+
 **Paragraphs (D8+):** the query above counts every paragraph row, including detached and
 historical instances, while Step 2 divides by the _active_ count. Restrict the numerator to
 the same active set `drupal-migrate-verify-active` uses (attached to the current revision
@@ -104,6 +120,12 @@ For each field:
 population_pct = ROUND(populated / active_instances * 100)
 ```
 
+Classify from the **raw `populated` count**, never from the rounded percentage:
+
+- `populated = 0` → zero-population field (exclusion candidate).
+- `populated > 0` and `population_pct = 0` → display `<1%`, not `0%`. One populated
+  instance out of 340 rounds to 0 but holds real content and must stay in scope.
+
 **Denominator choice:**
 
 - For `paragraph`: use the active count from `drupal-migrate-verify-active` (not the total from `drupal-migrate-count-instances`).
@@ -121,16 +143,17 @@ Add a **Population** column to the field table:
 | `field_title` | 100% |
 | `field_subtitle` | ~48% |
 | `field_extra_link` | 0% |
+| `field_legacy_note` | <1% |
 ```
 
-Flag 0% fields:
+Flag fields with `populated = 0`:
 
 > "Fields at 0% population are non-migration candidates and should be explicitly excluded."
 
 ## Output
 
 - **field_populations**: list of (field_name, populated_count, total_count, percentage)
-- **zero_population_fields**: fields with 0% that are candidates for exclusion
+- **zero_population_fields**: fields with `populated = 0` that are candidates for exclusion (a `<1%` field is not one)
 
 ## Guardrails
 

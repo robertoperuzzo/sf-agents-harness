@@ -52,10 +52,16 @@ Entity-Type Context reference (`.agents/references/migrate/entity-type-context.m
 
 Include these in the field report with:
 
-- Population: `100%` (base fields always exist)
-- Required: `✓`
-- Translatable: per entity type (typically `✓` for node title, `✗` for IDs)
 - Cardinality: `1`
+- Translatable: per entity type (typically `✓` for node title, `✗` for IDs)
+- Required: `✓` only for columns the entity cannot be saved without (`title`, `name`,
+  `langcode`, `status`, `uid`, `created`, `changed`, `uuid`). Optional base columns such as
+  `taxonomy_term_field_data.description__value`, `sticky`, `promote`, `weight`, `mail`
+  are **not** required.
+- Population: measure it like any other field in `drupal-migrate-field-population`
+  (`COUNT(DISTINCT id) WHERE <column> IS NOT NULL AND <column> <> ''`). A column that
+  exists is not a column that holds data; an empty term description must not report
+  `100%`.
 
 ### Step 1 — Query field configs
 
@@ -90,24 +96,30 @@ Parse to extract:
 - `field_type` (from storage: `s:4:"type";s:N:"..."`)
 - `cardinality` (from storage: `s:11:"cardinality";i:1` or `i:-1`)
 
-**Drupal 7** — Fetch from field_config tables:
+**Drupal 7** — Fetch from field_config tables. `field_config` exposes `type`,
+`cardinality` and `translatable` as real columns; `label` and `required` exist only
+inside the PHP-serialized `field_config_instance.data` blob, so select that blob and
+parse it. D7 has no `paragraph` entity type: map `paragraph` → `paragraphs_item`
+(`media` does not exist on D7; `node`, `taxonomy_term`, `user` are unchanged).
 
 ```sql
 SELECT
   fci.field_name,
-  fci.label,
   fcs.type         AS field_type,
   fcs.cardinality,
-  fci.required,
-  fcs.translatable
+  fcs.translatable,
+  fci.data         AS instance_data
 FROM field_config_instance fci
 JOIN field_config fcs ON fci.field_name = fcs.field_name
-WHERE fci.entity_type = '{entity_type}'
+WHERE fci.entity_type = '{d7_entity_type}'
   AND fci.bundle      = '{bundle}'
   AND fci.deleted = 0
   AND fcs.deleted = 0
 ORDER BY fci.field_name;
 ```
+
+Parse `instance_data` to extract `label` (`s:5:"label";s:N:"..."`) and `required`
+(`s:8:"required";i:1` or `b:1`).
 
 ### Step 2 — Cross-check with INFORMATION_SCHEMA (D8+ fallback)
 

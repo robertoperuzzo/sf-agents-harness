@@ -72,7 +72,7 @@ is the container's `entity_reference_revisions` field from Step 1:
 SELECT COUNT(DISTINCT c.{child_ref_field}_target_id) AS active_children
 FROM {parent_table} n
 JOIN {parent_ref_prefix}{parent_field} ref ON ref.entity_id = n.{parent_id} AND ref.revision_id = n.{parent_vid}
-JOIN paragraph__{child_ref_field} c
+JOIN paragraph_revision__{child_ref_field} c
   ON c.entity_id = ref.{parent_field}_target_id
  AND c.revision_id = ref.{parent_field}_target_revision_id
 WHERE n.{parent_status} = 1;
@@ -80,12 +80,15 @@ WHERE n.{parent_status} = 1;
 
 > The `c.revision_id = ref.{parent_field}_target_revision_id` join restricts the children
 > to the container revision the published node actually references. Without it, children
-> removed in later container revisions are still counted.
+> removed in later container revisions are still counted. The join must read
+> **`paragraph_revision__{child_ref_field}`**, not `paragraph__{child_ref_field}`: the
+> latter holds only default-revision rows and returns nothing when the referenced
+> container revision is not the default one.
 
 > This skill assumes the parent is a **node** (the case for paragraph hierarchies
 > in practice). Node defaults: `{parent_table}` = `node_field_data`, `{parent_ref_prefix}`
 > = `node__`, `{parent_id}` = `nid`, `{parent_vid}` = `vid`, `{parent_status}` = `status`;
-> the paragraph field table keeps the `paragraph__` prefix. If the parent is not a node,
+> the paragraph child-reference table uses the `paragraph_revision__` prefix. If the parent is not a node,
 > resolve `{parent_table}` / `{parent_ref_prefix}` / `{parent_id}` for that entity type
 > from `entity-type-context.md` → "Variable Resolution Table".
 

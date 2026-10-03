@@ -90,7 +90,7 @@ JOIN {field_data_prefix}{parent_field_name} ref
   ON ref.entity_id = n.nid AND ref.revision_id = n.vid
 JOIN {para_table} parent
   ON parent.id = ref.{parent_field_name}_target_id
-JOIN paragraph__{child_ref_field} cref
+JOIN paragraph_revision__{child_ref_field} cref
   ON cref.entity_id = parent.id
  AND cref.revision_id = ref.{parent_field_name}_target_revision_id
 JOIN {para_table} child
@@ -101,6 +101,13 @@ GROUP BY n.type;
 
 For deeper nesting, repeat the `parent → cref` pair once per level, always joining the
 next level's field table on the `*_target_revision_id` selected one level up.
+
+> Use the **`paragraph_revision__`** table for the child reference, not `paragraph__`.
+> `paragraph__{field}` holds only the default-revision rows; when the published node
+> references a container revision that is not the default one (for example a moderated
+> draft is ahead), the join against `paragraph__` finds nothing and marks every child as
+> orphaned. `paragraph_revision__{field}` holds one row set per revision, so the
+> `target_revision_id` predicate selects exactly the referenced one.
 
 ### Step 3 — Compute orphaned count
 

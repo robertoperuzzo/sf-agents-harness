@@ -128,13 +128,14 @@ Pick the strategy your project uses and delete the others:
 Consumed by `drupal-migrate-verify-content`. Without these values the non-interactive
 analyst cannot verify migrated pages.
 
-| Setting                | Value                                                                     |
-| ---------------------- | ------------------------------------------------------------------------- |
-| Source base URL (base) | `<https://www.example.com>`                                               |
-| Language URL rule      | `<separate domain / path prefix>`                                         |
-| Other-language bases   | `<lang: https://en.example.com>` or `<lang: https://www.example.com/en>`  |
-| Destination base URL   | `<https://new-site.loc>` or the discovery command that prints it          |
-| Internal HTTP host     | `<http://web-container>` (destination reachable from the tools container) |
+| Setting                | Value                                                                                                           |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Source base URL (base) | `<https://www.example.com>`                                                                                     |
+| Language URL rule      | `<separate domain / path prefix>`                                                                               |
+| Other-language bases   | `<lang: https://en.example.com>` or `<lang: https://www.example.com/en>`                                        |
+| Destination base URL   | `<https://new-site.loc>` or the discovery command that prints it (used by `playwright-cli` on the host)         |
+| Internal HTTP host     | `<http://web-container>` (destination reachable from the tools container; `curl` only)                          |
+| Destination runner     | `<docker compose run --rm <tools> ash -c>` (runs `drush` and `curl` against the **new** site; no source DB key) |
 
 ---
 
@@ -143,6 +144,10 @@ analyst cannot verify migrated pages.
 Document only if your migration scope is driven by a support/lookup table.
 
 - **Table name**: `<TABLE>`
+- **Which database holds it**: `<source DB (key …) / destination DB / WordPress DB>` —
+  `drupal-migrate-verify-content` runs the lookup through the matching query method.
+- **URL storage form**: `<full URL / path with language prefix / base-relative path>`, with
+  or without trailing slash — lookups use exact `=` matching, so this must be precise.
 - **Where the data lives / how it is built**: `<command or import process>`
 - **Columns**: `<col1, col2, ...>`
 - **Status semantics**: e.g. rows marked `<DO_NOT_MIGRATE_VALUE>` are skipped; pages with
