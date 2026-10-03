@@ -13,7 +13,7 @@ Read `.agents/references/migrate/project-config.md` first — it supplies every 
 
 - **Issue Tracker** → the tracker tool (`glab` or `gh`), its repository flag, and the auth check
 - **Migration Infrastructure — Where To Look** → where custom migration modules, migration YAML, and destination config live (paths vary per project)
-- **Issue Output Language** → the language to write the TO DO list in
+- **Output Language → Issue body** → the language to write the TO DO list in
 - **Migration Patterns** / **Scope Exclusions** → project conventions and fields/bundles to exclude
 - the **destination Drupal version** (the new site; D8+)
 
@@ -165,6 +165,6 @@ After presenting, add:
 - If the destination bundle can't be determined, ask the user.
 - If the issue already has a TO DO list, acknowledge it and produce a more detailed version.
 - Do not modify the issue — output only.
-- Write the output in the language set by project-config.md → **Issue Output Language**.
+- Write the output in the language set by project-config.md → **Output Language → Issue body**.
 - Run codebase-exploration queries in parallel.
 - Always use the tracker tool and repository flag from project config; never assume GitLab or GitHub.

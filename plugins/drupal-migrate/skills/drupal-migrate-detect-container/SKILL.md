@@ -75,6 +75,7 @@ JOIN {parent_ref_prefix}{parent_field} ref ON ref.entity_id = n.{parent_id} AND 
 JOIN paragraph_revision__{child_ref_field} c
   ON c.entity_id = ref.{parent_field}_target_id
  AND c.revision_id = ref.{parent_field}_target_revision_id
+ AND c.bundle = '{bundle}'
 WHERE n.{parent_status} = 1;
 ```
 
@@ -84,6 +85,11 @@ WHERE n.{parent_status} = 1;
 > **`paragraph_revision__{child_ref_field}`**, not `paragraph__{child_ref_field}`: the
 > latter holds only default-revision rows and returns nothing when the referenced
 > container revision is not the default one.
+
+> The `c.bundle = '{bundle}'` predicate is required too. Field tables are shared by every
+> paragraph bundle that owns a field of that name (several containers often share
+> `field_items`), and `{parent_field}` may reference more than one container bundle.
+> Without the bundle filter the count includes children of other containers.
 
 > This skill assumes the parent is a **node** (the case for paragraph hierarchies
 > in practice). Node defaults: `{parent_table}` = `node_field_data`, `{parent_ref_prefix}`

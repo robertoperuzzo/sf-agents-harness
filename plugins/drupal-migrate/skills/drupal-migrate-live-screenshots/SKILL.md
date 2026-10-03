@@ -1,13 +1,15 @@
 ---
 name: drupal-migrate-live-screenshots
-description: "Take browser screenshots of live example pages resolved by drupal-migrate-resolve-examples. Optional step — only run after explicit user confirmation. Browser-tool-agnostic — uses the playwright-cli skill if enabled, else a Playwright (or other browser) MCP server, else asks the user which browser tool to use."
+description: "Take browser screenshots of live example pages resolved by drupal-migrate-resolve-examples. Optional step — run only when the user confirms or the invocation explicitly requests screenshots. Browser-tool-agnostic — uses the playwright-cli skill if enabled, else a Playwright (or other browser) MCP server, else asks the user which browser tool to use."
 ---
 
 # Live screenshots of example pages
 
 Take browser screenshots of the live example URLs produced by
-`drupal-migrate-resolve-examples`. This is an **optional step** — always ask the user
-before running it.
+`drupal-migrate-resolve-examples`. This is an **optional step** — run it only when the
+user has confirmed it, or when the invocation prompt explicitly asks for screenshots
+(the non-interactive `drupal-migration-analyst` agent passes that request through and
+cannot ask mid-run).
 
 The skill does not hardcode a browser engine. It selects whatever browser tool the
 environment actually has, in a fixed preference order, and asks the user if none is
@@ -56,14 +58,22 @@ Record which tool was selected and report it in the result.
 
 ## Steps
 
-### 1. Confirm with the user (mandatory gate)
+### 1. Confirm the request (mandatory gate)
 
-Before doing anything, ask:
+The gate is satisfied in either of two ways:
 
-> "Should I take live screenshots of the example pages? This drives a browser and may
-> take some time. You can skip this step if you only need the field analysis."
+- **Invocation requests it.** The prompt that started this run explicitly asks for
+  screenshots (e.g. "screenshots: yes", "take live screenshots"). Proceed without asking;
+  note "screenshots requested in the invocation" in the result.
+- **Interactive run without an explicit request.** Ask:
 
-Only proceed if the user answers **yes**.
+  > "Should I take live screenshots of the example pages? This drives a browser and may
+  > take some time. You can skip this step if you only need the field analysis."
+
+  Proceed only if the user answers **yes**.
+
+In a non-interactive run (subagent) with no explicit request, skip screenshots and say
+so — never block the analysis waiting for an answer.
 
 ### 2. Select the browser tool
 
@@ -109,8 +119,8 @@ filename (e.g., `404 Not Found`, `Timeout`).
 
 ## Guardrails
 
-- **Optional and user-gated** — never run without the step-1 confirmation; never block
-  the field analysis on screenshots.
+- **Optional and gated** — never run without the step-1 gate (user confirmation or an
+  explicit request in the invocation); never block the field analysis on screenshots.
 - **Browser-tool-agnostic** — select by availability in the fixed order; never hardcode a
   single engine, and ask the user when none is detected.
 - **Read-only navigation** — navigate and capture only; never submit forms or trigger

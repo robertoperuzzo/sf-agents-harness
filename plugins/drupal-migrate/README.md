@@ -88,18 +88,21 @@ table, scope rules) from a single file in the **host project**:
 .agents/references/migrate/project-config.md
 ```
 
-The skills read two files from this host path — copy both there:
+The skills read two files from this host path — copy both there. After
+`/plugin install`, the plugin files live under the marketplace checkout in your home
+directory (`PLUGIN_DIR` below); adjust the path if you installed from a local clone:
 
 ```bash
+PLUGIN_DIR=~/.claude/plugins/marketplaces/sf-agents-harness/plugins/drupal-migrate
 mkdir -p .agents/references/migrate
 
 # 1. project-config.md — fill in your project's values (template provided)
-cp "$CLAUDE_PLUGIN_ROOT/references/project-config.template.md" \
+cp "$PLUGIN_DIR/references/project-config.template.md" \
    .agents/references/migrate/project-config.md
 # then edit project-config.md
 
 # 2. entity-type-context.md — generic Drupal 8+ table/column maps, copy verbatim
-cp "$CLAUDE_PLUGIN_ROOT/references/entity-type-context.md" \
+cp "$PLUGIN_DIR/references/entity-type-context.md" \
    .agents/references/migrate/entity-type-context.md
 ```
 
