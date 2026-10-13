@@ -73,12 +73,14 @@ LIMIT 1;
 
 ```sql
 -- Step A: enumerate every node reference field. No field name is known yet, so
--- list all `*_target_id` columns in node__field_* tables; each row yields one
--- candidate `{field_name}` (strip the `node__` prefix from TABLE_NAME).
+-- list all `*_target_id` columns in every node__* table (not only node__field_*:
+-- projects can drop the optional `field_` prefix or define fields in code, e.g.
+-- `node__related_content`); each row yields one candidate `{field_name}` (strip
+-- the `node__` prefix from TABLE_NAME). Step A2 filters by target type.
 SELECT TABLE_NAME, COLUMN_NAME
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = DATABASE()
-  AND TABLE_NAME LIKE 'node\_\_field\_%'
+  AND TABLE_NAME LIKE 'node\_\_%'
   AND COLUMN_NAME LIKE '%\_target\_id'
 ORDER BY TABLE_NAME;
 

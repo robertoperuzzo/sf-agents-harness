@@ -45,6 +45,9 @@ jobs:
       - name: Verify upstream repos are reachable and skill paths exist
         run: ./scripts/sync-skill.sh --all
 
+      - name: Validate plugin marketplace and plugin manifests
+        run: python3 scripts/validate-plugins.py
+
       - name: Test changelog entry generation
         run: |
           changelog=$(mktemp)

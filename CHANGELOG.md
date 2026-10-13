@@ -8,8 +8,13 @@ Changes are grouped by date.
 
 ## [2026-10-13]
 
+### Added
+
+- Plugin validation in CI: `scripts/validate-plugins.py` checks the marketplace manifest, each plugin's manifest and README, and the frontmatter of plugin skills and agents; the `validate-and-check` workflow runs it.
+
 ### Fixed
 
+- `drupal-migrate` plugin: Drupal 7 support now covers container child bundles and active-child counts, paragraph field population restricted to active items, and base fields per entity table; content verification rejects URLs with credentials, query strings or fragments, filters URL-map rows by language, carries the destination entity type through alias, redirect and translation checks, and matches alias redirect targets correctly; example resolution scans every node field table; the ecosystem map lists credential files without printing their contents; the README, manifest and agent state that another CMS is identified but not audited.
 - `drupal-migrate` plugin: Drupal 7 field population uses the Drupal 7 entity tables and entity-type names; content verification validates node IDs read from scope tables and matches redirects stored as entity or alias targets; the analyst agent resolves a bundle's entity type from project config and usage instead of words in its name; the detect-version skill uses the configured drush runner; disposition names, field type ids, and the verification evals are consistent across the agent, skills, and README.
 
 ## [2026-10-12]
