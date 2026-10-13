@@ -89,7 +89,7 @@ find {config_sync_dir} -name "migrate_plus.migration*.yml" 2>/dev/null
 # 3b — destination content type / paragraph / component
 ls {config_sync_dir}/core.entity_form_display.{entity_type}.{bundle}.*.yml 2>/dev/null
 ls {config_sync_dir}/field.field.{entity_type}.{bundle}.*.yml 2>/dev/null
-ls -d {theme_components_dir}/*{bundle_slug}*/ 2>/dev/null
+ls -d {theme_components_dir}/*{bundle_slug}*/ 2>/dev/null   # {bundle_slug} = {bundle} with "_" replaced by "-"
 
 # 3c — existing tests
 grep -rl "{bundle}" {custom_module_dir} --include="*.php" 2>/dev/null

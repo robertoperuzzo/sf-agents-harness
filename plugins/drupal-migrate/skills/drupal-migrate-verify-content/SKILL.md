@@ -150,6 +150,11 @@ Pass each completed URL to `curl` and to the browser tool as one single-quoted a
 (or as the MCP tool's URL parameter) and build the inner `{dest_runner}` command the same
 way, so no shell layer re-interprets it.
 
+**Node IDs are untrusted too.** `{nid}` and `{dest_nid}` come from `<node_id_col>` and
+`<map_dest_id_col>` and are interpolated into `drush php:eval` and SQL below. Accept a
+value only if it matches `^[0-9]+$`; otherwise stop for that URL and record
+`FAIL — unsafe node id`.
+
 ---
 
 ## Workflow Overview
@@ -226,8 +231,13 @@ project-specific alias command (for example a custom Drush command), use that in
 ### 1c. Collect redirects for this entity
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri = 'internal:/node/{nid}' ORDER BY language, redirect_source__path\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri IN ('internal:/node/{nid}', 'entity:node/{nid}', 'internal:{destination_alias}') ORDER BY language, redirect_source__path\""
 ```
+
+> The Redirect module stores the target in one of three forms: `internal:/node/N`,
+> `entity:node/N`, or the alias (`internal:/<alias>`). Match all three with the alias
+> from step 1b (validated, leading `/` kept), or redirects that exist are reported as
+> missing.
 
 > If the query errors with an unknown `redirect` table, the Redirect module is not
 > installed on the destination. Skip redirect collection, record redirects as
@@ -375,7 +385,7 @@ Apply the Phase 2 checklist.
 ### 3e. Language-specific redirects
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri = 'internal:/node/{dest_nid}' AND language = '<lang>'\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri IN ('internal:/node/{dest_nid}', 'entity:node/{dest_nid}', 'internal:{lang_destination_alias}') AND language = '<lang>'\""
 ```
 
 HTTP-check each like Phase 1d. If the `redirect` table is absent (see Phase 1c), skip this step.
