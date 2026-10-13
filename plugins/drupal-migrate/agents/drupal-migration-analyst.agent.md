@@ -168,10 +168,11 @@ Therefore:
 | Save location                              | No                                          | Default per phase: as-is → `doc/Migrate/as-is/`; to-be → `doc/Migrate/` or an OpenSpec change; issues → `doc/migrate-issue-notes/`. |
 | Extra context/documents                    | No                                          | Proceed; note none supplied.                                                                                                        |
 
-**Entity-type inference (Drupal source):** name matching a known node-type pattern →
-`node`; name containing words like `group`/`modal`/`card`/`person` → `paragraph`;
-otherwise ambiguous → stop and ask. Confirm against `entity-type-context.md` when
-available.
+**Entity-type resolution (Drupal source):** never infer the entity type from words in
+the bundle name. Resolve it in the order `drupal-migrate-count-instances` prescribes:
+the bundle→entity-type mapping in `project-config.md`, then how the source uses the
+bundle (top-level page → `node`, embedded component → `paragraph`, category list →
+`taxonomy_term`), and when still ambiguous stop and ask.
 
 ## Language
 
@@ -202,7 +203,7 @@ analysis applies, single vs multisite scope).
 | `drupal-migrate-platform-audit`    | `as-is/platform.md`: version, hosting, single/multisite, module/plugin inventory + activation, custom-code list | Always in as-is analysis                   |
 | `drupal-migrate-ecosystem-map`     | `as-is/ecosystem.md`: external integrations (CRM, mail, forms, analytics) + topology diagram                    | Always in as-is analysis                   |
 | `drupal-migrate-content-inventory` | `as-is/content-inventory.md`: content volumes per type, multilingual coverage                                   | Always in as-is analysis                   |
-| `drupal-migrate-codebase-scan`     | Custom-code disposition (replicate / triage / do-not-port / security)                                           | Codebase available; skip + note if DB-only |
+| `drupal-migrate-codebase-scan`     | Custom-code disposition (replicate-as-module / replace-with-config / triage / do-not-port / security)           | Codebase available; skip + note if DB-only |
 | `drupal-migrate-ia-audit`          | Information architecture: menus, URL/permalink structure, redirect + liveness                                   | Always in as-is analysis                   |
 
 ### Phase 1 — Entity/bundle analysis (feeds the data-model doc)

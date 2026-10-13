@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project has no semantic versioning — the latest commit is the current version.
 Changes are grouped by date.
 
+## [2026-10-13]
+
+### Fixed
+
+- `drupal-migrate` plugin: Drupal 7 field population uses the Drupal 7 entity tables and entity-type names; content verification validates node IDs read from scope tables and matches redirects stored as entity or alias targets; the analyst agent resolves a bundle's entity type from project config and usage instead of words in its name; the detect-version skill uses the configured drush runner; disposition names, field type ids, and the verification evals are consistent across the agent, skills, and README.
+
 ## [2026-10-12]
 
 ### Changed

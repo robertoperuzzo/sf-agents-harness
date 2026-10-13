@@ -151,7 +151,7 @@ Output the structured field table:
 | Label | Machine name | Field type | Cardinality | Required | Translatable |
 |---|---|---|---|---|---|
 | Title | `field_title` | string | 1 | ✓ | ✓ |
-| Body | `field_body` | text_formatted_long | 1 | | ✓ |
+| Body | `field_body` | text_long | 1 | | ✓ |
 | Items | `field_items` | entity_reference_revisions | unlimited | | |
 ```
 

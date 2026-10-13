@@ -115,8 +115,8 @@ use that list instead of Steps A/A2.
 **Drupal 7 differences.** The queries above are D8+. On a D7 source substitute:
 `node` for `node_field_data` (same `nid`, `type`, `status` columns);
 `field_data_{field_name}` for `node__{field_name}`, joined on `entity_id = n.nid`
-with `entity_type = 'node'` (D7 field tables have no `revision_id` join; use
-`field_revision_{field_name}` joined on `revision_id = n.vid` when revision accuracy
+with `entity_type = 'node'` (`field_data_*` holds the current revision only; use
+`field_revision_{field_name}` joined on `revision_id = n.vid` when another revision
 matters); `taxonomy_term_data` with `vid` resolved through `taxonomy_vocabulary.machine_name`
 for the taxonomy source table; and the reference column `{field_name}_tid` (taxonomy)
 or `{field_name}_target_id` (entityreference). In Step A enumerate columns ending in

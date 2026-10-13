@@ -42,10 +42,12 @@ SELECT IF(
 ) AS source_version;
 ```
 
-Execute via (substitute the `{drush_option}` from Step 1):
+Execute via the project's drush runner from project-config.md → Database Connection →
+Connection command (the same `<runner>` `drupal-migrate-db-discover` uses), substituting
+the `{drush_option}` from Step 1:
 
 ```bash
-docker compose run --rm <tools-container> ash -c "drush sql:query {drush_option} \"SELECT IF(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'field_config_instance'), 'drupal7', IF(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'config'), 'drupal8+', 'unknown')) AS source_version;\""
+<runner> "drush sql:query {drush_option} \"SELECT IF(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'field_config_instance'), 'drupal7', IF(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'config'), 'drupal8+', 'unknown')) AS source_version;\""
 ```
 
 ### Step 3 — Determine the core major (optional, Drupal 8+ with codebase only)

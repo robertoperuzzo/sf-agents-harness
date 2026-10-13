@@ -108,9 +108,15 @@ WHERE m.{bundle_column} = '{bundle}';
 
 The shared reference is D8+. On a D7 source, field tables are named
 `field_data_{field_name}` (plus `field_revision_{field_name}`), keyed by
-`entity_id` / `entity_type` / `bundle` rather than the `{field_data_prefix}` form.
-Join on `field_data_{field_name}.entity_id = {id_column}` and filter
-`entity_type = '{entity_type}'`; the value-suffix logic is otherwise the same.
+`entity_id` / `entity_type` / `bundle` rather than the `{field_data_prefix}` form, and
+the entity tables differ too: take `{main_table}`, `{id_column}` and `{bundle_column}`
+from the Drupal 7 table in `drupal-migrate-count-instances` → "Drupal 7 differences"
+(`node`/`nid`/`type`, `paragraphs_item`/`item_id`/`bundle`,
+`taxonomy_term_data`/`tid`/`vid`, `users`/`uid`), not from the D8+ reference.
+Join on `field_data_{field_name}.entity_id = m.{id_column}` and filter
+`entity_type = '{d7_entity_type}'`, where `{d7_entity_type}` is the D7 name:
+`paragraph` → `paragraphs_item`; `node`, `taxonomy_term` and `user` are unchanged
+(`media` does not exist on D7). The value-suffix logic is otherwise the same.
 
 ### Step 2 — Compute percentages
 

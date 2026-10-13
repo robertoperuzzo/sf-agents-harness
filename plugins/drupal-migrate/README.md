@@ -39,21 +39,21 @@ Phase 3  Implementation        — migration issues · tech-analysis TO DO lists
 
 **Phase 1 — as-is source analysis**
 
-| Skill                              | Purpose                                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------------------- |
-| `drupal-migrate-platform-audit`    | `as-is/platform.md`: version, topology, extension inventory + activation, custom code |
-| `drupal-migrate-ecosystem-map`     | `as-is/ecosystem.md`: external integrations + topology diagram                        |
-| `drupal-migrate-content-inventory` | `as-is/content-inventory.md`: volumes per type, multilingual coverage                 |
-| `drupal-migrate-codebase-scan`     | Custom-code disposition (replicate / replace / triage / drop / security)              |
-| `drupal-migrate-ia-audit`          | Information architecture: menus, URLs, redirect + liveness                            |
-| `drupal-migrate-detect-container`  | Detect group/container paragraph bundles + children (Drupal source)                   |
-| `drupal-migrate-count-instances`   | Revision-safe COUNT(DISTINCT) of a bundle (Drupal source)                             |
-| `drupal-migrate-verify-active`     | Determine which paragraph instances are "active"                                      |
-| `drupal-migrate-query-fields`      | Inspect a bundle's field tables/columns                                               |
-| `drupal-migrate-field-population`  | Measure per-field population rates                                                    |
-| `drupal-migrate-parent-context`    | Resolve a paragraph's parent entity chain                                             |
-| `drupal-migrate-resolve-examples`  | Resolve source node IDs to live URLs                                                  |
-| `drupal-migrate-live-screenshots`  | Capture live source-page screenshots                                                  |
+| Skill                              | Purpose                                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `drupal-migrate-platform-audit`    | `as-is/platform.md`: version, topology, extension inventory + activation, custom code                 |
+| `drupal-migrate-ecosystem-map`     | `as-is/ecosystem.md`: external integrations + topology diagram                                        |
+| `drupal-migrate-content-inventory` | `as-is/content-inventory.md`: volumes per type, multilingual coverage                                 |
+| `drupal-migrate-codebase-scan`     | Custom-code disposition (replicate-as-module / replace-with-config / triage / do-not-port / security) |
+| `drupal-migrate-ia-audit`          | Information architecture: menus, URLs, redirect + liveness                                            |
+| `drupal-migrate-detect-container`  | Detect group/container paragraph bundles + children (Drupal source)                                   |
+| `drupal-migrate-count-instances`   | Revision-safe COUNT(DISTINCT) of a bundle (Drupal source)                                             |
+| `drupal-migrate-verify-active`     | Determine which paragraph instances are "active"                                                      |
+| `drupal-migrate-query-fields`      | Inspect a bundle's field tables/columns                                                               |
+| `drupal-migrate-field-population`  | Measure per-field population rates                                                                    |
+| `drupal-migrate-parent-context`    | Resolve a paragraph's parent entity chain                                                             |
+| `drupal-migrate-resolve-examples`  | Resolve source node IDs to live URLs                                                                  |
+| `drupal-migrate-live-screenshots`  | Capture live source-page screenshots                                                                  |
 
 **Phase 2 — mapping triage**
 

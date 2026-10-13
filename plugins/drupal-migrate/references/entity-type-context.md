@@ -113,16 +113,16 @@ columns the entity cannot be saved without (`title`, `name`, `langcode`, `status
 
 Use these to infer field types from `INFORMATION_SCHEMA` column inspection:
 
-| Suffix(es)                                   | Inferred field type                |
-| -------------------------------------------- | ---------------------------------- |
-| `_value` only                                | `string` / `text_long` / `boolean` |
-| `_value` + `_format`                         | `text_formatted_long`              |
-| `_target_id` + `_target_revision_id`         | `entity_reference_revisions`       |
-| `_target_id` only                            | `entity_reference`                 |
-| `_uri` + `_title` + `_options`               | `link`                             |
-| `_target_id` + `_alt` + `_width` + `_height` | `image`                            |
-| `_date` or `_value` (datetime storage)       | `datetime`                         |
-| `_lat` + `_lng`                              | `geofield`                         |
+| Suffix(es)                                   | Inferred field type                                               |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| `_value` only                                | `string` / `text_long` / `boolean`                                |
+| `_value` + `_format`                         | `text_long` (`text_with_summary` when `_summary` is also present) |
+| `_target_id` + `_target_revision_id`         | `entity_reference_revisions`                                      |
+| `_target_id` only                            | `entity_reference`                                                |
+| `_uri` + `_title` + `_options`               | `link`                                                            |
+| `_target_id` + `_alt` + `_width` + `_height` | `image`                                                           |
+| `_date` or `_value` (datetime storage)       | `datetime`                                                        |
+| `_lat` + `_lng`                              | `geofield`                                                        |
 
 ---
 
