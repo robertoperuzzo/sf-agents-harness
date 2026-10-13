@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-container
-description: 'Detect whether a source paragraph bundle is a group/container that holds child paragraph entities via entity_reference_revisions fields, and list its child bundles. Use before analysing a paragraph''s fields when planning a migration — to discover nested paragraph hierarchies, e.g. "is X a container", "does the Y paragraph hold children", or to decide whether the full analysis must be repeated for child bundles. Supports both Drupal 7 and Drupal 8+ sources.'
+description: 'Detect whether a source paragraph bundle is a group/container that holds child paragraph entities via entity_reference_revisions fields, and list its child bundles. Use before analysing a paragraph''s fields when planning a migration — to discover nested paragraph hierarchies, e.g. "is X a container", "does the Y paragraph hold children", "what''s inside this paragraph", or to decide whether the full analysis must be repeated for child bundles. Paragraph bundles on Drupal 7 and Drupal 8+ sources only.'
 ---
 
 # Detect Group / Container Pattern

@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-count-instances
-description: 'Count how many instances of a Drupal entity bundle (node, paragraph, taxonomy term, media, or user) exist in a source migration database, using revision-safe COUNT(DISTINCT) queries that avoid inflation from revisions and language variants. Use this whenever migration planning needs a count — "how many X are there", "count the Y paragraphs", sizing a bundle before migrating it, or checking whether a bundle has any data at all. Reports both total and active (published) counts.'
+description: 'Count how many instances of a Drupal entity bundle (node, paragraph, taxonomy term, media, or user) exist in a source migration database, using revision-safe COUNT(DISTINCT) queries that avoid inflation from revisions and language variants. Use whenever migration planning needs a count — "how many X are there", "count the Y paragraphs", sizing a bundle before migrating it, or checking whether a bundle has any data at all. Reports total and active (published) counts. Drupal 7 and Drupal 8+ sources only. For a paragraph''s real in-use count, follow up with drupal-migrate-verify-active; for whole-site volumes use drupal-migrate-content-inventory.'
 ---
 
 # Count Source Entity Instances

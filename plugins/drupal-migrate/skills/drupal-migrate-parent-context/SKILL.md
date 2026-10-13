@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-parent-context
-description: "Identify the parent context for a paragraph bundle in the source database — which entity types and fields reference it, and which node bundles contain it. Use after counting instances, when planning a paragraph migration and you need to know where the paragraph is embedded (top-level node field vs. nested inside another paragraph)."
+description: 'Find where a Drupal source paragraph bundle is embedded: which entity types and fields reference it, which node bundles contain it, and whether it sits in a top-level node field or nested inside another paragraph. Use after drupal-migrate-count-instances when planning a paragraph migration, or when asked "where is paragraph X used", "which content types use Y", or "is Z nested". Paragraph bundles on Drupal 7 and Drupal 8+ sources only.'
 ---
 
 # Identify Paragraph Parent Context

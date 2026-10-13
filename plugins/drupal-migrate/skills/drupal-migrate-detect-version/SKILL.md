@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-version
-description: "Detect the Drupal version of the source migration database (Drupal 7 vs Drupal 8+, with the exact core major when the source codebase is available). Use after discovering the database connection with drupal-migrate-db-discover. Checks for version-specific table signatures."
+description: 'Detect whether a Drupal source database is Drupal 7 or Drupal 8+, and the exact core major when the source codebase is available, by checking version-specific table signatures. This is the Drupal-only sub-step of drupal-migrate-detect-source: run it after that skill has established the source is Drupal and drupal-migrate-db-discover has confirmed the connection. Use when asked "is the old site D7 or D8+", "which Drupal version is the source", or before any query whose table names differ between Drupal 7 and Drupal 8+. Not for WordPress or other sources.'
 ---
 
 # Detect Source Drupal Version

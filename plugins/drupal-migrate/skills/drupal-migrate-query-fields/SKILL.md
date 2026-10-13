@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-query-fields
-description: 'Query the field definitions of a source entity bundle from a migration database — base fields plus configurable fields, with label, machine name, type, cardinality, required, and translatable. Use when migration planning needs a bundle''s field list, e.g. "what fields does X have", "list the fields on the Y paragraph", or before mapping a bundle to its destination. Supports both Drupal 7 (field_config_instance) and Drupal 8+ (config table) sources.'
+description: 'Query the field definitions of a source entity bundle from a migration database — base fields plus configurable fields, with label, machine name, type, cardinality, required, and translatable. Use when migration planning needs a bundle''s field list, e.g. "what fields does X have", "list the fields on the Y paragraph", "what''s the structure of this content type", or before mapping a bundle to its destination. Drupal 7 (field_config_instance) and Drupal 8+ (config table) sources only.'
 ---
 
 # Query Source Entity Fields
