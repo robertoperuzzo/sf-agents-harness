@@ -109,7 +109,12 @@ commands. Never substitute a raw value. For every URL:
    does not match `https://example.com` even though the string starts with it. When the
    base carries a language path prefix (`/en`), the pathname must equal it or continue
    with `/` right after it (`/en/news` matches, `/english` does not). Reject any URL that
-   matches none of the bases and tell the user.
+   matches none of the bases and tell the user. Reject as well any URL that carries
+   userinfo (`user:pass@`), a query string (`?…`) or a fragment (`#…`): only the
+   origin and the pathname take part in verification, and nothing from the raw string is
+   ever substituted. `{source_url}` below is always rebuilt as
+   `{origin}/{source_pathname}` from the validated parts (`{origin}/` for the root
+   page), never copied from the input.
 2. **Record the language.** The matched base (separate domain) or path prefix gives
    `{langcode}` for this URL, per the language URL rule in project-config.md. Use that
    `{langcode}` in every later query, alias lookup, and content check for this URL; the
@@ -126,8 +131,8 @@ commands. Never substitute a raw value. For every URL:
      or matches `^[A-Za-z0-9/._~-]+$` (an already-decoded path with no query string).
      Stop on anything else, including quotes, `%`, `$`, backticks, spaces, or `..`.
 4. **Build an exact lookup key, never a substring.** Scope and url-map rows are matched
-   with `=` against the complete normalized value in the form the table stores (full URL
-   `{source_url}`, or `/{source_pathname}`, or `/{relative_path}`; project-config.md →
+   with `=` against the complete normalized value in the form the table stores (the
+   rebuilt full URL `{source_url}`, or `/{source_pathname}`, or `/{relative_path}`; project-config.md →
    "URL Scope Support Table" says which). Compare both with and without a trailing `/`
    when the table is inconsistent. A `LIKE '%news/item%'` pattern also matches
    `news/item-old` and `news/item/child` and would silently pick the wrong migration
@@ -208,12 +213,29 @@ If `{url_map_table}` is defined, run through `{source_query}` with the same exac
 ```sql
 SELECT <map_dest_id_col>, <map_dest_type_col>, <map_dest_url_col>
 FROM {url_map_table}
-WHERE <map_source_url_col> = '{lookup_key}' OR <map_source_url_col> = '{lookup_key}/'
+WHERE (<map_source_url_col> = '{lookup_key}' OR <map_source_url_col> = '{lookup_key}/')
+  AND <map_langcode_col> = '{langcode}'
 LIMIT 5;
 ```
 
+Drop the `<map_langcode_col>` predicate only when project-config.md declares that column
+as `none`. Without it, languages that share a stored path return each other's row.
+
 Otherwise resolve via the `<final_url_col>` / `<node_id_col>` values from Phase 0, or ask
-the user. Result is the destination node ID.
+the user. The result is the destination entity: `{nid}` (its numeric id, validated as
+above) and `{dest_type}` from `<map_dest_type_col>`. When the map has no type column, or
+the id came from the scope table, `{dest_type}` is `node`. The type drives every later
+alias, redirect and translation step:
+
+| `{dest_type}`   | `{entity_path}`        | Data table, id column             |
+| --------------- | ---------------------- | --------------------------------- |
+| `node`          | `/node/{nid}`          | `node_field_data`, `nid`          |
+| `taxonomy_term` | `/taxonomy/term/{nid}` | `taxonomy_term_field_data`, `tid` |
+| `media`         | `/media/{nid}`         | `media_field_data`, `mid`         |
+
+Any other value: stop for this URL and record `FAIL — unsupported destination entity
+type <type>`. Never fall back to `/node/{nid}`, which can inspect an unrelated node that
+happens to share the numeric id.
 
 ### 1b. Destination URL alias
 
@@ -221,23 +243,26 @@ Drush core ships no path-alias command, so resolve the alias through the
 `path_alias.manager` service:
 
 ```bash
-{dest_runner} "drush php:eval \"print \\Drupal::service('path_alias.manager')->getAliasByPath('/node/{nid}', '{langcode}');\""
+{dest_runner} "drush php:eval \"print \\Drupal::service('path_alias.manager')->getAliasByPath('{entity_path}', '{langcode}');\""
 ```
 
-It prints the alias, or `/node/{nid}` itself when no alias exists for that language —
+It prints the alias, or `{entity_path}` itself when no alias exists for that language —
 treat the latter as "alias missing" in the report. If project-config.md declares a
 project-specific alias command (for example a custom Drush command), use that instead.
+Normalize the printed alias like every database-derived path (leading `/` stripped,
+allow-list applied); it is `{destination_alias}` below.
 
 ### 1c. Collect redirects for this entity
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri IN ('internal:/node/{nid}', 'entity:node/{nid}', 'internal:{destination_alias}') ORDER BY language, redirect_source__path\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri IN ('internal:{entity_path}', 'entity:{dest_type}/{nid}', 'internal:/{destination_alias}') ORDER BY language, redirect_source__path\""
 ```
 
 > The Redirect module stores the target in one of three forms: `internal:/node/N`,
-> `entity:node/N`, or the alias (`internal:/<alias>`). Match all three with the alias
-> from step 1b (validated, leading `/` kept), or redirects that exist are reported as
-> missing.
+> `entity:node/N`, or the alias (`internal:/<alias>`). Match all three. The alias is kept
+> without its leading slash, so the SQL adds the `/` separator explicitly
+> (`internal:/{destination_alias}`); without it the query searches `internal:alias` and
+> reports valid redirects as missing.
 
 > If the query errors with an unknown `redirect` table, the Redirect module is not
 > installed on the destination. Skip redirect collection, record redirects as
@@ -339,7 +364,14 @@ From Phase 0 you know whether an other-language row exists in `{scope_table}` (o
 table, whether the user expects a translation). If not expected, confirm none was created:
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT langcode FROM node_field_data WHERE nid={dest_nid} AND langcode='<lang>'\""
+{dest_runner} "drush sql:query \"SELECT langcode FROM <data table> WHERE <id column>={dest_nid} AND langcode='<lang>'\""
+```
+
+`<data table>` and `<id column>` come from the `{dest_type}` table in Phase 1a
+(`node_field_data`/`nid`, `taxonomy_term_field_data`/`tid`, `media_field_data`/`mid`).
+
+```
+
 ```
 
 - not expected AND absent → **PASS**
@@ -365,7 +397,7 @@ before using it.
 ### 3c. Destination URL for the language
 
 ```bash
-{dest_runner} "drush php:eval \"print \\Drupal::service('path_alias.manager')->getAliasByPath('/node/{dest_nid}', '<lang>');\""
+{dest_runner} "drush php:eval \"print \\Drupal::service('path_alias.manager')->getAliasByPath('{entity_path}', '<lang>');\""
 ```
 
 ### 3d. Navigate + compare
@@ -385,7 +417,7 @@ Apply the Phase 2 checklist.
 ### 3e. Language-specific redirects
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri IN ('internal:/node/{dest_nid}', 'entity:node/{dest_nid}', 'internal:{lang_destination_alias}') AND language = '<lang>'\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri IN ('internal:{entity_path}', 'entity:{dest_type}/{dest_nid}', 'internal:/{lang_destination_alias}') AND language = '<lang>'\""
 ```
 
 HTTP-check each like Phase 1d. If the `redirect` table is absent (see Phase 1c), skip this step.

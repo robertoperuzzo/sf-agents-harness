@@ -1,7 +1,7 @@
 {
   "name": "drupal-migrate",
-  "version": "0.2.5",
-  "description": "Agnostic Drupal content-migration toolkit for migrations from any source (Drupal, WordPress, or other): atomic source-database analysis skills, a documentation-organization skill, a post-migration content-verification skill, and an orchestrating migration-analyst agent. All skills read project-specific values from .agents/references/migrate/project-config.md, so the plugin stays project-agnostic.",
+  "version": "0.2.6",
+  "description": "Agnostic Drupal content-migration toolkit for migrations from WordPress or Drupal 7/8+ sources (another CMS is identified and reported, not audited): atomic source-database analysis skills, a documentation-organization skill, a post-migration content-verification skill, and an orchestrating migration-analyst agent. All skills read project-specific values from .agents/references/migrate/project-config.md, so the plugin stays project-agnostic.",
   "author": {
     "name": "SparkFabrik"
   },

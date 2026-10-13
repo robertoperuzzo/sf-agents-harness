@@ -118,6 +118,29 @@ Join on `field_data_{field_name}.entity_id = m.{id_column}` and filter
 `paragraph` → `paragraphs_item`; `node`, `taxonomy_term` and `user` are unchanged
 (`media` does not exist on D7). The value-suffix logic is otherwise the same.
 
+**Paragraphs (D7):** the generic query counts detached and archived `paragraphs_item`
+rows too, while the denominator is the active count, so the same >100% error applies.
+Restrict the numerator to items referenced by the current revision of a published host
+(`field_data_*` holds the current revision):
+
+```sql
+SELECT
+  COUNT(DISTINCT p.item_id) AS active_instances,
+  COUNT(DISTINCT CASE WHEN f.{field_name}_{value_suffix} IS NOT NULL THEN p.item_id END) AS populated
+FROM node n
+JOIN field_data_{parent_field_name} ref
+  ON ref.entity_type = 'node' AND ref.entity_id = n.nid AND ref.deleted = 0
+JOIN paragraphs_item p
+  ON p.item_id = ref.{parent_field_name}_value AND p.bundle = '{bundle}' AND p.archived = 0
+LEFT JOIN field_data_{field_name} f
+  ON f.entity_type = 'paragraphs_item' AND f.entity_id = p.item_id AND f.deleted = 0
+WHERE n.status = 1;
+```
+
+Run it once per host field and sum. For nested paragraphs, replace `node n` and `ref`
+with the host chain from `drupal-migrate-parent-context` (Drupal 7 differences, Step 3)
+and keep the final `p → f` pair.
+
 ### Step 2 — Compute percentages
 
 For each field:

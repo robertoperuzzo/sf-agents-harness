@@ -2,8 +2,9 @@
 
 Source-agnostic toolkit for content migrations **into Drupal** in Claude Code: a
 full-lifecycle `drupal-migration-analyst` agent, atomic source-analysis skills, and a
-post-migration content-verification skill. The source can be WordPress, Drupal 7,
-Drupal 8+, another CMS, or a database alone.
+post-migration content-verification skill. The source can be WordPress, Drupal 7 or
+Drupal 8+, with the full codebase or a database alone. Another CMS is identified and
+reported by the source detector, but the audit skills cover WordPress and Drupal only.
 
 Migration is usually a one-time effort per project — install this plugin while migrating,
 uninstall it when done.

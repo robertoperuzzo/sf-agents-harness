@@ -146,8 +146,9 @@ plugins/<name>/
 2. Add agents and skills using the same file formats described above
 3. **Register the plugin in `.claude-plugin/marketplace.json`** (root of this repo) so it is installable with `/plugin install <name>@sf-agents-harness`
 4. Bump `version` in `plugin.json` on every user-facing change
-5. **Update `README.md`** — add or remove the plugin from the plugins table
-6. Do not touch `SYSTEM.md` or `config/catalog.json`: they cover only sparkdock-synced resources
+5. Run `python3 scripts/validate-plugins.py`; CI runs the same check on every pull request that touches `plugins/` or the marketplace manifest
+6. **Update `README.md`** — add or remove the plugin from the plugins table
+7. Do not touch `SYSTEM.md` or `config/catalog.json`: they cover only sparkdock-synced resources
 
 ## Git Workflow
 

@@ -53,7 +53,7 @@ If any rows are found, this bundle is a container. For each matching row, parse 
 > `field_config_instance` / `field_config` (entity type `paragraphs_item`), not in `config`.
 
 ```sql
-SELECT fci.field_name, fcs.type
+SELECT fci.field_name, fcs.type, fci.data AS instance_data
 FROM field_config_instance fci
 JOIN field_config fcs ON fci.field_name = fcs.field_name
 WHERE fci.entity_type = 'paragraphs_item'
@@ -61,6 +61,35 @@ WHERE fci.entity_type = 'paragraphs_item'
   AND fcs.type = 'paragraphs'
   AND fci.deleted = 0;
 ```
+
+Any row means the bundle is a container. The child bundles are in the PHP-serialized
+`instance_data`: `settings` → `allowed_bundles` maps each bundle name to itself when
+allowed and to `-1` when not (`s:15:"allowed_bundles";a:2:{s:4:"text";s:4:"text";s:5:"image";i:-1;}`
+allows `text` only). An empty `allowed_bundles` array allows every paragraph bundle:
+list them with `SELECT bundle FROM paragraphs_bundle`.
+
+Count active children on Drupal 7 through the host field tables. `{parent_field}` is
+the node field that references this container (from `drupal-migrate-parent-context`,
+Drupal 7 differences) and `{child_ref_field}` is the field found above. The
+`field_data_*` tables hold the current revision of each host, so the join follows the
+revision the published node actually uses:
+
+```sql
+SELECT COUNT(DISTINCT c.{child_ref_field}_value) AS active_children
+FROM node n
+JOIN field_data_{parent_field} ref
+  ON ref.entity_type = 'node' AND ref.entity_id = n.nid AND ref.deleted = 0
+JOIN paragraphs_item p
+  ON p.item_id = ref.{parent_field}_value AND p.bundle = '{bundle}' AND p.archived = 0
+JOIN field_data_{child_ref_field} c
+  ON c.entity_type = 'paragraphs_item' AND c.entity_id = p.item_id AND c.deleted = 0
+WHERE n.status = 1;
+```
+
+When the container is itself nested, replace `node n` and `ref` with the host chain from
+`drupal-migrate-parent-context` (Drupal 7 differences, Step 3) and keep the final
+`p → c` pair. The outputs `child_bundles` and `active_child_count` are filled from these
+two queries on Drupal 7; Steps 1 and 3 are Drupal 8+ only.
 
 ### Step 3 — Count active children from published content (Drupal 8+)
 

@@ -47,8 +47,24 @@ Use `{main_table}`, `{base_table}`, `{id_column}`, `{field_data_prefix}`, `{conf
 
 ### Step 0 — Enumerate base fields
 
-Before querying configurable fields, list the **base fields** for the entity type from the
-Entity-Type Context reference (`.agents/references/migrate/entity-type-context.md`, section "Base Fields Per Entity Type").
+Before querying configurable fields, list the **base fields** for the entity type.
+Branch on `source_version`:
+
+- **Drupal 8+**: from the Entity-Type Context reference
+  (`.agents/references/migrate/entity-type-context.md`, section "Base Fields Per Entity
+  Type").
+- **Drupal 7**: that reference does not apply (no `langcode`, `uuid`, `parent_id` or
+  `created` on a D7 paragraph, for example). Use the real columns of the D7 entity tables:
+
+  | Entity type     | Table                | Base columns                                                                                                       |
+  | --------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+  | `node`          | `node`               | `nid`, `vid`, `type`, `language`, `title`, `uid`, `status`, `created`, `changed`, `promote`, `sticky`, `translate` |
+  | `paragraph`     | `paragraphs_item`    | `item_id`, `revision_id`, `bundle`, `field_name`, `archived`                                                       |
+  | `taxonomy_term` | `taxonomy_term_data` | `tid`, `vid`, `name`, `description`, `format`, `weight`                                                            |
+  | `user`          | `users`              | `uid`, `name`, `mail`, `status`, `created`, `access`, `login`, `language`                                          |
+
+  Required on D7: `title` and `type` (node), `bundle` (paragraph), `name` and `vid`
+  (term), `name` (user); the rest are optional and measured.
 
 Include these in the field report with:
 

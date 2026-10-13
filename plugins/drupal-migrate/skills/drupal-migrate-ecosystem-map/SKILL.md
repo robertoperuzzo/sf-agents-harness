@@ -34,8 +34,13 @@ Find integrations from three sources, not from assumption:
 
   ```bash
   grep -rEi "https?://[a-z0-9.-]+\.(com|net|io|azurewebsites\.net)" <codebase> --include="*.php" --include="*.js" 2>/dev/null | sort -u
-  grep -rEi "client_id|client_secret|api_key|oauth|odata|webhook" <codebase> 2>/dev/null
+  # Filenames only: never print the matching lines, they can contain the secret values.
+  grep -rEil "client_id|client_secret|api_key|oauth|odata|webhook" <codebase> 2>/dev/null | sort -u
   ```
+
+  Open each listed file and read the setting names and endpoints around the match.
+  Record where the credential lives (file, setting key, env variable), never its value,
+  and never echo those lines into the report or the tool log.
 
 - **Stored config in the DB** — connector settings, API endpoints, list IDs.
 
