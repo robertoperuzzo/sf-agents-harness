@@ -62,6 +62,11 @@ Skills that only apply to a Drupal source SHALL refuse to run when `source_tech`
 - **WHEN** `source_tech` is `wordpress` and `drupal-migrate-parent-context` is invoked
 - **THEN** the invocation is refused with a message stating the skill is Drupal-only, and no query runs
 
+#### Scenario: Refused skill is not performed inline
+
+- **WHEN** a Drupal-only skill has refused to run and the agent's fallback rule for unloaded skills applies
+- **THEN** the agent records the refusal in the report and does not run the skill's documented queries itself
+
 ### Requirement: DB-only delivery skips codebase analysis
 
 The plugin SHALL skip `drupal-migrate-codebase-scan` when `delivery` is `db-only`, SHALL record the skip in the as-is documentation, and SHALL NOT infer a custom-code inventory from the database alone.
@@ -73,12 +78,17 @@ The plugin SHALL skip `drupal-migrate-codebase-scan` when `delivery` is `db-only
 
 ### Requirement: Entity type is resolved from the source database
 
-For a Drupal source, the plugin SHALL resolve a bundle's entity type by querying the source database's field or bundle configuration, SHALL honour an explicit mapping in `project-config.md` first, and SHALL NOT infer the entity type from words in the bundle name.
+For a Drupal source, the plugin SHALL resolve a bundle's entity type by querying the source database's bundle configuration (node types, paragraph types, vocabularies, media or file types, block types), SHALL honour an explicit mapping in `project-config.md` first, SHALL NOT decide whether a bundle exists from its field configuration, and SHALL NOT infer the entity type from words in the bundle name.
 
 #### Scenario: Bundle exists in the source
 
 - **WHEN** a bundle name is given without an entity type and the source is Drupal 8+
-- **THEN** the entity type is read from the configuration entries for that bundle and reported with the query used
+- **THEN** the entity type is read from the bundle configuration entry for that name and reported with the query used
+
+#### Scenario: Bundle has no configurable fields
+
+- **WHEN** the bundle exists but has no field configuration entries (a node type with only base fields, an empty vocabulary)
+- **THEN** the entity type is still resolved from the bundle configuration and the run does not report the bundle as missing
 
 #### Scenario: Bundle exists under two entity types
 

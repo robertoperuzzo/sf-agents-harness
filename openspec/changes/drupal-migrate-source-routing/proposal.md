@@ -26,10 +26,12 @@ _(none; the plugin has no existing specs under `openspec/specs/`)_
 
 ## Impact
 
-- `plugins/drupal-migrate/skills/*/SKILL.md`: the 7 skills with a "Drupal 7 differences" block and the 4 skills with WordPress/Drupal branches are restructured into a variant-free body plus `variants/<source>.md` files. Prose length per loaded skill drops; behaviour per source is unchanged.
-- `plugins/drupal-migrate/agents/drupal-migration-analyst.agent.md`: the entity-type inference rule and the per-step `source_version` passing are replaced by references to the routing facts.
+- `plugins/drupal-migrate/skills/*/SKILL.md`: the 7 skills that branch on Drupal 7 (5 with a "Drupal 7 differences" block, 2 with Drupal 7 step headings) and the 4 skills with WordPress/Drupal branches other than `detect-source` are restructured into a variant-free body plus `variants/<source>.md` files. Prose length per loaded skill drops; behaviour per source is unchanged.
+- `plugins/drupal-migrate/agents/drupal-migration-analyst.agent.md`: the entity-type inference rule and the per-step `source_version` passing are replaced by references to the routing facts; the "perform inline if a skill is not loaded" rule no longer applies to a skill that refused to run.
+- `plugins/drupal-migrate/skills/drupal-migrate-verify-content/SKILL.md` and the new classifier client: the classifier path fetches and strips page content outside the agent context, which does not exist in the skill today; JavaScript-rendered or authenticated pages stay on the LLM path.
 - `plugins/drupal-migrate/references/project-config.template.md`: new optional `Classifier` section (enable flag, model id, confidence thresholds, allowed data classes).
-- `plugins/drupal-migrate/hooks/`: new hooks module, new `.claude-plugin/plugin.json` fields for the mod. Claude Code only; mods do not run in the Copilot or OpenCode profiles.
+- `plugins/drupal-migrate/hooks/`: new hooks module, new `.claude-plugin/plugin.json` fields for the mod. Claude Code only; mods do not run in the Copilot or OpenCode profiles. The module loads routing facts on the first `drupal-migrate-*` skill call, not in every session, and runs host commands only in the CLI.
+- `.github/workflows/`: a new step validating the plugin's hooks module; no workflow validates plugins today.
 - New external dependency, optional: TypeSafe Jev API (`TYPESAFE_API_KEY`, `https://api.typesafe.ai/v1/systemone`). Sending source content to it requires a data-processing agreement; the capability spec makes that a precondition.
 - `plugins/drupal-migrate/.claude-plugin/plugin.json`: version bump. `README.md` and `CHANGELOG.md` updated.
 - No change to `SYSTEM.md` or `config/catalog.json` (plugins are not sparkdock-synced).

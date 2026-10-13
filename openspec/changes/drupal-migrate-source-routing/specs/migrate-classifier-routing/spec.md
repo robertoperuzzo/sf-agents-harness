@@ -31,12 +31,31 @@ The plugin SHALL send source content to the classifier only when `project-config
 
 ### Requirement: Questions are typed and batched
 
-Each classifier request SHALL carry one typed question per item (a choice over a closed option set, a score on ordered levels, or a yes/no), with the item content as state, and SHALL batch all items of a skill run into as few requests as the provider's limits allow.
+Each classifier request SHALL carry one typed question per item (a choice over a closed option set, a score on ordered levels, or a yes/no), with the item content as state, and SHALL batch the items of a skill run into requests of at most the configured batch size rather than one request per item.
 
 #### Scenario: Codebase scan with 50 custom plugins
 
-- **WHEN** `codebase-scan` runs with the classifier enabled on 50 custom plugins
-- **THEN** each plugin becomes one choice question over `replicate`, `triage`, `do_not_port` and `other`, and the questions are sent together rather than one request per plugin
+- **WHEN** `codebase-scan` runs with the classifier enabled on 50 custom plugins and the batch size is 50
+- **THEN** each plugin becomes one choice question over `replicate`, `triage`, `do_not_port` and `other`, and the questions are sent in one request rather than one request per plugin
+
+#### Scenario: Request rejected as too large
+
+- **WHEN** a batched request is rejected by the provider as too large
+- **THEN** the client halves the batch and retries once, and items still rejected are routed to the LLM path
+
+### Requirement: Item content is fetched outside the agent context
+
+When the classifier is enabled, the plugin SHALL obtain the content of each item (plugin source, page body) through the classifier client, not through the agent, and SHALL present the agent only with item references and the routing result.
+
+#### Scenario: Page pair on the classifier path
+
+- **WHEN** `verify-content` classifies a page pair
+- **THEN** the classifier client fetches both pages, strips navigation, header, footer, script and style content, sends the remaining text as state, and the agent does not open either page unless the pair is routed to the LLM path
+
+#### Scenario: Page cannot be fetched without a browser
+
+- **WHEN** a page needs JavaScript rendering or authentication the fetch cannot carry, or yields no main content after stripping
+- **THEN** the pair is routed to the LLM path with the reason recorded, and the existing browser-based comparison runs for it
 
 #### Scenario: Field mapping with no plausible destination
 
