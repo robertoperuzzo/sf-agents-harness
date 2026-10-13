@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-source
-description: "Identify the source system of a migration into Drupal before any analysis — the source technology (WordPress, Drupal 7, Drupal 8+, or another CMS), whether it is single-site or multisite, whether the full codebase is available or only a database dump, and which read-only DB access method to use (drush / wp-cli / ddev / mysql). Use as the very first step of any migration analysis, before db-discover and before any source query. Returns routing facts that every later skill depends on; writes no documentation."
+description: 'Identify the source system of a migration into Drupal before any analysis — the source technology (WordPress, Drupal 7, Drupal 8+, or another CMS), whether it is single-site or multisite, whether the full codebase is available or only a database dump, and which read-only DB access method to use (drush / wp-cli / ddev / mysql). Use as the very first step of any migration analysis, before db-discover and before any source query, and whenever someone hands over a dump or repo with "we''re migrating this site to Drupal". Returns routing facts that every later skill depends on; writes no documentation.'
 ---
 
 # Detect the migration source system

@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-resolve-examples
-description: "Resolve live URLs for example nodes from the source Drupal database — one representative node per parent bundle. Compulsory step in every full source analysis. Does NOT take screenshots (use drupal-migrate-live-screenshots for that)."
+description: 'Resolve live URLs for representative example content from a Drupal source database: one published node per parent bundle that uses the bundle under analysis, including paragraphs, terms and media reached through their parent nodes. A required, automatic step in every full bundle analysis. Use when asked "find an example page for X", "where can I see Y on the live site", or "give me sample URLs for this bundle". Drupal 7 and Drupal 8+ sources, with a project-config override for custom URL resolution. Does not take screenshots; drupal-migrate-live-screenshots does that.'
 ---
 
 # Resolve live example URLs

@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-field-population
-description: "Measure field population percentages for a source entity bundle — for each field, count how many active instances actually contain data, so fields at 0% can be flagged as non-migration candidates. Use after querying fields with drupal-migrate-query-fields, when deciding which fields are worth migrating."
+description: 'Measure how full each field of a Drupal source bundle actually is: for every field, the share of active instances that hold data, so empty (0%) and near-empty fields can be flagged as non-migration candidates. Use after drupal-migrate-query-fields, when asked "which fields are actually used", "which fields are empty", "is field_x worth migrating", or when trimming a bundle''s field mapping. Drupal 7 and Drupal 8+ sources only.'
 ---
 
 # Measure Field Population
