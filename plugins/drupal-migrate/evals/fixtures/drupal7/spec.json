@@ -1,0 +1,159 @@
+{
+  "kind": "drupal7",
+  "database": "drupal7",
+  "seed": 20261007,
+  "epoch": 1750000000,
+  "site_name": "Drupal 7 fixture",
+  "site_mail": "site@drupal7.example",
+  "core_minor": 103,
+  "node_language": "und",
+  "source": {
+    "technology": "drupal7",
+    "topology": "single",
+    "delivery": "db-only",
+    "drupal_major": 7,
+    "base_url": "https://www.drupal7.example",
+    "default_langcode": "en",
+    "languages": [
+      "en"
+    ]
+  },
+  "modules": [
+    {
+      "name": "system",
+      "status": 1,
+      "core": true
+    },
+    {
+      "name": "node",
+      "status": 1,
+      "core": true
+    },
+    {
+      "name": "user",
+      "status": 1,
+      "core": true
+    },
+    {
+      "name": "field",
+      "status": 1,
+      "core": true
+    },
+    {
+      "name": "field_sql_storage",
+      "status": 1,
+      "core": true
+    },
+    {
+      "name": "text",
+      "status": 1,
+      "core": true
+    },
+    {
+      "name": "paragraphs",
+      "status": 1,
+      "version": "7.x-1.0"
+    },
+    {
+      "name": "views",
+      "status": 0,
+      "version": "7.x-3.28"
+    },
+    {
+      "name": "webform",
+      "status": 0,
+      "version": "7.x-4.24"
+    },
+    {
+      "name": "pathauto",
+      "status": 0,
+      "version": "7.x-1.3"
+    }
+  ],
+  "themes": [
+    "bartik",
+    "seven"
+  ],
+  "users": [
+    {
+      "name": "admin",
+      "mail": "admin@drupal7.example",
+      "status": 1
+    },
+    {
+      "name": "editor",
+      "mail": "editor@drupal7.example",
+      "status": 1
+    },
+    {
+      "name": "legacy-author",
+      "mail": "legacy@drupal7.example",
+      "status": 0
+    }
+  ],
+  "fields": {
+    "body": {
+      "type": "text_with_summary",
+      "cardinality": 1
+    },
+    "field_subtitle": {
+      "type": "text",
+      "cardinality": 1
+    },
+    "field_slides": {
+      "type": "paragraphs",
+      "cardinality": -1
+    }
+  },
+  "node_bundles": {
+    "article": {
+      "label": "Article",
+      "count": 8,
+      "revisions": 2,
+      "unpublished": 1,
+      "alias_prefix": "news",
+      "fields": {
+        "body": {
+          "label": "Body",
+          "population": 1.0
+        },
+        "field_subtitle": {
+          "label": "Subtitle",
+          "population": 0.0
+        },
+        "field_slides": {
+          "label": "Slides",
+          "population": 1.0,
+          "children": [
+            "slide"
+          ]
+        }
+      }
+    },
+    "page": {
+      "label": "Basic page",
+      "count": 3,
+      "revisions": 1,
+      "unpublished": 0,
+      "alias_prefix": "pages",
+      "fields": {
+        "body": {
+          "label": "Body",
+          "population": 1.0
+        }
+      }
+    }
+  },
+  "paragraph_bundles": {
+    "slide": {
+      "label": "Slide",
+      "fields": {},
+      "orphans": 1,
+      "orphan_parent": {
+        "type": "node",
+        "bundle": "article",
+        "field": "field_slides"
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "kind": "wordpress",
+  "database": "wordpress",
+  "prefix": "wp_",
+  "seed": 20261012,
+  "epoch": 1755000000,
+  "source": {
+    "technology": "wordpress",
+    "topology": "single",
+    "delivery": "db-only",
+    "base_url": "https://www.wordpress.example",
+    "default_langcode": "en",
+    "languages": ["en", "it"]
+  },
+  "site": {
+    "blogname": "WordPress fixture",
+    "blogdescription": "Synthetic single-site source",
+    "admin_email": "admin@wordpress.example",
+    "db_version": 57155,
+    "permalink_structure": "/%postname%/",
+    "theme": "twentytwentyfour",
+    "wplang": ""
+  },
+  "plugins": [
+    {"file": "advanced-custom-fields/acf.php", "name": "Advanced Custom Fields"},
+    {"file": "sitepress-multilingual-cms/sitepress.php", "name": "WPML Multilingual CMS"},
+    {"file": "woocommerce/woocommerce.php", "name": "WooCommerce"},
+    {"file": "wordpress-seo/wp-seo.php", "name": "Yoast SEO"},
+    {"file": "contact-form-7/wp-contact-form-7.php", "name": "Contact Form 7"},
+    {"file": "redirection/redirection.php", "name": "Redirection"}
+  ],
+  "users": [
+    {"login": "admin", "email": "admin@wordpress.example", "role": "administrator"},
+    {"login": "editor", "email": "editor@wordpress.example", "role": "editor"},
+    {"login": "author", "email": "author@wordpress.example", "role": "author"}
+  ],
+  "terms": {
+    "category": ["Uncategorized", "News", "Events"],
+    "product_cat": ["Books"]
+  },
+  "post_types": {
+    "post": {
+      "label": "Post",
+      "publish": 15,
+      "draft": 3,
+      "revisions": 2,
+      "translations": {"it": 10},
+      "categories": ["News", "Events", "Uncategorized"]
+    },
+    "page": {
+      "label": "Page",
+      "publish": 6
+    },
+    "product": {
+      "label": "Product",
+      "publish": 4,
+      "custom": true,
+      "acf": {
+        "group": "Product details",
+        "fields": [
+          {"name": "price", "type": "number", "key": "field_fx_price", "sample": "%d9.90"},
+          {"name": "sku", "type": "text", "key": "field_fx_sku", "sample": "FX-%03d"}
+        ]
+      }
+    }
+  },
+  "menus": {
+    "main": [
+      {"title": "Home", "url": "https://www.wordpress.example/"},
+      {"title": "About", "post_type": "page", "index": 0},
+      {"title": "Team", "post_type": "page", "index": 1, "parent": "About"},
+      {"title": "Shop", "post_type": "product", "index": 0}
+    ]
+  }
+}

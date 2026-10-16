@@ -1,0 +1,166 @@
+{
+  "content_inventory": {
+    "posts": {
+      "acf-field-group/publish": 1,
+      "acf-field/publish": 2,
+      "nav_menu_item/publish": 4,
+      "page/publish": 6,
+      "post/draft": 3,
+      "post/publish": 25,
+      "product/publish": 4,
+      "revision/inherit": 2
+    }
+  },
+  "examples": {
+    "page": {
+      "ID": 31,
+      "slug": "page-1",
+      "title": "Page 1",
+      "url": "https://www.wordpress.example/page-1/"
+    },
+    "post": {
+      "ID": 1,
+      "slug": "post-1",
+      "title": "Post 1",
+      "url": "https://www.wordpress.example/post-1/"
+    },
+    "product": {
+      "ID": 37,
+      "slug": "product-1",
+      "title": "Product 1",
+      "url": "https://www.wordpress.example/product-1/"
+    }
+  },
+  "fixture": "wordpress",
+  "generator_version": "2",
+  "kind": "wordpress",
+  "language_coverage": {
+    "rows_by_language": {
+      "en": 28,
+      "it": 10
+    },
+    "source": "wp_icl_translations"
+  },
+  "menus": {
+    "main": {
+      "items": 4,
+      "top_level": 3
+    }
+  },
+  "options": {
+    "db_version": "57155",
+    "permalink_structure": "/%postname%/",
+    "siteurl": "https://www.wordpress.example",
+    "theme": "twentytwentyfour"
+  },
+  "plugins": {
+    "active": [
+      "advanced-custom-fields/acf.php",
+      "contact-form-7/wp-contact-form-7.php",
+      "redirection/redirection.php",
+      "sitepress-multilingual-cms/sitepress.php",
+      "woocommerce/woocommerce.php",
+      "wordpress-seo/wp-seo.php"
+    ],
+    "count": 6,
+    "names": {
+      "advanced-custom-fields/acf.php": "Advanced Custom Fields",
+      "contact-form-7/wp-contact-form-7.php": "Contact Form 7",
+      "redirection/redirection.php": "Redirection",
+      "sitepress-multilingual-cms/sitepress.php": "WPML Multilingual CMS",
+      "woocommerce/woocommerce.php": "WooCommerce",
+      "wordpress-seo/wp-seo.php": "Yoast SEO"
+    },
+    "source": "wp_options.active_plugins",
+    "wpml_active": true
+  },
+  "post_types": {
+    "page": {
+      "custom_post_type": false,
+      "draft": 0,
+      "label": "Page",
+      "originals": 6,
+      "publish": 6,
+      "revision_rows": 0,
+      "rows_including_revisions": 6,
+      "total_rows": 6,
+      "translations": {}
+    },
+    "post": {
+      "custom_post_type": false,
+      "draft": 3,
+      "label": "Post",
+      "originals": 18,
+      "publish": 25,
+      "revision_rows": 2,
+      "rows_including_revisions": 30,
+      "total_rows": 28,
+      "translations": {
+        "it": 10
+      }
+    },
+    "product": {
+      "acf": {
+        "fields": [
+          "price",
+          "sku"
+        ],
+        "group": "Product details"
+      },
+      "custom_post_type": true,
+      "draft": 0,
+      "label": "Product",
+      "originals": 4,
+      "publish": 4,
+      "revision_rows": 0,
+      "rows_including_revisions": 4,
+      "total_rows": 4,
+      "translations": {}
+    }
+  },
+  "signature": {
+    "absent": [
+      "wp_blogs",
+      "wp_site",
+      "wp_sitemeta"
+    ],
+    "present": [
+      "wp_posts",
+      "wp_options",
+      "wp_postmeta"
+    ]
+  },
+  "source": {
+    "base_url": "https://www.wordpress.example",
+    "database": "wordpress",
+    "db_key": "",
+    "default_langcode": "en",
+    "delivery": "db-only",
+    "languages": [
+      "en",
+      "it"
+    ],
+    "multisite_tables_present": false,
+    "table_prefix": "wp_",
+    "technology": "wordpress",
+    "topology": "single"
+  },
+  "tables": [
+    "wp_icl_translations",
+    "wp_options",
+    "wp_postmeta",
+    "wp_posts",
+    "wp_term_relationships",
+    "wp_term_taxonomy",
+    "wp_terms",
+    "wp_usermeta",
+    "wp_users"
+  ],
+  "terms": {
+    "category": 3,
+    "product_cat": 1
+  },
+  "users": {
+    "count": 3
+  }
+}

@@ -25,9 +25,16 @@ the spec `epoch`. The dump preamble creates the SELECT-only `reader` user that
 `fixture query` connects as, so the dump must be imported as root.
 
 `project-config.md` declares only what a real project would declare: technology,
-topology, delivery, database key, the read-only runner, languages and URL rules. It
-must not contain any value a grader checks (counts, bundle structure, detection
-results), because the scaffold installs it in both eval arms.
+topology, delivery, database key or table prefix, the read-only runner, languages and
+URL rules. It must not contain any value a grader checks (counts, bundle structure,
+detection results), because the scaffold installs it in both eval arms. The `unknown`
+fixture has no config file: the negative case that uses it must not be told what the
+source is.
+
+Both `generate` and `--check` scan the dump and `expected.json` for URLs and e-mail
+addresses and fail on any host that does not end in `.example` or `example.com`.
+`--check` also scans the committed files, so a hand edit that leaks a real host fails
+even before the drift diff.
 
 ## Lifecycle: `bin/fixture`
 
@@ -74,7 +81,7 @@ fixtures/bin/fixture-parser-test
 
 | Key        | Type   | Meaning                                                                                                                                   |
 | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `kind`     | string | builder to use: `drupal8` (Drupal 8+). `drupal7`, `wordpress` and `unknown` are added with their fixtures                                 |
+| `kind`     | string | builder to use: `drupal8` (Drupal 8+), `drupal7`, `wordpress` or `unknown`                                                                |
 | `database` | string | schema name created by the dump and granted to `reader`                                                                                   |
 | `seed`     | int    | seed of the `random.Random` instance behind every sampled choice and UUID                                                                 |
 | `epoch`    | int    | base Unix timestamp; every `created`/`changed` value is `epoch` plus a fixed offset                                                       |
@@ -130,6 +137,60 @@ Paragraph bundle keys:
   `paragraphs_item_field_data`: the last instance of that paragraph bundle, or the last
   node of that node bundle. A join on `parent_id` finds them; a join through the
   reference table does not, which is the trap the orphans exist for.
+
+### `drupal7` keys
+
+| Key                                    | Meaning                                                                                                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source.drupal_major`                  | always 7; recorded in `expected.json`                                                                                                                                      |
+| `site_name`, `site_mail`, `core_minor` | `variable` rows and the core version string in `system.info`                                                                                                               |
+| `node_language`                        | `language` column of `node`, `url_alias` and every field row; `und` for a monolingual site                                                                                 |
+| `modules`                              | list of `{name, status, core?, version?}`; one `system` row each, `status` 1 enabled, 0 disabled. Core modules live under `modules/`, others under `sites/all/modules/`    |
+| `themes`                               | `system` rows of type `theme`; the first is `theme_default`                                                                                                                |
+| `users`                                | `{name, mail, status}`; uid 0 is always added                                                                                                                              |
+| `vocabularies`                         | optional `{machine_name: {label, terms}}`; `taxonomy_vocabulary` and `taxonomy_term_data` exist only when given                                                            |
+| `fields`                               | `{field_name: {type, cardinality?}}`: one `field_config` row each. Types: `text`, `text_long`, `text_with_summary`, `taxonomy_term_reference` (`vocabulary`), `paragraphs` |
+| `node_bundles`                         | `{type: {label, count, revisions, unpublished, alias_prefix, fields}}`; `fields` references names from `fields` and adds `label`, `population`, `children`                 |
+| `paragraph_bundles`                    | `{bundle: {label, fields, orphans?, orphan_parent?}}`; bundles may have no fields                                                                                          |
+| `menus`                                | optional `{menu_name: [{title, path or nid, parent?}]}` for `menu_custom` and `menu_links`                                                                                 |
+
+Differences from `drupal8`: one `url_alias` row per node (`alias_prefix` is a string, no
+leading slash in the alias); `node` holds one row per entity and the revision trap
+lives in `node_revision` and `field_revision_*`; a `paragraphs` field row stores
+`item_id` and `revision_id` in `field_data_<field>`; orphans are `paragraphs_item` rows
+with the host `field_name` set but no `field_data_<field>` row pointing at them.
+`expected.json` adds `fields` (the `field_config` list) and `url_aliases`.
+
+### `wordpress` keys
+
+| Key          | Meaning                                                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `prefix`     | table prefix, `wp_`; recorded as `source.table_prefix`                                                                                   |
+| `site`       | `blogname`, `blogdescription`, `admin_email`, `db_version`, `permalink_structure`, `theme`, `wplang`: rows of `{prefix}options`          |
+| `plugins`    | list of `{file, name, active?}`; active ones form the serialized `active_plugins` option                                                 |
+| `users`      | `{login, email, role}`; one `{prefix}users` row and a `{prefix}capabilities` usermeta row each                                           |
+| `terms`      | `{taxonomy: [names]}` for `{prefix}terms` and `{prefix}term_taxonomy`                                                                    |
+| `post_types` | `{type: {label, publish, draft?, revisions?, translations?, categories?, custom?, acf?}}` (see below)                                    |
+| `menus`      | `{menu_name: [{title, url or post_type + index, parent?}]}`: a `nav_menu` term plus `nav_menu_item` posts with their `_menu_item_*` meta |
+
+Post type keys: `publish` and `draft` count original posts in the default language;
+`translations` (`{langcode: n}`) adds one translated post for each of the first `n`
+originals and links them through `{prefix}icl_translations` with a shared `trid`;
+`revisions` adds that many `post_type = revision`, `post_status = inherit` rows whose
+`post_parent` is a published original; `categories` assigns originals round-robin;
+`acf` (`{group, fields: [{name, type, key, sample}]}`) writes two postmeta rows per field
+and post (`name` and `_name`) plus the `acf-field-group` and `acf-field` definition
+posts. `expected.json` records `post_types.<type>` (publish, draft, originals,
+translations, revision rows), `content_inventory.posts` keyed `type/status`,
+`plugins`, `language_coverage.rows_by_language`, `options` and `menus`. No multisite
+table is ever created.
+
+### `unknown` keys
+
+`source` (`delivery`, `base_url`, `default_langcode`, `languages`), `users`
+(`{username, email, is_admin?}`) and `pages` (`{count, published}`). The dump holds
+`cms_pages` and `cms_users` only; `expected.json.source.technology` is `other` and the
+listed `absent` tables are every signature the detect-source skill knows.
 
 ### Ground truth produced for `drupal8`
 

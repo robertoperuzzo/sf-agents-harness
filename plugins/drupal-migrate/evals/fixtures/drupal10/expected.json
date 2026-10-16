@@ -224,7 +224,7 @@
     }
   },
   "fixture": "drupal10",
-  "generator_version": "1",
+  "generator_version": "2",
   "kind": "drupal8",
   "language_coverage": {
     "article": {

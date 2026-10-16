@@ -1,0 +1,241 @@
+{
+  "content_inventory": {
+    "node": {
+      "article": {
+        "languages": {
+          "und": 8
+        },
+        "published": 7,
+        "total": 8
+      },
+      "page": {
+        "languages": {
+          "und": 3
+        },
+        "published": 3,
+        "total": 3
+      }
+    }
+  },
+  "entities": {
+    "node": {
+      "article": {
+        "active": 7,
+        "child_bundles": [
+          "slide"
+        ],
+        "distinct": 8,
+        "fields": {
+          "body": {
+            "populated": 8,
+            "population_pct": 100.0,
+            "type": "text_with_summary"
+          },
+          "field_slides": {
+            "populated": 8,
+            "population_pct": 100.0,
+            "target_bundles": [
+              "slide"
+            ],
+            "target_type": "paragraphs_item",
+            "type": "paragraphs"
+          },
+          "field_subtitle": {
+            "populated": 0,
+            "population_pct": 0.0,
+            "type": "text"
+          }
+        },
+        "label": "Article",
+        "languages": [
+          "und"
+        ],
+        "node_revision_rows": 16,
+        "node_rows": 8,
+        "parent_bundles": [],
+        "revisions_per_entity": 2,
+        "unpublished": 1
+      },
+      "page": {
+        "active": 3,
+        "child_bundles": [],
+        "distinct": 3,
+        "fields": {
+          "body": {
+            "populated": 3,
+            "population_pct": 100.0,
+            "type": "text_with_summary"
+          }
+        },
+        "label": "Basic page",
+        "languages": [
+          "und"
+        ],
+        "node_revision_rows": 3,
+        "node_rows": 3,
+        "parent_bundles": [],
+        "revisions_per_entity": 1,
+        "unpublished": 0
+      }
+    },
+    "paragraph": {
+      "slide": {
+        "active": 7,
+        "attached": 8,
+        "child_bundles": [],
+        "distinct": 9,
+        "fields": {},
+        "is_container": false,
+        "label": "Slide",
+        "orphans": 1,
+        "parent_bundles": [
+          {
+            "field": "field_slides",
+            "parent_bundle": "article",
+            "parent_type": "node"
+          }
+        ],
+        "root_node_bundles": [
+          "article"
+        ]
+      }
+    },
+    "taxonomy_term": {},
+    "user": {
+      "user": {
+        "active": 2,
+        "child_bundles": [],
+        "distinct": 3,
+        "fields": {},
+        "parent_bundles": [],
+        "rows_including_anonymous": 4
+      }
+    }
+  },
+  "examples": {
+    "article": {
+      "alias": "/news/article-1",
+      "nid": 1,
+      "title": "Article 1",
+      "url": "https://www.drupal7.example/news/article-1"
+    },
+    "page": {
+      "alias": "/pages/basic-page-1",
+      "nid": 9,
+      "title": "Basic page 1",
+      "url": "https://www.drupal7.example/pages/basic-page-1"
+    }
+  },
+  "fields": {
+    "body": {
+      "module": "text",
+      "type": "text_with_summary"
+    },
+    "field_slides": {
+      "module": "paragraphs",
+      "type": "paragraphs"
+    },
+    "field_subtitle": {
+      "module": "text",
+      "type": "text"
+    }
+  },
+  "fixture": "drupal7",
+  "generator_version": "2",
+  "kind": "drupal7",
+  "language_coverage": {
+    "article": {
+      "und": 8
+    },
+    "page": {
+      "und": 3
+    }
+  },
+  "menus": {},
+  "modules": {
+    "count": 7,
+    "count_installed": 10,
+    "disabled": [
+      "pathauto",
+      "views",
+      "webform"
+    ],
+    "enabled": [
+      "field",
+      "field_sql_storage",
+      "node",
+      "paragraphs",
+      "system",
+      "text",
+      "user"
+    ],
+    "installed": [
+      "field",
+      "field_sql_storage",
+      "node",
+      "paragraphs",
+      "pathauto",
+      "system",
+      "text",
+      "user",
+      "views",
+      "webform"
+    ],
+    "source": "system",
+    "themes": [
+      "bartik",
+      "seven"
+    ]
+  },
+  "signature": {
+    "absent": [
+      "config",
+      "key_value",
+      "node_field_data"
+    ],
+    "present": [
+      "field_config_instance",
+      "node"
+    ]
+  },
+  "source": {
+    "base_url": "https://www.drupal7.example",
+    "database": "drupal7",
+    "db_key": "drupal7",
+    "default_langcode": "en",
+    "delivery": "db-only",
+    "detect_version_result": "drupal7",
+    "drupal_major": 7,
+    "languages": [
+      "en"
+    ],
+    "node_language": "und",
+    "table_prefix": "",
+    "technology": "drupal7",
+    "topology": "single"
+  },
+  "tables": [
+    "field_config",
+    "field_config_instance",
+    "field_data_body",
+    "field_data_field_slides",
+    "field_data_field_subtitle",
+    "field_revision_body",
+    "field_revision_field_slides",
+    "field_revision_field_subtitle",
+    "node",
+    "node_revision",
+    "node_type",
+    "paragraphs_bundle",
+    "paragraphs_item",
+    "paragraphs_item_revision",
+    "system",
+    "url_alias",
+    "users",
+    "variable"
+  ],
+  "url_aliases": {
+    "count": 11,
+    "table": "url_alias"
+  }
+}

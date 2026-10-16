@@ -1,0 +1,17 @@
+{
+  "kind": "unknown",
+  "database": "unknown",
+  "seed": 20261001,
+  "epoch": 1740000000,
+  "source": {
+    "delivery": "db-only",
+    "base_url": "https://www.legacy-cms.example",
+    "default_langcode": "en",
+    "languages": ["en"]
+  },
+  "users": [
+    {"username": "root-editor", "email": "editor@legacy-cms.example", "is_admin": true},
+    {"username": "writer", "email": "writer@legacy-cms.example"}
+  ],
+  "pages": {"count": 6, "published": 5}
+}

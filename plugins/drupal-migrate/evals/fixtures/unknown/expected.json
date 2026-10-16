@@ -1,0 +1,45 @@
+{
+  "content_inventory": {
+    "cms_pages": {
+      "published": 5,
+      "total": 6
+    }
+  },
+  "fixture": "unknown",
+  "generator_version": "2",
+  "kind": "unknown",
+  "signature": {
+    "absent": [
+      "config",
+      "key_value",
+      "field_config_instance",
+      "node",
+      "wp_posts",
+      "wp_options",
+      "wp_postmeta",
+      "wp_blogs"
+    ],
+    "present": []
+  },
+  "source": {
+    "base_url": "https://www.legacy-cms.example",
+    "database": "unknown",
+    "db_key": "unknown",
+    "default_langcode": "en",
+    "delivery": "db-only",
+    "expected_behaviour": "stop and ask the user to confirm the source system",
+    "languages": [
+      "en"
+    ],
+    "table_prefix": "",
+    "technology": "other",
+    "topology": "unknown"
+  },
+  "tables": [
+    "cms_pages",
+    "cms_users"
+  ],
+  "users": {
+    "count": 2
+  }
+}
