@@ -85,6 +85,10 @@ allowed "SELECT 'a;b', \"c;d\", \`e;f\`"
 allowed "SELECT 'it''s; fine'"
 allowed "SELECT '\\'; still one'"
 allowed 'SELECT 1--1'
+allowed "SELECT alias FROM path_alias WHERE alias REGEXP '\\\\.[a-z]+$'"
+allowed "SELECT 1 FROM t WHERE body_value REGEXP 'https?://[a-z0-9.-]+\\\\.(com|net)'"
+allowed "SELECT 'a \\\\! b' AS s"
+allowed 'SELECT "x \\. y" AS s'
 allowed 'SELECT 1 -- trailing comment'
 allowed 'SELECT 1 AS `a`'
 
@@ -131,6 +135,9 @@ echo "# mariadb client commands"
 escape 'SELECT 1; \! id'
 escape '\! id'
 escape 'SELECT 1 \G'
+escape 'SELECT 1 \! id'
+escape "SELECT 'quoted' \\! id"
+escape "SELECT 1 /* c */ \\. /etc/passwd"
 escape '\. /etc/passwd'
 escape 'SELECT 1 \T /tmp/out'
 escape 'system id'

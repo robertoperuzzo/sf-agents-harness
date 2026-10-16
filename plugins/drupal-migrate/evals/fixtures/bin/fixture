@@ -308,13 +308,48 @@ statement_count() {
     END { if (seg) n++; print n }'
 }
 
+escape_outside_quotes() {
+  # Prints 1 when $1 holds a backslash followed by . ! ? # or a letter OUTSIDE quotes
+  # and comments (a mariadb short client command such as \! \. \G), 0 otherwise.
+  # Inside '...' or "..." a backslash is an SQL escape (REGEXP '\\.', LIKE '%\\_%').
+  printf '%s\n' "$1" | awk '
+    BEGIN { q = ""; mode = "code"; found = 0 }
+    {
+      line = $0 "\n"
+      len = length(line)
+      i = 1
+      while (i <= len) {
+        c = substr(line, i, 1)
+        d = substr(line, i, 2)
+        if (mode == "line_comment") { if (c == "\n") mode = "code"; i++; continue }
+        if (mode == "block_comment") { if (d == "*/") { mode = "code"; i += 2 } else i++; continue }
+        if (q != "") {
+          if (c == "\\" && q != "`") { i += 2; continue }
+          if (c == q) { q = "" }
+          i++; continue
+        }
+        if (c == "\047" || c == "\"" || c == "`") { q = c; i++; continue }
+        if (d == "--") {
+          e = substr(line, i + 2, 1)
+          if (e == "" || e ~ /[ \t\r\n]/) { mode = "line_comment"; i += 2; continue }
+          i += 2; continue
+        }
+        if (c == "#") { mode = "line_comment"; i++; continue }
+        if (d == "/*") { mode = "block_comment"; i += 2; continue }
+        if (c == "\\" && substr(line, i + 1, 1) ~ /[.!?#A-Za-z]/) { found = 1 }
+        i++
+      }
+    }
+    END { print found }'
+}
+
 check_statement() {
   # Exit 2 unless $1 is exactly one read-only SQL statement with no client escape.
   sql=$1
-  # 1. mariadb client commands: short form `\x` anywhere, long form at a line start.
-  case "$sql" in
-    *\\[.!?#A-Za-z]*) refuse "as a client command: backslash commands such as \\! \\. \\T \\P \\G are not allowed" ;;
-  esac
+  # 1. mariadb client commands: short form `\x` outside quotes, long form at a line start.
+  if [ "$(escape_outside_quotes "$sql")" = 1 ]; then
+    refuse "as a client command: backslash commands such as \\! \\. \\T \\P \\G are not allowed outside string literals"
+  fi
   if printf '%s\n' "$sql" | grep -iqE '^[[:space:]]*(system|source|tee|use|delimiter|pager|nopager|notee|prompt|connect|status|warnings|nowarning|edit|print|rehash|charset|resetconnection|exit|quit|clear|go|ego|help)([[:space:]]|$)'; then
     refuse "as a client command: system, source, tee and other client commands are not allowed at a line start"
   fi
