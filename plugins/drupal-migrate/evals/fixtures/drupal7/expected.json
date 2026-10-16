@@ -144,6 +144,8 @@
   },
   "fixture": "drupal7",
   "generator_version": "2",
+  "integration_count": 0,
+  "integrations": [],
   "kind": "drupal7",
   "language_coverage": {
     "article": {

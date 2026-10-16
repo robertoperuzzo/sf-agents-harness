@@ -887,6 +887,10 @@ def build_drupal8(spec, rng):
     expected["menus"] = menus_expected
 
     # -- table list for signature checks ----------------------------------
+    # The fixture declares no external integration (no connector config, no API endpoint),
+    # so the ecosystem map must report none.
+    expected["integrations"] = []
+    expected["integration_count"] = 0
     expected["tables"] = sorted(schema.tables)
     expected["signature"] = {"present": ["config", "key_value"], "absent": ["field_config_instance"]}
     for bspec in node_bundles.values():
@@ -1406,6 +1410,8 @@ def build_drupal7(spec, rng):
         menus_expected = build_drupal7_menus(spec, schema)
     expected["menus"] = menus_expected
 
+    expected["integrations"] = []
+    expected["integration_count"] = 0
     expected["tables"] = sorted(schema.tables)
     expected["signature"] = {"present": ["field_config_instance", "node"], "absent": ["config", "key_value", "node_field_data"]}
     for bspec in node_bundles.values():
