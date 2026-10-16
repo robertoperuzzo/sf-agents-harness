@@ -6,3 +6,7 @@ __pycache__/
 .idea/
 nuclei-out/
 .security-assessment/
+
+# drupal-migrate eval runner output
+plugins/*/evals/results/
+plugins/*/evals-live/results/

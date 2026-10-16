@@ -59,8 +59,9 @@ Not applicable: the source is WordPress.
 
 ### Connection command
 
-Run every query through the fixture runner, one statement per call. The command is on
-`PATH` in the eval workspace; outside it, call
+Run every query through the fixture runner, one statement per call. In the eval
+workspace the scaffold installs the runner as `.agents/bin/fixture` and rewrites the
+commands below to that path; outside it, call
 `plugins/drupal-migrate/evals/fixtures/bin/fixture` from the `sf-agents-harness` checkout.
 
 ```bash
