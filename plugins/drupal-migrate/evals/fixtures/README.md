@@ -56,7 +56,7 @@ results), because the scaffold installs it in both eval arms.
 | `node_bundles`                 | `{type: {label, count, revisions, unpublished, languages, alias_prefix, fields}}`        |
 | `paragraph_bundles`            | `{type: {label, fields, orphans?, orphan_parent?}}`                                      |
 | `redirects`                    | list of `{source, nid, language?, status_code?}` rows of the `redirect` table            |
-| `menus`                        | `{menu_name: [{title, uri                                                                | nid, parent?}]}`; `parent` names an earlier link title |
+| `menus`                        | `{menu_name: [{title, uri or nid, parent?}]}`; `parent` names an earlier link title      |
 
 Node bundle keys:
 
