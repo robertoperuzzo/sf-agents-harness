@@ -5,7 +5,7 @@ target:
   source: file
   path: doc/Migrate/as-is/content-inventory.md
 flags: i
-pattern: 'page[^\n]*(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])5(?![\w.,]?\d)'
+pattern: 'page[^\n;]{0,80}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])5(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)'
 ---
 
 The inventory row for `page` carries the distinct total 5.

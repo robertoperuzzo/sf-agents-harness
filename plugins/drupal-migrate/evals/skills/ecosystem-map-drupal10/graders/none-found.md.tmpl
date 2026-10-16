@@ -1,0 +1,13 @@
+---
+type: regex
+target:
+  source: file
+  path: doc/Migrate/as-is/ecosystem.md
+flags: i
+pattern: '(no|none|zero|{{expected.integration_count}})\b[^\n]{0,80}(integration|external system|connector|analytics|crm|newsletter|payment|sso)|(integration|external system)s?[^\n]{0,80}\b(none|not found|no evidence|absent|: {{expected.integration_count}}\b|found: {{expected.integration_count}}\b)'
+---
+
+`expected.json` records `integrations: {{expected.integrations}}` (count {{expected.integration_count}}) for this
+fixture: no connector config and no API endpoint exist. The document must state that
+absence in its own words (none found, no analytics, integrations: 0) instead of listing
+systems.

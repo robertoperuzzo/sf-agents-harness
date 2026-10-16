@@ -2,7 +2,7 @@
 type: regex
 target: last_message
 flags: i
-pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.text.distinct}}(?![\w.,]?\d)'
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.text.distinct}}(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)'
 ---
 
 The instance count for the `paragraph` / `field_items` parent is {{expected.entities.paragraph.text.distinct}} (every row of `paragraphs_item_field_data` with that parent, orphans included).

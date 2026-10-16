@@ -3,7 +3,7 @@
 type: regex
 target: last_message
 flags: i
-pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])12(?![\w.,]?\d)'
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])12(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)'
 ---
 
 The final message states the revision-safe total of distinct `article` nodes,

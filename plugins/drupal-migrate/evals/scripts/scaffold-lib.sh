@@ -72,6 +72,11 @@ dm_scaffold() {
   sed -E -e 's#`fixture (query|up|down|status) #`.agents/bin/fixture \1 #g' \
       -e 's#^fixture (query|up|down|status) #.agents/bin/fixture \1 #' \
       "$dm_fixture_dir/project-config.md" > .agents/references/migrate/project-config.md
+  # The installed config must not point the agent at the answer key or the case files.
+  if grep -qE 'evals/|expected\.json' .agents/references/migrate/project-config.md; then
+    echo "scaffold: the installed project-config.md names evals/ or expected.json; the fixture config must not reveal the answer key" >&2
+    return 1
+  fi
   if [ "$dm_phase" = "phase1" ]; then
     mkdir -p doc
   fi

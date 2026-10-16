@@ -2,7 +2,9 @@
 type: regex
 target: last_message
 flags: i
-pattern: '\bconfig\b[^\n]{0,120}(table|serializ)|(table|serializ)[^\n]{0,120}\bconfig\b'
+pattern: '`config`|\bconfig\s+table\b|\btable\s+`?config`?\b'
 ---
 
-The answer names the Drupal 8+ signature it found: field metadata in the `config` table.
+The answer names the Drupal 8+ signature it found: the `config` table (written as a
+table name, in backticks or next to the word table), not the word config in another
+sense.

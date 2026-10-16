@@ -2,7 +2,7 @@
 type: regex
 target: last_message
 flags: i
-pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.section.active_children}}(?![\w.,]?\d)'
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.section.active_children}}(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)'
 ---
 
 Active children in published content: {{expected.entities.paragraph.section.active_children}} (hero and text under the current revision of published pages).

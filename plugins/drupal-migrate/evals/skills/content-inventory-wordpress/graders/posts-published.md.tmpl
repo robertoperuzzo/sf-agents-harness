@@ -4,7 +4,7 @@ target:
   source: file
   path: doc/Migrate/as-is/content-inventory.md
 flags: i
-pattern: 'post[^\n]*(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.post_types.post.publish}}(?![\w.,]?\d)'
+pattern: 'post[^\n;]{0,80}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.post_types.post.publish}}(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)'
 ---
 
 The `post` row carries {{expected.post_types.post.publish}} published rows: this is `wp_posts` grouped by type and status, so it counts the {{expected.post_types.post.originals}} originals' published subset plus the {{expected.post_types.post.translations.it}} published Italian translation posts (design D3: 15 published originals plus 10 `it` translation posts).

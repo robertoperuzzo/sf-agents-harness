@@ -1,0 +1,9 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '{{expected.source.delivery|regex}}|db only|database[- ]only|no (source )?code(base)? (was )?delivered|not delivered'
+---
+
+The final message states the delivery recorded in `expected.json`
+(`{{expected.source.delivery}}`): the custom-code scan has no codebase to read.

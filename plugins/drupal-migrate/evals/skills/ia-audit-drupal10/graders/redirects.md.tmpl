@@ -2,7 +2,7 @@
 type: regex
 target: last_message
 flags: i
-pattern: 'redirect[^\n]{0,80}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.redirects.count}}(?![\w.,]?\d)'
+pattern: 'redirect[^\n]{0,80}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.redirects.count}}(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)'
 ---
 
 The redirect count {{expected.redirects.count}} from the `redirect` table is reported next to the word redirect.
