@@ -1,0 +1,348 @@
+{
+  "content_inventory": {
+    "node": {
+      "article": {
+        "languages": {
+          "en": 12,
+          "it": 12
+        },
+        "published": 10,
+        "total": 12
+      },
+      "page": {
+        "languages": {
+          "en": 5
+        },
+        "published": 4,
+        "total": 5
+      }
+    }
+  },
+  "entities": {
+    "node": {
+      "article": {
+        "active": 10,
+        "child_bundles": [],
+        "distinct": 12,
+        "field_data_rows": 24,
+        "field_revision_rows": 72,
+        "fields": {
+          "body": {
+            "populated": 12,
+            "population_pct": 100.0,
+            "type": "text_with_summary"
+          },
+          "field_subtitle": {
+            "populated": 0,
+            "population_pct": 0.0,
+            "type": "string"
+          },
+          "field_tags": {
+            "populated": 6,
+            "population_pct": 50.0,
+            "target_bundles": [
+              "tags"
+            ],
+            "target_type": "taxonomy_term",
+            "type": "entity_reference"
+          }
+        },
+        "label": "Article",
+        "languages": [
+          "en",
+          "it"
+        ],
+        "parent_bundles": [],
+        "revisions_per_entity": 3,
+        "unpublished": 2
+      },
+      "page": {
+        "active": 4,
+        "child_bundles": [
+          "hero",
+          "section"
+        ],
+        "distinct": 5,
+        "field_data_rows": 5,
+        "field_revision_rows": 5,
+        "fields": {
+          "body": {
+            "populated": 5,
+            "population_pct": 100.0,
+            "type": "text_with_summary"
+          },
+          "field_content": {
+            "populated": 5,
+            "population_pct": 100.0,
+            "target_bundles": [
+              "hero",
+              "section"
+            ],
+            "target_type": "paragraph",
+            "type": "entity_reference_revisions"
+          }
+        },
+        "label": "Basic page",
+        "languages": [
+          "en"
+        ],
+        "parent_bundles": [],
+        "revisions_per_entity": 1,
+        "unpublished": 1
+      }
+    },
+    "paragraph": {
+      "hero": {
+        "active": 8,
+        "attached": 10,
+        "child_bundles": [],
+        "distinct": 10,
+        "fields": {
+          "field_title": {
+            "populated": 10,
+            "population_pct": 100.0,
+            "type": "string"
+          }
+        },
+        "is_container": false,
+        "label": "Hero",
+        "orphans": 0,
+        "parent_bundles": [
+          {
+            "field": "field_content",
+            "parent_bundle": "page",
+            "parent_type": "node"
+          },
+          {
+            "field": "field_items",
+            "parent_bundle": "section",
+            "parent_type": "paragraph"
+          }
+        ],
+        "root_node_bundles": [
+          "page"
+        ]
+      },
+      "section": {
+        "active": 4,
+        "attached": 5,
+        "child_bundles": [
+          "hero",
+          "text"
+        ],
+        "distinct": 5,
+        "fields": {
+          "field_items": {
+            "populated": 5,
+            "population_pct": 100.0,
+            "target_bundles": [
+              "hero",
+              "text"
+            ],
+            "target_type": "paragraph",
+            "type": "entity_reference_revisions"
+          }
+        },
+        "is_container": true,
+        "label": "Section",
+        "orphans": 0,
+        "parent_bundles": [
+          {
+            "field": "field_content",
+            "parent_bundle": "page",
+            "parent_type": "node"
+          }
+        ],
+        "root_node_bundles": [
+          "page"
+        ]
+      },
+      "text": {
+        "active": 8,
+        "attached": 10,
+        "child_bundles": [],
+        "distinct": 12,
+        "fields": {
+          "field_text": {
+            "populated": 12,
+            "population_pct": 100.0,
+            "type": "text_long"
+          }
+        },
+        "is_container": false,
+        "label": "Text",
+        "orphans": 2,
+        "parent_bundles": [
+          {
+            "field": "field_items",
+            "parent_bundle": "section",
+            "parent_type": "paragraph"
+          }
+        ],
+        "root_node_bundles": [
+          "page"
+        ]
+      }
+    },
+    "taxonomy_term": {
+      "tags": {
+        "active": 6,
+        "child_bundles": [],
+        "distinct": 6,
+        "fields": {},
+        "parent_bundles": []
+      }
+    },
+    "user": {
+      "user": {
+        "active": 3,
+        "child_bundles": [],
+        "distinct": 4,
+        "fields": {},
+        "parent_bundles": [],
+        "rows_including_anonymous": 5
+      }
+    }
+  },
+  "examples": {
+    "article": {
+      "aliases": {
+        "en": "/articles/article-1",
+        "it": "/articoli/article-1-it"
+      },
+      "nid": 1,
+      "title": "Article 1",
+      "url": "https://www.drupal10.example/articles/article-1"
+    },
+    "page": {
+      "aliases": {
+        "en": "/pages/basic-page-1"
+      },
+      "nid": 13,
+      "title": "Basic page 1",
+      "url": "https://www.drupal10.example/pages/basic-page-1"
+    }
+  },
+  "fixture": "drupal10",
+  "generator_version": "1",
+  "kind": "drupal8",
+  "language_coverage": {
+    "article": {
+      "en": 12,
+      "it": 12
+    },
+    "page": {
+      "en": 5
+    }
+  },
+  "menus": {
+    "main": {
+      "links": 4,
+      "top_level": 3
+    }
+  },
+  "modules": {
+    "count": 8,
+    "enabled": [
+      "field",
+      "language",
+      "node",
+      "paragraphs",
+      "redirect",
+      "system",
+      "taxonomy",
+      "user"
+    ],
+    "profile": "standard",
+    "source": "core.extension",
+    "themes": [
+      "olivero",
+      "claro"
+    ]
+  },
+  "path_aliases": {
+    "count": 29,
+    "table": "path_alias"
+  },
+  "redirects": {
+    "count": 3,
+    "rows": [
+      {
+        "source": "old-news",
+        "status_code": 301,
+        "target": "/node/1"
+      },
+      {
+        "source": "about-us",
+        "status_code": 301,
+        "target": "/node/13"
+      },
+      {
+        "source": "vecchie-notizie",
+        "status_code": 301,
+        "target": "/node/2"
+      }
+    ],
+    "table": "redirect"
+  },
+  "signature": {
+    "absent": [
+      "field_config_instance"
+    ],
+    "present": [
+      "config",
+      "key_value"
+    ]
+  },
+  "source": {
+    "base_url": "https://www.drupal10.example",
+    "database": "drupal10",
+    "db_key": "drupal10",
+    "default_langcode": "en",
+    "delivery": "db-only",
+    "detect_version_result": "drupal8+",
+    "drupal_major": 10,
+    "languages": [
+      "en",
+      "it"
+    ],
+    "table_prefix": "",
+    "technology": "drupal8+",
+    "topology": "single"
+  },
+  "tables": [
+    "config",
+    "key_value",
+    "menu_link_content",
+    "menu_link_content_data",
+    "node",
+    "node__body",
+    "node__field_content",
+    "node__field_subtitle",
+    "node__field_tags",
+    "node_field_data",
+    "node_field_revision",
+    "node_revision",
+    "node_revision__body",
+    "node_revision__field_content",
+    "node_revision__field_subtitle",
+    "node_revision__field_tags",
+    "paragraph__field_items",
+    "paragraph__field_text",
+    "paragraph__field_title",
+    "paragraph_revision__field_items",
+    "paragraph_revision__field_text",
+    "paragraph_revision__field_title",
+    "paragraphs_item",
+    "paragraphs_item_field_data",
+    "paragraphs_item_revision",
+    "paragraphs_item_revision_field_data",
+    "path_alias",
+    "path_alias_revision",
+    "redirect",
+    "taxonomy_term_data",
+    "taxonomy_term_field_data",
+    "users",
+    "users_field_data"
+  ]
+}
