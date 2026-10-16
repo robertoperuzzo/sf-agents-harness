@@ -1,1 +1,1 @@
-How many article nodes are there in the source database we are migrating from? I need the real number of distinct articles, not table rows, and how many of them are published. The source is read-only; use the runner from the project config.
+How many articles are there in the source database we are migrating from, and how many of them are published? Use the runner from the project config.

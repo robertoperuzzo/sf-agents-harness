@@ -1,7 +1,7 @@
 schema_version: "1.1"
 name: count-instances-drupal10
 description: Smoke case for the drupal-migrate-count-instances skill on the drupal10 fixture.
-tags: [smoke, phase0, drupal10]
+tags: [smoke, phase1, drupal10]
 execution:
   max_turns: 30
   timeout_seconds: 600
