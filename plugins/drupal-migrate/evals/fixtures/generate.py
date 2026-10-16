@@ -655,6 +655,15 @@ def build_drupal8(spec, rng):
         unpublished = int(bspec.get("unpublished", 0))
         langs = [default_lang] + [l for l in bspec.get("languages", [default_lang]) if l != default_lang]
         bundle_nids = []
+        # Decide up front which nids populate each entity_reference_revisions
+        # field, so the paragraph trees and the field rows exist only for them.
+        planned_nids = list(range(nid_counter.value + 1, nid_counter.value + 1 + count))
+        err_populated = {
+            field_name: set(choose_populated(rng, planned_nids, fspec.get("population", 1.0)))
+            for field_name, fspec in bspec["fields"].items()
+            if fspec["type"] == "entity_reference_revisions"
+        }
+        bspec["_err_populated"] = err_populated
         for i in range(1, count + 1):
             nid = nid_counter.next()
             status = 0 if i > count - unpublished else 1
@@ -692,7 +701,7 @@ def build_drupal8(spec, rng):
                 record.setdefault("aliases", {})[lang] = alias
             # ERR fields on the node: build paragraph trees for every revision (same tree, current only once)
             for field_name, fspec in bspec["fields"].items():
-                if fspec["type"] != "entity_reference_revisions":
+                if fspec["type"] != "entity_reference_revisions" or nid not in err_populated[field_name]:
                     continue
                 children = []
                 for delta, child_bundle in enumerate(fspec["children"]):
@@ -726,7 +735,7 @@ def build_drupal8(spec, rng):
         for field_name, fspec in bspec["fields"].items():
             ftype = fspec["type"]
             if ftype == "entity_reference_revisions":
-                populated = nids if fspec.get("population", 1.0) >= 1 else choose_populated(rng, nids, fspec["population"])
+                populated = sorted(bspec["_err_populated"][field_name])
                 fields_expected[field_name] = {"type": ftype, "populated": len(populated), "population_pct": pct(len(populated), len(nids)),
                                                "target_type": fspec["target_type"], "target_bundles": sorted(set(fspec["children"]))}
                 continue
@@ -877,7 +886,24 @@ def build_drupal8(spec, rng):
     expected["signature"] = {"present": ["config", "key_value"], "absent": ["field_config_instance"]}
     for bspec in node_bundles.values():
         bspec.pop("_nids", None)
+        bspec.pop("_err_populated", None)
+    verify_population(schema, expected)
     return schema, expected
+
+
+def verify_population(schema, expected):
+    """Fail loudly when a field table disagrees with the population expected.json reports."""
+    prefixes = {"node": "node__", "paragraph": "paragraph__"}
+    for entity_type, prefix in prefixes.items():
+        for bundle, bexp in expected["entities"][entity_type].items():
+            for field_name, fexp in bexp["fields"].items():
+                table = schema.tables[prefix + field_name]
+                in_dump = len({row["entity_id"] for row in table.rows if row["bundle"] == bundle})
+                if in_dump != fexp["populated"]:
+                    raise RuntimeError(
+                        "%s.%s.%s: dump has %d populated entities, expected.json says %d"
+                        % (entity_type, bundle, field_name, in_dump, fexp["populated"])
+                    )
 
 
 BUILDERS = {"drupal8": build_drupal8}
