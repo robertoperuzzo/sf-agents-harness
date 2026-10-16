@@ -47,11 +47,26 @@ one is started without re-import. Each fixture has a default host port bound to
 `127.0.0.1` (`drupal10` 5310, `drupal7` 5307, `wordpress` 5336, `unknown` 5399);
 override with `FIXTURE_PORT_<NAME>`, for example `FIXTURE_PORT_DRUPAL10=53310`.
 
-`query` refuses, before reaching Docker and with exit status 2, any statement whose
-first keyword (after leading whitespace and comments) is not `SELECT`, `SHOW`,
-`DESCRIBE`, `EXPLAIN` or `WITH`. The `reader` user holds `SELECT` only, so a write that
-reaches the server by another path fails with a privilege error. A missing `docker`
-binary exits 1 with a message naming Docker.
+`query` refuses, before reaching Docker and with exit status 2:
+
+- any statement whose first keyword (after leading whitespace and comments) is not
+  `SELECT`, `SHOW`, `DESCRIBE`, `DESC`, `EXPLAIN` or `WITH`;
+- more than one statement per call (a `;` anywhere but at the very end; a trailing `;`
+  is fine);
+- mariadb client commands: a backslash command such as `\!`, `\.`, `\T`, `\P` or `\G`
+  anywhere, or `system`, `source`, `tee` and the other long-form commands at a line
+  start;
+- executable comments (`/*!` and `/*M!`), which the server runs instead of ignoring.
+
+What passes runs as the unprivileged `mysql` OS user (`docker exec -u mysql`) with the
+client in `--sandbox` mode, which disables every client escape on the server side as
+well. The `reader` user holds `SELECT` only, so a write that reaches the server by any
+other path fails with a privilege error. A missing `docker` binary exits 1 with a
+message naming Docker. `bin/fixture-parser-test` exercises the refusals without Docker:
+
+```bash
+fixtures/bin/fixture-parser-test
+```
 
 ## `spec.json` schema
 

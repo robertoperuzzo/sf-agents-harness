@@ -1,0 +1,137 @@
+#!/bin/sh
+# fixture-parser-test: exercise the statement checks of `fixture query` without Docker.
+#
+# A stub `docker` is put first on PATH. It answers `info` and `inspect` as if the
+# fixture container were running and prints the arguments of `exec`, so an allowed
+# statement shows the exact client command line while a refused one never reaches it.
+# Exit status 0 when every case behaves as listed, 1 otherwise.
+
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+fixture="$here/fixture"
+stub_dir=$(mktemp -d "${TMPDIR:-/tmp}/fixture-parser-test.XXXXXX")
+trap 'rm -rf "$stub_dir"' EXIT INT TERM
+
+cat >"$stub_dir/docker" <<'EOF'
+#!/bin/sh
+case "${1:-}" in
+  info) exit 0 ;;
+  inspect) echo true ;;
+  exec) printf 'exec'; for a in "$@"; do printf ' [%s]' "$a"; done; printf '\n' ;;
+  *) echo "stub docker: unexpected command $*" >&2; exit 99 ;;
+esac
+EOF
+chmod +x "$stub_dir/docker"
+PATH="$stub_dir:$PATH"
+export PATH
+
+failures=0
+total=0
+nl='
+'
+
+# expect STATUS MESSAGE-SUBSTRING SQL
+expect() {
+  want_status=$1
+  want_text=$2
+  sql=$3
+  total=$((total + 1))
+  out=$("$fixture" query drupal10 "$sql" 2>&1)
+  status=$?
+  label=$(printf '%s' "$sql" | tr '\n' '|' | cut -c1-60)
+  if [ "$status" -ne "$want_status" ]; then
+    printf 'FAIL exit %s (want %s): %s\n     %s\n' "$status" "$want_status" "$label" "$out"
+    failures=$((failures + 1))
+    return
+  fi
+  case "$out" in
+    *"$want_text"*) printf 'ok   exit %s: %s\n' "$status" "$label" ;;
+    *)
+      printf 'FAIL exit %s but output lacks "%s": %s\n     %s\n' "$status" "$want_text" "$label" "$out"
+      failures=$((failures + 1))
+      ;;
+  esac
+}
+
+allowed() { expect 0 "[--sandbox]" "$1"; }
+write() { expect 2 "refused as a write" "$1"; }
+multi() { expect 2 "one statement per call" "$1"; }
+escape() { expect 2 "refused as a client command" "$1"; }
+exec_comment() { expect 2 "refused as an executable comment" "$1"; }
+
+echo "# allowed statements reach the client with --sandbox, as user mysql"
+allowed 'SELECT 1'
+allowed '  select 1'
+allowed "-- comment${nl}SELECT 2"
+allowed '/* block */ SHOW TABLES'
+allowed "/* multi${nl}line */${nl}  describe node"
+allowed "# hash${nl}WITH x AS (SELECT 1) SELECT * FROM x"
+allowed 'select(1)'
+allowed 'desc node'
+allowed 'EXPLAIN SELECT nid FROM node'
+allowed "SELECT type, COUNT(DISTINCT nid) AS instances FROM node_field_data WHERE type = 'article' GROUP BY type;"
+allowed 'SELECT 1;   '
+allowed "SELECT 1; -- done"
+allowed "SELECT 1 /* tail */;"
+allowed "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME LIKE 'node\\_\\_%' AND COLUMN_NAME LIKE '%\\_target\\_id'"
+allowed "SELECT name FROM config WHERE name LIKE CONCAT('field.field.', 'node', '.', 'article', '.%') ORDER BY name;"
+
+echo "# the client command line carries the hardening flags"
+total=$((total + 1))
+line=$("$fixture" query drupal10 'SELECT 1' 2>&1)
+case "$line" in
+  "exec [exec] [-u] [mysql] [dm-fixture-drupal10] [mariadb] [--sandbox] [-ureader] [-preader] [-D] [drupal10] [--batch] [-e] [SELECT 1]")
+    echo "ok   exec -u mysql ... mariadb --sandbox ... --batch -e" ;;
+  *) echo "FAIL unexpected client command line: $line"; failures=$((failures + 1)) ;;
+esac
+
+echo "# writes and other non-read statements"
+write 'UPDATE node_field_data SET status=0'
+write '  delete from node'
+write 'INSERT INTO t VALUES (1)'
+write 'DROP TABLE node'
+write 'TRUNCATE node'
+write 'ALTER TABLE node ADD x INT'
+write 'CREATE TABLE t (x INT)'
+write 'REPLACE INTO t VALUES (1)'
+write 'GRANT ALL ON *.* TO x'
+write 'SET @a = 1'
+write 'CALL p()'
+write 'ANALYZE TABLE node'
+write '-- only a comment'
+write '(SELECT 1)'
+write ''"'"'SELECT 1'"'"''
+
+echo "# more than one statement"
+multi 'SELECT 1; DELETE FROM node WHERE nid=1'
+multi 'select 1;update node set type=1'
+multi 'SELECT 1; SELECT 2'
+multi "SELECT 1;${nl}SELECT 2"
+multi 'SELECT 1; /* x */ SELECT 2'
+
+echo "# mariadb client commands"
+escape 'SELECT 1; \! id'
+escape '\! id'
+escape 'SELECT 1 \G'
+escape '\. /etc/passwd'
+escape 'SELECT 1 \T /tmp/out'
+escape 'system id'
+escape 'source /etc/passwd'
+escape 'tee /tmp/out'
+escape "SELECT 1${nl}system id"
+escape "SELECT 1${nl}  source /x"
+escape 'use mysql'
+
+echo "# executable comments"
+exec_comment '/*!UPDATE node_field_data SET status=0*/ SELECT 1'
+exec_comment '/*M! DELETE FROM node */ SELECT 1'
+exec_comment 'SELECT 1 /*!50000 , 2 */'
+
+echo
+if [ "$failures" -eq 0 ]; then
+  echo "fixture-parser-test: $total cases, all passed"
+  exit 0
+fi
+echo "fixture-parser-test: $failures of $total cases FAILED"
+exit 1
