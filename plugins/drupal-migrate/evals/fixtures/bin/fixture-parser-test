@@ -9,7 +9,9 @@
 set -u
 
 here=$(cd "$(dirname "$0")" && pwd)
-fixture="$here/fixture"
+# FIXTURE_UNDER_TEST points the test at a copy of the script (used to prove the
+# test fails when a check is disabled).
+fixture="${FIXTURE_UNDER_TEST:-$here/fixture}"
 stub_dir=$(mktemp -d "${TMPDIR:-/tmp}/fixture-parser-test.XXXXXX")
 trap 'rm -rf "$stub_dir"' EXIT INT TERM
 
@@ -76,6 +78,11 @@ allowed "SELECT 1; -- done"
 allowed "SELECT 1 /* tail */;"
 allowed "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME LIKE 'node\\_\\_%' AND COLUMN_NAME LIKE '%\\_target\\_id'"
 allowed "SELECT name FROM config WHERE name LIKE CONCAT('field.field.', 'node', '.', 'article', '.%') ORDER BY name;"
+allowed "SELECT '#'"
+allowed "SELECT '--'"
+allowed "SELECT 'a;b', \"c;d\", \`e;f\`"
+allowed "SELECT 'it''s; fine'"
+allowed "SELECT '\\'; still one'"
 
 echo "# the client command line carries the hardening flags"
 total=$((total + 1))
@@ -109,6 +116,10 @@ multi 'select 1;update node set type=1'
 multi 'SELECT 1; SELECT 2'
 multi "SELECT 1;${nl}SELECT 2"
 multi 'SELECT 1; /* x */ SELECT 2'
+multi "SELECT '#'; DELETE FROM node WHERE nid=1"
+multi "SELECT '--'; DELETE FROM node WHERE nid=1"
+multi "SELECT '/*'; DELETE FROM node WHERE nid=1 -- */"
+multi "SELECT 1;${nl}-- comment${nl}DELETE FROM node"
 
 echo "# mariadb client commands"
 escape 'SELECT 1; \! id'

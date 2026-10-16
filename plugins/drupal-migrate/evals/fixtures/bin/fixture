@@ -13,9 +13,10 @@
 # Exit status: 0 ok, 1 usage or environment error, 2 statement refused (write,
 # more than one statement, client command or executable comment).
 #
-# Defaults: image mariadb:10.11, container dm-fixture-NAME, host port from the
-# table below bound to 127.0.0.1. Override a port with FIXTURE_PORT_<NAME>
-# (upper-case name, e.g. FIXTURE_PORT_DRUPAL10=53306).
+# Defaults: image mariadb:10.11, container dm-fixture-NAME, a fixed per-fixture
+# host port (drupal10 5310, drupal7 5307, wordpress 5336, unknown 5399) bound to
+# 127.0.0.1. Override a port with FIXTURE_PORT_<NAME> (upper-case name, e.g.
+# FIXTURE_PORT_DRUPAL10=53306).
 
 set -eu
 
@@ -235,10 +236,42 @@ refuse() {
   exit 2
 }
 
-strip_comments() {
-  # Drop `-- ...` and `# ...` to end of line, join lines, drop /* ... */ blocks.
-  printf '%s\n' "$1" | awk '{ sub(/--.*$/, ""); sub(/#.*$/, ""); printf "%s ", $0 } END { print "" }' |
-    awk '{ while (match($0, /\/\*([^*]|\*+[^*\/])*\*+\//)) $0 = substr($0, 1, RSTART - 1) " " substr($0, RSTART + RLENGTH); print }'
+statement_count() {
+  # Count SQL statements in $1 with a scan that knows about quotes and comments:
+  # a `;` inside '...', "..." or `...` or inside a comment does not separate
+  # statements, and a trailing `;` followed only by blanks or comments does not
+  # start a new one. Prints the count.
+  printf '%s\n' "$1" | awk '
+    BEGIN { q = ""; mode = "code"; seg = 0; n = 0 }
+    {
+      line = $0 "\n"
+      len = length(line)
+      i = 1
+      while (i <= len) {
+        c = substr(line, i, 1)
+        d = substr(line, i, 2)
+        if (mode == "line_comment") {
+          if (c == "\n") mode = "code"
+          i++; continue
+        }
+        if (mode == "block_comment") {
+          if (d == "*/") { mode = "code"; i += 2 } else i++
+          continue
+        }
+        if (q != "") {
+          if (c == "\\") { i += 2; continue }
+          if (c == q) { q = "" }
+          i++; continue
+        }
+        if (c == "\047" || c == "\"" || c == "`") { q = c; seg = 1; i++; continue }
+        if (d == "--" || c == "#") { mode = "line_comment"; i++; continue }
+        if (d == "/*") { mode = "block_comment"; i += 2; continue }
+        if (c == ";") { if (seg) n++; seg = 0; i++; continue }
+        if (c !~ /[ \t\r\n]/) seg = 1
+        i++
+      }
+    }
+    END { if (seg) n++; print n }'
 }
 
 check_statement() {
@@ -255,15 +288,11 @@ check_statement() {
   case "$sql" in
     *'/*!'* | *'/*M!'* | *'/*m!'*) refuse "as an executable comment: /*! and /*M! are not allowed" ;;
   esac
-  # 3. one statement per call: a `;` may appear only at the very end.
-  body=$(strip_comments "$sql")
-  body=$(printf '%s' "$body" | sed 's/[[:space:]]*$//')
-  case "$body" in
-    *';') body=${body%;} ;;
-  esac
-  case "$body" in
-    *';'*) refuse "as more than one statement: one statement per call (a trailing ';' is fine)" ;;
-  esac
+  # 3. one statement per call, counted with a quote- and comment-aware scan.
+  count=$(statement_count "$sql")
+  if [ "$count" -gt 1 ]; then
+    refuse "as more than one statement: one statement per call (a trailing ';' is fine)"
+  fi
   # 4. first keyword allow-list.
   keyword=$(first_keyword "$sql")
   case "$keyword" in
