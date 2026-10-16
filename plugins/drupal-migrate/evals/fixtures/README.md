@@ -29,6 +29,30 @@ topology, delivery, database key, the read-only runner, languages and URL rules.
 must not contain any value a grader checks (counts, bundle structure, detection
 results), because the scaffold installs it in both eval arms.
 
+## Lifecycle: `bin/fixture`
+
+`bin/fixture` is POSIX sh and runs on macOS and Linux. It needs Docker for every
+command except `generate`.
+
+```bash
+fixture up drupal10                 # pull mariadb:10.11, start dm-fixture-drupal10, import dump.sql
+fixture query drupal10 'SELECT 1'   # one read-only statement as `reader`, tab-separated with header
+fixture status                      # state, host port and import marker of every fixture
+fixture down drupal10               # remove the container and its data
+fixture generate [name ...]         # python3 -I generate.py
+```
+
+`up` is idempotent: a running, imported container is reported and left alone; a stopped
+one is started without re-import. Each fixture has a default host port bound to
+`127.0.0.1` (`drupal10` 5310, `drupal7` 5307, `wordpress` 5336, `unknown` 5399);
+override with `FIXTURE_PORT_<NAME>`, for example `FIXTURE_PORT_DRUPAL10=53310`.
+
+`query` refuses, before reaching Docker and with exit status 2, any statement whose
+first keyword (after leading whitespace and comments) is not `SELECT`, `SHOW`,
+`DESCRIBE`, `EXPLAIN` or `WITH`. The `reader` user holds `SELECT` only, so a write that
+reaches the server by another path fails with a privilege error. A missing `docker`
+binary exits 1 with a message naming Docker.
+
 ## `spec.json` schema
 
 ### Keys shared by every kind

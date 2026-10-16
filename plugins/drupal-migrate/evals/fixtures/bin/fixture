@@ -1,0 +1,263 @@
+#!/bin/sh
+# fixture: lifecycle of the drupal-migrate eval fixture databases.
+#
+# POSIX sh; runs on macOS (BSD userland) and Linux. Needs Docker for everything
+# except `generate`, which needs python3.
+#
+#   fixture generate [NAME ...]   regenerate dump.sql and expected.json from spec.json
+#   fixture up NAME               start MariaDB for NAME and import its dump (idempotent)
+#   fixture down NAME             remove the container and its data
+#   fixture status                container state and host port of every fixture
+#   fixture query NAME 'SQL'      run one read-only statement as the `reader` user
+#
+# Exit status: 0 ok, 1 usage or environment error, 2 statement refused as a write.
+#
+# Defaults: image mariadb:10.11, container dm-fixture-NAME, host port from the
+# table below bound to 127.0.0.1. Override a port with FIXTURE_PORT_<NAME>
+# (upper-case name, e.g. FIXTURE_PORT_DRUPAL10=53306).
+
+set -eu
+
+IMAGE="${FIXTURE_IMAGE:-mariadb:10.11}"
+ROOT_PASSWORD="${FIXTURE_ROOT_PASSWORD:-root}"
+READER_USER="reader"
+READER_PASSWORD="reader"
+READY_TIMEOUT="${FIXTURE_READY_TIMEOUT:-90}"
+IMPORT_MARKER="/var/lib/mysql/.dm-fixture-imported"
+
+self="$0"
+while [ -L "$self" ]; do
+  link=$(readlink "$self")
+  case "$link" in
+    /*) self="$link" ;;
+    *) self="$(dirname "$self")/$link" ;;
+  esac
+done
+FIXTURES_DIR=$(cd "$(dirname "$self")/.." && pwd)
+
+usage() {
+  sed -n '2,20p' "$self" | sed 's/^# \{0,1\}//'
+}
+
+die() {
+  printf 'fixture: %s\n' "$*" >&2
+  exit 1
+}
+
+default_port() {
+  case "$1" in
+    drupal10) echo 5310 ;;
+    drupal7) echo 5307 ;;
+    wordpress) echo 5336 ;;
+    unknown) echo 5399 ;;
+    *) echo 5300 ;;
+  esac
+}
+
+port_for() {
+  var="FIXTURE_PORT_$(printf '%s' "$1" | tr '[:lower:]-' '[:upper:]_')"
+  # shellcheck disable=SC2016 # the variable name is built at run time on purpose
+  override=$(eval "printf '%s' \"\${$var:-}\"")
+  if [ -n "$override" ]; then
+    printf '%s' "$override"
+  else
+    default_port "$1"
+  fi
+}
+
+container_for() {
+  printf 'dm-fixture-%s' "$1"
+}
+
+fixture_names() {
+  for spec in "$FIXTURES_DIR"/*/spec.json; do
+    [ -f "$spec" ] || continue
+    basename "$(dirname "$spec")"
+  done
+}
+
+require_fixture() {
+  [ -n "${1:-}" ] || die "fixture name required (one of: $(fixture_names | tr '\n' ' '))"
+  [ -f "$FIXTURES_DIR/$1/spec.json" ] || die "unknown fixture '$1' (one of: $(fixture_names | tr '\n' ' '))"
+}
+
+database_for() {
+  # The schema name is the "database" key of spec.json; fall back to the fixture name.
+  db=$(sed -n 's/^[[:space:]]*"database":[[:space:]]*"\([^"]*\)".*/\1/p' "$FIXTURES_DIR/$1/spec.json" | head -n 1)
+  printf '%s' "${db:-$1}"
+}
+
+require_docker() {
+  command -v docker >/dev/null 2>&1 || die "Docker is required but 'docker' is not on PATH. Install Docker and start it."
+  docker info >/dev/null 2>&1 || die "Docker is installed but the daemon is not reachable. Start Docker and retry."
+}
+
+container_state() {
+  # prints: absent | running | stopped
+  state=$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null || true)
+  case "$state" in
+    true) echo running ;;
+    false) echo stopped ;;
+    *) echo absent ;;
+  esac
+}
+
+is_imported() {
+  docker exec "$1" test -f "$IMPORT_MARKER" >/dev/null 2>&1
+}
+
+wait_ready() {
+  # The MariaDB image runs a temporary socket-only server while it initialises;
+  # a TCP connection succeeds only once the final server is up.
+  waited=0
+  while [ "$waited" -lt "$READY_TIMEOUT" ]; do
+    if docker exec "$1" mariadb -uroot -p"$ROOT_PASSWORD" -h127.0.0.1 --protocol=TCP -e 'SELECT 1' >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+  die "container $1 did not become ready within ${READY_TIMEOUT}s (docker logs $1)"
+}
+
+import_dump() {
+  name=$1
+  container=$2
+  dump="$FIXTURES_DIR/$name/dump.sql"
+  [ -f "$dump" ] || die "$dump missing; run 'fixture generate $name' first"
+  printf 'fixture: importing %s/dump.sql into %s\n' "$name" "$container"
+  docker exec -i "$container" mariadb -uroot -p"$ROOT_PASSWORD" <"$dump"
+  docker exec "$container" touch "$IMPORT_MARKER"
+}
+
+cmd_generate() {
+  command -v python3 >/dev/null 2>&1 || die "python3 is required for generate"
+  exec python3 -I "$FIXTURES_DIR/generate.py" "$@"
+}
+
+cmd_up() {
+  require_fixture "${1:-}"
+  require_docker
+  name=$1
+  container=$(container_for "$name")
+  port=$(port_for "$name")
+  case "$(container_state "$container")" in
+    running)
+      if is_imported "$container"; then
+        printf 'fixture: %s already running on 127.0.0.1:%s (dump already imported)\n' "$container" "$port"
+        return 0
+      fi
+      printf 'fixture: %s running but the dump was never imported; importing now\n' "$container"
+      wait_ready "$container"
+      import_dump "$name" "$container"
+      ;;
+    stopped)
+      printf 'fixture: starting existing container %s\n' "$container"
+      docker start "$container" >/dev/null
+      wait_ready "$container"
+      if ! is_imported "$container"; then
+        import_dump "$name" "$container"
+      fi
+      ;;
+    absent)
+      printf 'fixture: pulling %s\n' "$IMAGE"
+      docker pull -q "$IMAGE" >/dev/null
+      printf 'fixture: starting %s on 127.0.0.1:%s\n' "$container" "$port"
+      if ! docker run -d --name "$container" \
+        -e MARIADB_ROOT_PASSWORD="$ROOT_PASSWORD" \
+        -p "127.0.0.1:$port:3306" \
+        "$IMAGE" >/dev/null; then
+        die "could not start $container; if the port is taken set FIXTURE_PORT_$(printf '%s' "$name" | tr '[:lower:]-' '[:upper:]_')"
+      fi
+      wait_ready "$container"
+      import_dump "$name" "$container"
+      ;;
+  esac
+  printf 'fixture: %s ready on 127.0.0.1:%s (schema %s, user %s)\n' "$container" "$port" "$(database_for "$name")" "$READER_USER"
+}
+
+cmd_down() {
+  require_fixture "${1:-}"
+  require_docker
+  container=$(container_for "$1")
+  if [ "$(container_state "$container")" = absent ]; then
+    printf 'fixture: %s is not present\n' "$container"
+    return 0
+  fi
+  docker rm -f -v "$container" >/dev/null
+  printf 'fixture: removed %s\n' "$container"
+}
+
+cmd_status() {
+  require_docker
+  printf '%s\t%s\t%s\t%s\t%s\n' FIXTURE CONTAINER STATE PORT IMPORTED
+  for name in $(fixture_names); do
+    container=$(container_for "$name")
+    state=$(container_state "$container")
+    imported=-
+    if [ "$state" = running ]; then
+      if is_imported "$container"; then imported=yes; else imported=no; fi
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$container" "$state" "$(port_for "$name")" "$imported"
+  done
+}
+
+first_keyword() {
+  # Strip leading whitespace and SQL comments, then print the first word upper-cased.
+  rest=$1
+  nl='
+'
+  while :; do
+    rest=${rest#"${rest%%[![:space:]]*}"}
+    case "$rest" in
+      --* | '#'*)
+        case "$rest" in
+          *"$nl"*) rest=${rest#*"$nl"} ;;
+          *) rest="" ;;
+        esac
+        ;;
+      /\**)
+        case "$rest" in
+          *'*/'*) rest=${rest#*\*/} ;;
+          *) rest="" ;;
+        esac
+        ;;
+      *) break ;;
+    esac
+  done
+  printf '%s\n' "$rest" | sed -n '1s/^\([A-Za-z_]*\).*/\1/p' | tr '[:lower:]' '[:upper:]'
+}
+
+cmd_query() {
+  require_fixture "${1:-}"
+  name=$1
+  sql=${2:-}
+  [ -n "$sql" ] || die "usage: fixture query $name 'SELECT ...'"
+  keyword=$(first_keyword "$sql")
+  case "$keyword" in
+    SELECT | SHOW | DESCRIBE | DESC | EXPLAIN | WITH) ;;
+    *)
+      printf 'fixture: statement refused as a write (first keyword %s); allowed: SELECT, SHOW, DESCRIBE, EXPLAIN, WITH\n' "${keyword:-<none>}" >&2
+      exit 2
+      ;;
+  esac
+  require_docker
+  container=$(container_for "$name")
+  if [ "$(container_state "$container")" != running ]; then
+    die "$container is not running; start it with: fixture up $name"
+  fi
+  # No -t: a non-tty client prints tab-separated rows with a header line.
+  docker exec "$container" mariadb -u"$READER_USER" -p"$READER_PASSWORD" -D "$(database_for "$name")" --batch -e "$sql"
+}
+
+command=${1:-}
+[ $# -gt 0 ] && shift
+case "$command" in
+  generate) cmd_generate "$@" ;;
+  up) cmd_up "$@" ;;
+  down) cmd_down "$@" ;;
+  status) cmd_status "$@" ;;
+  query) cmd_query "$@" ;;
+  -h | --help | help | "") usage; [ -n "$command" ] || exit 1 ;;
+  *) die "unknown command '$command' (try: fixture --help)" ;;
+esac
