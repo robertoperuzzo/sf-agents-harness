@@ -1,0 +1,103 @@
+#!/bin/sh
+# fixture-bridge-test: round-trip the file-queue bridge (design D4) end to end.
+#
+# Needs Docker and the drupal10 fixture running (`fixture up drupal10`). Uses a
+# private state dir so a `fixture serve` of the operator is not disturbed, starts
+# its own `serve` in the background, builds a workspace with the case scaffold
+# under the minimal environment the runner uses, and checks:
+#   1. `.agents/bin/fixture query drupal10 'SELECT 1'` prints the result, exit 0
+#   2. a write is refused with the executor's message, exit 2
+#   3. two concurrent requests both get their own answer
+#   4. with `serve` stopped the client fails within its pickup timeout, exit 1,
+#      and the message names `fixture serve`
+#   5. the scaffold refuses to run when `serve` is not alive
+# Exit 0 when every check holds, 1 otherwise. Everything it creates is removed.
+
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+evals_dir=$(cd "$here/../.." && pwd)
+fixture="$here/fixture"
+work=$(mktemp -d "${TMPDIR:-/tmp}/fixture-bridge-test.XXXXXX")
+state="$work/state"
+ws="$work/ws"
+home="$work/home"
+mkdir -p "$state" "$ws" "$home"
+serve_pid=""
+failures=0
+
+# shellcheck disable=SC2329 # invoked through the trap
+cleanup() {
+  [ -n "$serve_pid" ] && kill "$serve_pid" 2>/dev/null
+  rm -rf "$work"
+}
+trap cleanup EXIT INT TERM
+
+check() {
+  # check LABEL WANT_STATUS GOT_STATUS WANT_SUBSTRING OUTPUT
+  label=$1; want=$2; got=$3; needle=$4; out=$5
+  if [ "$got" -ne "$want" ]; then
+    printf 'FAIL %s: exit %s (want %s)\n     %s\n' "$label" "$got" "$want" "$out"; failures=$((failures + 1)); return
+  fi
+  case "$out" in
+    *"$needle"*) printf 'ok   %s (exit %s)\n' "$label" "$got" ;;
+    *) printf 'FAIL %s: output lacks "%s"\n     %s\n' "$label" "$needle" "$out"; failures=$((failures + 1)) ;;
+  esac
+}
+
+minimal_env() {
+  # the environment the eval runner gives scaffold scripts and (roughly) the agent
+  env -i PATH="$PATH" HOME="$home" TMPDIR="$work" TERM=dumb DM_FIXTURE_STATE_DIR="$state" \
+    FIXTURE_PICKUP_TIMEOUT="${FIXTURE_PICKUP_TIMEOUT:-3}" "$@"
+}
+
+echo "# scaffold refuses without serve"
+out=$(cd "$ws" && minimal_env sh "$evals_dir/skills/detect-source-drupal10/scaffold.sh" 2>&1); code=$?
+check "scaffold without serve" 1 "$code" "fixture serve" "$out"
+
+echo "# start serve (private state dir)"
+DM_FIXTURE_STATE_DIR="$state" "$fixture" serve >"$work/serve.log" 2>&1 &
+serve_pid=$!
+tick=0
+while [ ! -f "$state/serve.pid" ] && [ "$tick" -lt 25 ]; do sleep 0.2; tick=$((tick + 1)); done
+[ -f "$state/serve.pid" ] || { echo "FAIL serve did not write its pid file"; exit 1; }
+
+echo "# scaffold with serve"
+out=$(cd "$ws" && minimal_env sh "$evals_dir/skills/detect-source-drupal10/scaffold.sh" 2>&1); code=$?
+check "scaffold with serve" 0 "$code" "registered for fixture serve" "$out"
+[ -x "$ws/.agents/bin/fixture" ] || { echo "FAIL client not installed"; failures=$((failures + 1)); }
+
+echo "# round trip"
+out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 'SELECT 1' 2>&1); code=$?
+check "SELECT 1 through the queue" 0 "$code" "1" "$out"
+out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 "SELECT COUNT(DISTINCT nid) AS n FROM node_field_data WHERE type='article'" 2>&1); code=$?
+check "COUNT(DISTINCT nid)" 0 "$code" "12" "$out"
+out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 'UPDATE node_field_data SET status=0' 2>&1); code=$?
+check "UPDATE refused" 2 "$code" "refused as a write" "$out"
+out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 'SELECT 1; \! id' 2>&1); code=$?
+check "client command refused" 2 "$code" "refused as a client command" "$out"
+out=$(cd "$ws" && minimal_env .agents/bin/fixture up drupal10 2>&1); code=$?
+check "up is a host command" 0 "$code" "managed on the host" "$out"
+
+echo "# two concurrent requests"
+( cd "$ws" && minimal_env .agents/bin/fixture query drupal10 "SELECT 'first' AS who" >"$work/c1.out" 2>&1; echo $? >"$work/c1.exit" ) &
+c1=$!
+( cd "$ws" && minimal_env .agents/bin/fixture query drupal10 "SELECT 'second' AS who" >"$work/c2.out" 2>&1; echo $? >"$work/c2.exit" ) &
+c2=$!
+wait "$c1" "$c2"
+check "concurrent request 1" "0" "$(cat "$work/c1.exit")" "first" "$(cat "$work/c1.out")"
+check "concurrent request 2" "0" "$(cat "$work/c2.exit")" "second" "$(cat "$work/c2.out")"
+leftover=$(find "$ws/.agents/queue" -type f | wc -l | tr -d ' ')
+if [ "$leftover" -eq 0 ]; then echo "ok   queue empty after requests"; else echo "FAIL $leftover file(s) left in the queue"; failures=$((failures + 1)); fi
+
+echo "# serve still alive after the refusals"
+if kill -0 "$serve_pid" 2>/dev/null; then echo "ok   serve alive (pid $serve_pid)"; else echo "FAIL serve died during the requests"; failures=$((failures + 1)); fi
+
+echo "# stop serve, client must fail quickly"
+kill "$serve_pid" 2>/dev/null; wait "$serve_pid" 2>/dev/null; serve_pid=""
+out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 'SELECT 1' 2>&1); code=$?
+check "client with serve stopped" 1 "$code" "fixture serve" "$out"
+
+echo
+if [ "$failures" -eq 0 ]; then echo "fixture-bridge-test: all checks passed"; exit 0; fi
+echo "fixture-bridge-test: $failures check(s) FAILED"; echo "--- serve log"; cat "$work/serve.log"; exit 1

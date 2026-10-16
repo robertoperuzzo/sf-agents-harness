@@ -47,6 +47,7 @@ fixture query drupal10 'SELECT 1'   # one read-only statement as `reader`, tab-s
 fixture status                      # state, host port and import marker of every fixture
 fixture down drupal10               # remove the container and its data
 fixture generate [name ...]         # python3 -I generate.py
+fixture serve                       # host executor for eval workspaces (foreground, Ctrl-C to stop)
 ```
 
 `up` is idempotent: a running, imported container is reported and left alone; a stopped
@@ -73,6 +74,36 @@ message naming Docker. `bin/fixture-parser-test` exercises the refusals without 
 
 ```bash
 fixtures/bin/fixture-parser-test
+```
+
+## Inside an eval run: `fixture serve` and the queue client
+
+The agent's shell in a `claude plugin eval` run is sandboxed: no network, no Docker
+socket, no read access to the plugin checkout. So the runner an agent sees is not this
+script but `bin/fixture-client`, which the case scaffold copies to
+`.agents/bin/fixture` in the run workspace. `query` there writes the statement to
+`.agents/queue/<id>.sql` (plus `<id>.fixture` with the fixture name; `<id>` comes from
+`mktemp`, so concurrent calls and concurrent runs never collide), then waits for
+`<id>.out` and `<id>.exit`, prints the output and exits with the recorded code
+(poll 0.2 s; fails after 10 s without pickup or 60 s without a result, naming
+`fixture serve`). `up`, `down` and `status` print "managed on the host" and exit 0.
+
+`fixture serve` is the host side: a foreground process that writes
+`~/.cache/dm-fixture/serve.pid`, polls every workspace registered under
+`~/.cache/dm-fixture/workspaces/` (the scaffold registers the run workspace; a
+registration whose directory is gone is dropped), and answers each request through
+the same statement check and `docker exec -u mysql ... --sandbox` path as `query`.
+Start it in a terminal before an eval run and stop it with Ctrl-C afterwards; the
+scaffold refuses to run (exit 1, hint `fixture serve`) when no live pid is recorded.
+`DM_FIXTURE_STATE_DIR` relocates the pid file and registry.
+
+`bin/fixture-bridge-test` round-trips the bridge with a private state dir: scaffold
+without and with serve, `SELECT 1`, a count, a refused `UPDATE` and client command,
+two concurrent requests, an empty queue afterwards, and the client failure with serve
+stopped. It needs Docker and the drupal10 fixture running.
+
+```bash
+fixtures/bin/fixture-bridge-test
 ```
 
 ## `spec.json` schema

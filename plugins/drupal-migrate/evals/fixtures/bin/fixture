@@ -9,6 +9,7 @@
 #   fixture down NAME             remove the container and its data
 #   fixture status                container state and host port of every fixture
 #   fixture query NAME 'SQL'      run one read-only statement as the `reader` user
+#   fixture serve                 foreground host executor for eval workspaces (file queue)
 #
 # Exit status: 0 ok, 1 usage or environment error, 2 statement refused (write,
 # more than one statement, client command or executable comment).
@@ -16,7 +17,8 @@
 # Defaults: image mariadb:10.11, container dm-fixture-NAME, a fixed per-fixture
 # host port (drupal10 5310, drupal7 5307, wordpress 5336, unknown 5399) bound to
 # 127.0.0.1. Override a port with FIXTURE_PORT_<NAME> (upper-case name, e.g.
-# FIXTURE_PORT_DRUPAL10=53306).
+# FIXTURE_PORT_DRUPAL10=53306). `serve` keeps its registry and pid file under
+# ~/.cache/dm-fixture (override: DM_FIXTURE_STATE_DIR).
 
 set -eu
 
@@ -26,6 +28,7 @@ READER_USER="reader"
 READER_PASSWORD="reader"
 READY_TIMEOUT="${FIXTURE_READY_TIMEOUT:-90}"
 IMPORT_MARKER="/var/lib/mysql/.dm-fixture-imported"
+SERVE_POLL="${FIXTURE_SERVE_POLL:-0.2}"
 
 self="$0"
 while [ -L "$self" ]; do
@@ -36,6 +39,24 @@ while [ -L "$self" ]; do
   esac
 done
 FIXTURES_DIR=$(cd "$(dirname "$self")/.." && pwd)
+
+real_home() {
+  # The eval scaffold runs with HOME pointed at a temporary directory; the
+  # registry must live in the real user's home, so resolve it from the login name.
+  eval "printf '%s' ~$(id -un)"
+}
+
+state_dir() {
+  printf '%s' "${DM_FIXTURE_STATE_DIR:-$(real_home)/.cache/dm-fixture}"
+}
+
+serve_pid() {
+  # prints the pid of a live `fixture serve`, nothing otherwise
+  pidfile="$(state_dir)/serve.pid"
+  [ -f "$pidfile" ] || return 1
+  pid=$(cat "$pidfile" 2>/dev/null || true)
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && printf '%s' "$pid"
+}
 
 usage() {
   # The header comment up to the first blank line, without the leading `# `.
@@ -193,6 +214,12 @@ cmd_down() {
 
 cmd_status() {
   require_docker
+  if pid=$(serve_pid); then
+    regs=$(find "$(state_dir)/workspaces" -type f 2>/dev/null | wc -l | tr -d ' ')
+    printf 'serve: running (pid %s), %s registered workspace(s), state dir %s\n' "$pid" "$regs" "$(state_dir)"
+  else
+    printf 'serve: not running (start it with: fixture serve)\n'
+  fi
   printf '%s\t%s\t%s\t%s\t%s\n' FIXTURE CONTAINER STATE PORT IMPORTED
   for name in $(fixture_names); do
     container=$(container_for "$name")
@@ -308,7 +335,9 @@ check_statement() {
   esac
 }
 
-cmd_query() {
+run_query() {
+  # The one read-only path: statement check, then the SELECT-only user through the
+  # sandboxed client as the unprivileged OS user. Used by `query` and by `serve`.
   require_fixture "${1:-}"
   name=$1
   sql=${2:-}
@@ -324,6 +353,62 @@ cmd_query() {
   docker exec -u mysql "$container" mariadb --sandbox -u"$READER_USER" -p"$READER_PASSWORD" -D "$(database_for "$name")" --batch -e "$sql"
 }
 
+cmd_query() {
+  run_query "$@"
+}
+
+serve_log() {
+  printf '%s serve: %s\n' "$(date '+%H:%M:%S')" "$*"
+}
+
+serve_request() {
+  # $1 = request base path (without extension) inside a workspace queue
+  base=$1
+  : >"$base.working"
+  req_name=$(head -n 1 "$base.fixture" 2>/dev/null || true)
+  req_sql=$(cat "$base.sql" 2>/dev/null || true)
+  # `set -e` is on: capture the subshell status without letting it stop serve.
+  code=0
+  (run_query "$req_name" "$req_sql") >"$base.out" 2>&1 || code=$?
+  printf '%s\n' "$code" >"$base.exit.tmp"
+  mv "$base.exit.tmp" "$base.exit"
+  serve_log "$(basename "$base") fixture=$req_name exit=$code: $(printf '%s' "$req_sql" | tr '\n' ' ' | cut -c1-100)"
+}
+
+cmd_serve() {
+  require_docker
+  state=$(state_dir)
+  mkdir -p "$state/workspaces"
+  if pid=$(serve_pid); then
+    die "fixture serve already running (pid $pid, $state/serve.pid)"
+  fi
+  printf '%s\n' "$$" >"$state/serve.pid"
+  # shellcheck disable=SC2064 # expand $state now; the trap must not depend on later state
+  trap "rm -f '$state/serve.pid'; exit 0" INT TERM EXIT
+  serve_log "watching $state/workspaces (pid $$); stop with Ctrl-C"
+  while :; do
+    for reg in "$state"/workspaces/*; do
+      [ -f "$reg" ] || continue
+      ws=$(head -n 1 "$reg" 2>/dev/null || true)
+      if [ -z "$ws" ] || [ ! -d "$ws" ]; then
+        rm -f "$reg"
+        serve_log "dropped registration $(basename "$reg") (workspace gone)"
+        continue
+      fi
+      queue="$ws/.agents/queue"
+      [ -d "$queue" ] || continue
+      for sqlf in "$queue"/*.sql; do
+        [ -f "$sqlf" ] || continue
+        base=${sqlf%.sql}
+        [ -f "$base.exit" ] && continue
+        [ -f "$base.working" ] && continue
+        serve_request "$base"
+      done
+    done
+    sleep "$SERVE_POLL"
+  done
+}
+
 command=${1:-}
 [ $# -gt 0 ] && shift
 case "$command" in
@@ -332,6 +417,7 @@ case "$command" in
   down) cmd_down "$@" ;;
   status) cmd_status "$@" ;;
   query) cmd_query "$@" ;;
+  serve) cmd_serve "$@" ;;
   -h | --help | help | "") usage; [ -n "$command" ] || exit 1 ;;
   *) die "unknown command '$command' (try: fixture --help)" ;;
 esac

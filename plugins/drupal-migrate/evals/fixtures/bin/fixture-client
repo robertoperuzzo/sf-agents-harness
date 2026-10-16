@@ -1,0 +1,78 @@
+#!/bin/sh
+# fixture-client: the read-only runner installed in an eval workspace as
+# .agents/bin/fixture. The agent's shell runs in a sandbox with no network and no
+# Docker, so this client only writes a request under .agents/queue/ and waits for
+# the host-side `fixture serve` to execute it through the read-only path.
+#
+#   .agents/bin/fixture query NAME 'SQL'   one read-only statement; prints the result
+#   .agents/bin/fixture up|down|status     managed on the host; print a note and exit 0
+#
+# Exit status: the executor's (0 ok, 1 error, 2 statement refused), or 1 when no
+# `fixture serve` answers within the timeout.
+#
+# POSIX sh. Request ids come from mktemp, so concurrent runs and concurrent calls
+# in one run never collide; every request writes its own files and removes them.
+
+set -u
+
+PICKUP_TIMEOUT="${FIXTURE_PICKUP_TIMEOUT:-10}"
+RESULT_TIMEOUT="${FIXTURE_TIMEOUT:-60}"
+POLL=0.2
+
+here=$(cd "$(dirname "$0")" && pwd)
+queue="$(dirname "$here")/queue"
+
+fail() {
+  printf 'fixture: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+cleanup() {
+  [ -n "${req:-}" ] && rm -f "$req" "$req.fixture" "$req.sql" "$req.working" "$req.out" "$req.exit" "$req.exit.tmp"
+}
+
+cmd_query() {
+  name=${1:-}
+  sql=${2:-}
+  [ -n "$name" ] || fail "usage: fixture query NAME 'SELECT ...'"
+  [ -n "$sql" ] || fail "usage: fixture query $name 'SELECT ...'"
+  mkdir -p "$queue" || fail "cannot create $queue"
+  req=$(mktemp "$queue/req.XXXXXX") || fail "cannot create a request file in $queue"
+  trap cleanup EXIT INT TERM
+  printf '%s\n' "$name" >"$req.fixture"
+  printf '%s' "$sql" >"$req.sql.tmp"
+  mv "$req.sql.tmp" "$req.sql"
+  # ticks of POLL seconds
+  pickup_ticks=$((PICKUP_TIMEOUT * 5))
+  result_ticks=$((RESULT_TIMEOUT * 5))
+  tick=0
+  while [ ! -f "$req.exit" ]; do
+    if [ "$tick" -ge "$result_ticks" ]; then
+      fail "no result after ${RESULT_TIMEOUT}s; is the host executor running? start it on the host with: fixture serve"
+    fi
+    if [ "$tick" -ge "$pickup_ticks" ] && [ ! -f "$req.working" ]; then
+      fail "request not picked up within ${PICKUP_TIMEOUT}s: the host executor is not running. Start it on the host with: fixture serve (and register this workspace through the case scaffold)"
+    fi
+    sleep "$POLL"
+    tick=$((tick + 1))
+  done
+  code=$(cat "$req.exit")
+  [ -f "$req.out" ] && cat "$req.out"
+  exit "${code:-1}"
+}
+
+command=${1:-}
+[ $# -gt 0 ] && shift
+case "$command" in
+  query) cmd_query "$@" ;;
+  up | down | status | generate)
+    printf 'fixture %s: managed on the host, not from the eval workspace; nothing to do here. The database is already up when this workspace exists.\n' "$command"
+    exit 0
+    ;;
+  -h | --help | help | "") usage; [ -n "$command" ] || exit 1 ;;
+  *) fail "unknown command '$command' (try: fixture --help)" ;;
+esac

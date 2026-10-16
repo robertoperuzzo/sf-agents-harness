@@ -10,8 +10,13 @@
 #   dm_scaffold drupal10 phase1   # same, plus an empty doc/ for as-is output
 #
 # Exit 1 with a `fixture up <name>` hint when the fixture container is not
-# running, so the run scores 0 instead of grading an agent that never had a
-# database.
+# running, or a `fixture serve` hint when the host executor is not alive, so the
+# run scores 0 instead of grading an agent that never had a database.
+#
+# The agent's shell is sandboxed: no network, no Docker, no read access to the
+# plugin checkout. So the workspace gets the file-queue client as
+# .agents/bin/fixture and the workspace path is registered for `fixture serve`,
+# which executes the queued statements on the host (design D4).
 
 dm_scaffold() {
   dm_fixture=$1
@@ -43,21 +48,26 @@ dm_scaffold() {
     echo "scaffold: fixture container dm-fixture-$dm_fixture is not running. Start it first: $dm_fixture_bin up $dm_fixture" >&2
     return 1
   fi
+  # HOME is a temporary directory here; the registry lives in the real home.
+  dm_state=${DM_FIXTURE_STATE_DIR:-$(eval "printf '%s' ~$(id -un)")/.cache/dm-fixture}
+  dm_serve_pid=$(cat "$dm_state/serve.pid" 2>/dev/null || true)
+  if [ -z "$dm_serve_pid" ] || ! kill -0 "$dm_serve_pid" 2>/dev/null; then
+    echo "scaffold: the host executor is not running (no live pid in $dm_state/serve.pid). Start it first, in another terminal: $dm_fixture_bin serve" >&2
+    return 1
+  fi
   if [ ! -f "$dm_fixture_dir/project-config.md" ]; then
     echo "scaffold: $dm_fixture_dir/project-config.md missing" >&2
     return 1
   fi
-  mkdir -p .agents/references/migrate .agents/bin ".agents/$dm_fixture"
+  mkdir -p .agents/references/migrate .agents/bin .agents/queue
   cp "$dm_plugin_dir/references/entity-type-context.md" .agents/references/migrate/entity-type-context.md
-  # The agent's shell runs in a sandbox that cannot read the plugin checkout, and
-  # it does not inherit a PATH with the fixture script. So the runner is copied
-  # into the workspace: the script resolves its fixtures dir as ../ from its own
-  # location, hence .agents/bin/fixture plus .agents/<name>/spec.json (the only
-  # fixture file `query` needs). The installed config names that relative path
-  # instead of the bare `fixture` command.
-  cp "$dm_fixture_bin" .agents/bin/fixture
+  # File-queue client in place of the Docker-backed script; the installed config
+  # names the relative path instead of the bare `fixture` command.
+  cp "$dm_evals_dir/fixtures/bin/fixture-client" .agents/bin/fixture
   chmod +x .agents/bin/fixture
-  cp "$dm_fixture_dir/spec.json" ".agents/$dm_fixture/spec.json"
+  mkdir -p "$dm_state/workspaces"
+  dm_ws=$(pwd)
+  printf '%s\n' "$dm_ws" >"$dm_state/workspaces/$(printf '%s' "$dm_ws" | cksum | cut -d' ' -f1)"
   # shellcheck disable=SC2016 # literal backticks are Markdown, not command substitution
   sed -E -e 's#`fixture (query|up|down|status) #`.agents/bin/fixture \1 #g' \
       -e 's#^fixture (query|up|down|status) #.agents/bin/fixture \1 #' \
@@ -65,6 +75,6 @@ dm_scaffold() {
   if [ "$dm_phase" = "phase1" ]; then
     mkdir -p doc
   fi
-  echo "scaffold: workspace ready for fixture $dm_fixture (runner copied to .agents/bin/fixture from $dm_fixture_bin)"
+  echo "scaffold: workspace ready for fixture $dm_fixture (queue client at .agents/bin/fixture, registered for fixture serve pid $dm_serve_pid)"
   return 0
 }
