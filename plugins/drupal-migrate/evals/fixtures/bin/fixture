@@ -259,12 +259,19 @@ statement_count() {
           continue
         }
         if (q != "") {
-          if (c == "\\") { i += 2; continue }
+          # a backslash escapes only inside single or double quotes, never in backticks
+          if (c == "\\" && q != "`") { i += 2; continue }
           if (c == q) { q = "" }
           i++; continue
         }
         if (c == "\047" || c == "\"" || c == "`") { q = c; seg = 1; i++; continue }
-        if (d == "--" || c == "#") { mode = "line_comment"; i++; continue }
+        # `--` opens a comment only when followed by whitespace or end of input; 1--1 is arithmetic
+        if (d == "--") {
+          e = substr(line, i + 2, 1)
+          if (e == "" || e ~ /[ \t\r\n]/) { mode = "line_comment"; i += 2; continue }
+          seg = 1; i += 2; continue
+        }
+        if (c == "#") { mode = "line_comment"; i++; continue }
         if (d == "/*") { mode = "block_comment"; i += 2; continue }
         if (c == ";") { if (seg) n++; seg = 0; i++; continue }
         if (c !~ /[ \t\r\n]/) seg = 1

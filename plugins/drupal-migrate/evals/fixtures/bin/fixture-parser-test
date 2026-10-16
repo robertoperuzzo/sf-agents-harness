@@ -6,6 +6,7 @@
 # statement shows the exact client command line while a refused one never reaches it.
 # Exit status 0 when every case behaves as listed, 1 otherwise.
 
+# shellcheck disable=SC2016 # backticks inside single-quoted SQL are test data, not expansions
 set -u
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -83,6 +84,9 @@ allowed "SELECT '--'"
 allowed "SELECT 'a;b', \"c;d\", \`e;f\`"
 allowed "SELECT 'it''s; fine'"
 allowed "SELECT '\\'; still one'"
+allowed 'SELECT 1--1'
+allowed 'SELECT 1 -- trailing comment'
+allowed 'SELECT 1 AS `a`'
 
 echo "# the client command line carries the hardening flags"
 total=$((total + 1))
@@ -120,6 +124,8 @@ multi "SELECT '#'; DELETE FROM node WHERE nid=1"
 multi "SELECT '--'; DELETE FROM node WHERE nid=1"
 multi "SELECT '/*'; DELETE FROM node WHERE nid=1 -- */"
 multi "SELECT 1;${nl}-- comment${nl}DELETE FROM node"
+multi 'SELECT 1--1; DELETE FROM node WHERE nid=1'
+multi 'SELECT 1 AS `a\`; DELETE FROM node WHERE nid=1'
 
 echo "# mariadb client commands"
 escape 'SELECT 1; \! id'
