@@ -99,6 +99,11 @@
         "child_bundles": [],
         "distinct": 10,
         "fields": {
+          "field_link": {
+            "populated": 0,
+            "population_pct": 0.0,
+            "type": "string"
+          },
           "field_title": {
             "populated": 10,
             "population_pct": 100.0,
@@ -343,9 +348,11 @@
     "node_revision__field_subtitle",
     "node_revision__field_tags",
     "paragraph__field_items",
+    "paragraph__field_link",
     "paragraph__field_text",
     "paragraph__field_title",
     "paragraph_revision__field_items",
+    "paragraph_revision__field_link",
     "paragraph_revision__field_text",
     "paragraph_revision__field_title",
     "paragraphs_item",

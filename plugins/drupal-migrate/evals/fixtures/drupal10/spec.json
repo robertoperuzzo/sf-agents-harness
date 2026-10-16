@@ -150,6 +150,11 @@
           "type": "string",
           "label": "Title",
           "population": 1.0
+        },
+        "field_link": {
+          "type": "string",
+          "label": "Link",
+          "population": 0.0
         }
       }
     },

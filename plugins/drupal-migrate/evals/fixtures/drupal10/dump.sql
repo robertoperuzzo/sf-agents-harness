@@ -42,13 +42,15 @@ INSERT INTO `config` (`collection`, `name`, `data`) VALUES
 ('', 'paragraphs.paragraphs_type.hero', 'a:10:{s:4:"uuid";s:36:"10ef852c-e214-4c26-8dc0-6a71a09b9fad";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:4:"hero";s:5:"label";s:4:"Hero";s:9:"icon_uuid";N;s:12:"icon_default";N;s:11:"description";s:0:"";s:16:"behavior_plugins";a:0:{}}'),
 ('', 'field.storage.paragraph.field_title', 'a:16:{s:4:"uuid";s:36:"5963dbe6-1768-4dfd-bae6-aa9c52cebe1d";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:1:{s:6:"module";a:1:{i:0;s:10:"paragraphs";}}s:2:"id";s:21:"paragraph.field_title";s:10:"field_name";s:11:"field_title";s:11:"entity_type";s:9:"paragraph";s:4:"type";s:6:"string";s:8:"settings";a:0:{}s:6:"module";s:4:"core";s:6:"locked";b:0;s:11:"cardinality";i:1;s:12:"translatable";b:1;s:7:"indexes";a:0:{}s:22:"persist_with_no_fields";b:0;s:14:"custom_storage";b:0;}'),
 ('', 'field.field.paragraph.hero.field_title', 'a:16:{s:4:"uuid";s:36:"dbcf6107-f7a4-4ef8-8ca4-50a6101d63fd";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:2:{s:6:"config";a:2:{i:0;s:35:"field.storage.paragraph.field_title";i:1;s:31:"paragraphs.paragraphs_type.hero";}s:6:"module";a:0:{}}s:2:"id";s:26:"paragraph.hero.field_title";s:10:"field_name";s:11:"field_title";s:11:"entity_type";s:9:"paragraph";s:6:"bundle";s:4:"hero";s:5:"label";s:5:"Title";s:11:"description";s:0:"";s:8:"required";b:0;s:12:"translatable";b:1;s:13:"default_value";a:0:{}s:22:"default_value_callback";s:0:"";s:8:"settings";a:0:{}s:10:"field_type";s:6:"string";}'),
-('', 'paragraphs.paragraphs_type.section', 'a:10:{s:4:"uuid";s:36:"aff4cd19-b6f5-4682-a2c9-c99910c215a0";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:7:"section";s:5:"label";s:7:"Section";s:9:"icon_uuid";N;s:12:"icon_default";N;s:11:"description";s:0:"";s:16:"behavior_plugins";a:0:{}}'),
-('', 'field.storage.paragraph.field_items', 'a:16:{s:4:"uuid";s:36:"f155611b-cbc3-4030-90a0-3bfeb1398005";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:1:{s:6:"module";a:2:{i:0;s:26:"entity_reference_revisions";i:1;s:10:"paragraphs";}}s:2:"id";s:21:"paragraph.field_items";s:10:"field_name";s:11:"field_items";s:11:"entity_type";s:9:"paragraph";s:4:"type";s:26:"entity_reference_revisions";s:8:"settings";a:1:{s:11:"target_type";s:9:"paragraph";}s:6:"module";s:26:"entity_reference_revisions";s:6:"locked";b:0;s:11:"cardinality";i:-1;s:12:"translatable";b:0;s:7:"indexes";a:0:{}s:22:"persist_with_no_fields";b:0;s:14:"custom_storage";b:0;}'),
-('', 'field.field.paragraph.section.field_items', 'a:16:{s:4:"uuid";s:36:"81d82ac7-ed27-49aa-a86d-bd4e20bbfbce";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:2:{s:6:"config";a:4:{i:0;s:35:"field.storage.paragraph.field_items";i:1;s:31:"paragraphs.paragraphs_type.hero";i:2;s:34:"paragraphs.paragraphs_type.section";i:3;s:31:"paragraphs.paragraphs_type.text";}s:6:"module";a:1:{i:0;s:26:"entity_reference_revisions";}}s:2:"id";s:29:"paragraph.section.field_items";s:10:"field_name";s:11:"field_items";s:11:"entity_type";s:9:"paragraph";s:6:"bundle";s:7:"section";s:5:"label";s:5:"Items";s:11:"description";s:0:"";s:8:"required";b:0;s:12:"translatable";b:0;s:13:"default_value";a:0:{}s:22:"default_value_callback";s:0:"";s:8:"settings";a:2:{s:7:"handler";s:17:"default:paragraph";s:16:"handler_settings";a:3:{s:14:"target_bundles";a:2:{s:4:"hero";s:4:"hero";s:4:"text";s:4:"text";}s:6:"negate";i:0;s:24:"target_bundles_drag_drop";a:2:{s:4:"hero";a:2:{s:6:"weight";i:0;s:7:"enabled";b:1;}s:4:"text";a:2:{s:6:"weight";i:1;s:7:"enabled";b:1;}}}}s:10:"field_type";s:26:"entity_reference_revisions";}'),
-('', 'paragraphs.paragraphs_type.text', 'a:10:{s:4:"uuid";s:36:"4f4e02eb-2f4a-4a6f-b5c4-6fe31d9133cf";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:4:"text";s:5:"label";s:4:"Text";s:9:"icon_uuid";N;s:12:"icon_default";N;s:11:"description";s:0:"";s:16:"behavior_plugins";a:0:{}}'),
-('', 'field.storage.paragraph.field_text', 'a:16:{s:4:"uuid";s:36:"52fe96be-512c-4635-bf9c-5bc89dcab95c";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:1:{s:6:"module";a:2:{i:0;s:10:"paragraphs";i:1;s:4:"text";}}s:2:"id";s:20:"paragraph.field_text";s:10:"field_name";s:10:"field_text";s:11:"entity_type";s:9:"paragraph";s:4:"type";s:9:"text_long";s:8:"settings";a:0:{}s:6:"module";s:4:"text";s:6:"locked";b:0;s:11:"cardinality";i:1;s:12:"translatable";b:1;s:7:"indexes";a:0:{}s:22:"persist_with_no_fields";b:0;s:14:"custom_storage";b:0;}'),
-('', 'field.field.paragraph.text.field_text', 'a:16:{s:4:"uuid";s:36:"82dba040-2016-437c-902a-888270b451f3";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:2:{s:6:"config";a:2:{i:0;s:34:"field.storage.paragraph.field_text";i:1;s:31:"paragraphs.paragraphs_type.text";}s:6:"module";a:1:{i:0;s:4:"text";}}s:2:"id";s:25:"paragraph.text.field_text";s:10:"field_name";s:10:"field_text";s:11:"entity_type";s:9:"paragraph";s:6:"bundle";s:4:"text";s:5:"label";s:4:"Text";s:11:"description";s:0:"";s:8:"required";b:0;s:12:"translatable";b:1;s:13:"default_value";a:0:{}s:22:"default_value_callback";s:0:"";s:8:"settings";a:0:{}s:10:"field_type";s:9:"text_long";}'),
-('', 'system.menu.main', 'a:8:{s:4:"uuid";s:36:"70de6e81-98e4-464c-92c6-e996bc33684a";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:4:"main";s:5:"label";s:15:"Main navigation";s:11:"description";s:18:"Site section links";s:6:"locked";b:1;}');
+('', 'field.storage.paragraph.field_link', 'a:16:{s:4:"uuid";s:36:"aff4cd19-b6f5-4682-a2c9-c99910c215a0";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:1:{s:6:"module";a:1:{i:0;s:10:"paragraphs";}}s:2:"id";s:20:"paragraph.field_link";s:10:"field_name";s:10:"field_link";s:11:"entity_type";s:9:"paragraph";s:4:"type";s:6:"string";s:8:"settings";a:0:{}s:6:"module";s:4:"core";s:6:"locked";b:0;s:11:"cardinality";i:1;s:12:"translatable";b:1;s:7:"indexes";a:0:{}s:22:"persist_with_no_fields";b:0;s:14:"custom_storage";b:0;}'),
+('', 'field.field.paragraph.hero.field_link', 'a:16:{s:4:"uuid";s:36:"f155611b-cbc3-4030-90a0-3bfeb1398005";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:2:{s:6:"config";a:2:{i:0;s:34:"field.storage.paragraph.field_link";i:1;s:31:"paragraphs.paragraphs_type.hero";}s:6:"module";a:0:{}}s:2:"id";s:25:"paragraph.hero.field_link";s:10:"field_name";s:10:"field_link";s:11:"entity_type";s:9:"paragraph";s:6:"bundle";s:4:"hero";s:5:"label";s:4:"Link";s:11:"description";s:0:"";s:8:"required";b:0;s:12:"translatable";b:1;s:13:"default_value";a:0:{}s:22:"default_value_callback";s:0:"";s:8:"settings";a:0:{}s:10:"field_type";s:6:"string";}'),
+('', 'paragraphs.paragraphs_type.section', 'a:10:{s:4:"uuid";s:36:"81d82ac7-ed27-49aa-a86d-bd4e20bbfbce";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:7:"section";s:5:"label";s:7:"Section";s:9:"icon_uuid";N;s:12:"icon_default";N;s:11:"description";s:0:"";s:16:"behavior_plugins";a:0:{}}'),
+('', 'field.storage.paragraph.field_items', 'a:16:{s:4:"uuid";s:36:"4f4e02eb-2f4a-4a6f-b5c4-6fe31d9133cf";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:1:{s:6:"module";a:2:{i:0;s:26:"entity_reference_revisions";i:1;s:10:"paragraphs";}}s:2:"id";s:21:"paragraph.field_items";s:10:"field_name";s:11:"field_items";s:11:"entity_type";s:9:"paragraph";s:4:"type";s:26:"entity_reference_revisions";s:8:"settings";a:1:{s:11:"target_type";s:9:"paragraph";}s:6:"module";s:26:"entity_reference_revisions";s:6:"locked";b:0;s:11:"cardinality";i:-1;s:12:"translatable";b:0;s:7:"indexes";a:0:{}s:22:"persist_with_no_fields";b:0;s:14:"custom_storage";b:0;}'),
+('', 'field.field.paragraph.section.field_items', 'a:16:{s:4:"uuid";s:36:"52fe96be-512c-4635-bf9c-5bc89dcab95c";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:2:{s:6:"config";a:4:{i:0;s:35:"field.storage.paragraph.field_items";i:1;s:31:"paragraphs.paragraphs_type.hero";i:2;s:34:"paragraphs.paragraphs_type.section";i:3;s:31:"paragraphs.paragraphs_type.text";}s:6:"module";a:1:{i:0;s:26:"entity_reference_revisions";}}s:2:"id";s:29:"paragraph.section.field_items";s:10:"field_name";s:11:"field_items";s:11:"entity_type";s:9:"paragraph";s:6:"bundle";s:7:"section";s:5:"label";s:5:"Items";s:11:"description";s:0:"";s:8:"required";b:0;s:12:"translatable";b:0;s:13:"default_value";a:0:{}s:22:"default_value_callback";s:0:"";s:8:"settings";a:2:{s:7:"handler";s:17:"default:paragraph";s:16:"handler_settings";a:3:{s:14:"target_bundles";a:2:{s:4:"hero";s:4:"hero";s:4:"text";s:4:"text";}s:6:"negate";i:0;s:24:"target_bundles_drag_drop";a:2:{s:4:"hero";a:2:{s:6:"weight";i:0;s:7:"enabled";b:1;}s:4:"text";a:2:{s:6:"weight";i:1;s:7:"enabled";b:1;}}}}s:10:"field_type";s:26:"entity_reference_revisions";}'),
+('', 'paragraphs.paragraphs_type.text', 'a:10:{s:4:"uuid";s:36:"82dba040-2016-437c-902a-888270b451f3";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:4:"text";s:5:"label";s:4:"Text";s:9:"icon_uuid";N;s:12:"icon_default";N;s:11:"description";s:0:"";s:16:"behavior_plugins";a:0:{}}'),
+('', 'field.storage.paragraph.field_text', 'a:16:{s:4:"uuid";s:36:"70de6e81-98e4-464c-92c6-e996bc33684a";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:1:{s:6:"module";a:2:{i:0;s:10:"paragraphs";i:1;s:4:"text";}}s:2:"id";s:20:"paragraph.field_text";s:10:"field_name";s:10:"field_text";s:11:"entity_type";s:9:"paragraph";s:4:"type";s:9:"text_long";s:8:"settings";a:0:{}s:6:"module";s:4:"text";s:6:"locked";b:0;s:11:"cardinality";i:1;s:12:"translatable";b:1;s:7:"indexes";a:0:{}s:22:"persist_with_no_fields";b:0;s:14:"custom_storage";b:0;}'),
+('', 'field.field.paragraph.text.field_text', 'a:16:{s:4:"uuid";s:36:"d1d58ff1-353a-4f5d-9409-02119bd42dfc";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:2:{s:6:"config";a:2:{i:0;s:34:"field.storage.paragraph.field_text";i:1;s:31:"paragraphs.paragraphs_type.text";}s:6:"module";a:1:{i:0;s:4:"text";}}s:2:"id";s:25:"paragraph.text.field_text";s:10:"field_name";s:10:"field_text";s:11:"entity_type";s:9:"paragraph";s:6:"bundle";s:4:"text";s:5:"label";s:4:"Text";s:11:"description";s:0:"";s:8:"required";b:0;s:12:"translatable";b:1;s:13:"default_value";a:0:{}s:22:"default_value_callback";s:0:"";s:8:"settings";a:0:{}s:10:"field_type";s:9:"text_long";}'),
+('', 'system.menu.main', 'a:8:{s:4:"uuid";s:36:"e6049f0c-a5fc-4b20-aa22-7953793e2c94";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:4:"main";s:5:"label";s:15:"Main navigation";s:11:"description";s:18:"Site section links";s:6:"locked";b:1;}');
 
 DROP TABLE IF EXISTS `key_value`;
 CREATE TABLE `key_value` (
@@ -86,10 +88,10 @@ CREATE TABLE `menu_link_content` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `menu_link_content` (`id`, `revision_id`, `bundle`, `uuid`, `langcode`) VALUES
-(1, 1, 'menu_link_content', '10d412f8-050f-4e1e-be8a-866066aeb4f5', 'en'),
-(2, 2, 'menu_link_content', 'd1e5454a-b24f-4821-ad4a-9570ed64039b', 'en'),
-(3, 3, 'menu_link_content', '283063f2-606e-4f5d-9f8a-e22b61f6a307', 'en'),
-(4, 4, 'menu_link_content', '8deaa06d-4ab8-42f4-bc45-bcc686103e6f', 'en');
+(1, 1, 'menu_link_content', 'd63e4f68-8dea-406d-8ab8-a2f4bc45bcc6', 'en'),
+(2, 2, 'menu_link_content', '63836678-4ff7-434f-99a8-0fb97ae345fd', 'en'),
+(3, 3, 'menu_link_content', 'cca7589e-2208-4855-b474-dad75727b028', 'en'),
+(4, 4, 'menu_link_content', 'bab2b7aa-291d-41eb-9c6f-49f8133cba09', 'en');
 
 DROP TABLE IF EXISTS `menu_link_content_data`;
 CREATE TABLE `menu_link_content_data` (
@@ -117,7 +119,7 @@ CREATE TABLE `menu_link_content_data` (
 INSERT INTO `menu_link_content_data` (`id`, `revision_id`, `bundle`, `langcode`, `enabled`, `title`, `description`, `menu_name`, `link__uri`, `link__title`, `link__options`, `external`, `rediscover`, `weight`, `expanded`, `parent`, `changed`, `default_langcode`, `revision_translation_affected`) VALUES
 (1, 1, 'menu_link_content', 'en', 1, 'Home', NULL, 'main', 'internal:/', '', 'a:0:{}', 0, 0, 0, 0, NULL, 1760030001, 1, 1),
 (2, 2, 'menu_link_content', 'en', 1, 'About', NULL, 'main', 'entity:node/13', '', 'a:0:{}', 0, 0, 1, 0, NULL, 1760030002, 1, 1),
-(3, 3, 'menu_link_content', 'en', 1, 'Team', NULL, 'main', 'entity:node/14', '', 'a:0:{}', 0, 0, 2, 0, 'menu_link_content:d1e5454a-b24f-4821-ad4a-9570ed64039b', 1760030003, 1, 1),
+(3, 3, 'menu_link_content', 'en', 1, 'Team', NULL, 'main', 'entity:node/14', '', 'a:0:{}', 0, 0, 2, 0, 'menu_link_content:63836678-4ff7-434f-99a8-0fb97ae345fd', 1760030003, 1, 1),
 (4, 4, 'menu_link_content', 'en', 1, 'News', NULL, 'main', 'entity:node/1', '', 'a:0:{}', 0, 0, 3, 0, NULL, 1760030004, 1, 1);
 
 DROP TABLE IF EXISTS `node`;
@@ -130,23 +132,23 @@ CREATE TABLE `node` (
   PRIMARY KEY (`nid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `node` (`nid`, `vid`, `type`, `uuid`, `langcode`) VALUES
-(1, 3, 'article', 'd1d58ff1-353a-4f5d-9409-02119bd42dfc', 'en'),
-(2, 6, 'article', '6eb074d5-ca21-459e-a4ee-f00c105af476', 'en'),
-(3, 9, 'article', '6b1fbd11-ff6d-4a54-a7e3-65cbf512a75b', 'en'),
-(4, 12, 'article', '8753797d-a568-4ff5-88cb-2d7ff8b9beb3', 'en'),
-(5, 15, 'article', 'cb10746b-f9e0-45ff-9e90-f502d78ac8e7', 'en'),
-(6, 18, 'article', '95317793-3d58-43a6-b070-456486ebad32', 'en'),
-(7, 21, 'article', 'e6da37f7-efeb-4fc0-8d4b-988fa995fd6f', 'en'),
-(8, 24, 'article', 'b01c7253-41fd-4da2-b6b5-d14d03c93bb4', 'en'),
-(9, 27, 'article', 'c8e262ae-10e3-4000-a3be-227071625686', 'en'),
-(10, 30, 'article', '5f70f21e-dcbd-48cd-a014-3571b52eca88', 'en'),
-(11, 33, 'article', 'abf8d62b-1bd0-4ffb-be28-7778655e84da', 'en'),
-(12, 36, 'article', '230c9732-a739-41eb-80d0-7aa8c9acfc8e', 'en'),
-(13, 37, 'page', '71439993-5fc8-43ef-93a2-2b618f448290', 'en'),
-(14, 38, 'page', '9c291196-8a68-4d58-a418-c629f2e895a3', 'en'),
-(15, 39, 'page', '007cfe56-ee31-4210-9bc9-db6163ba6c0e', 'en'),
-(16, 40, 'page', '3010972c-4105-4de4-a90d-dba0ba0f1a5b', 'en'),
-(17, 41, 'page', '9a16bec1-919f-4219-b340-c3227d996e72', 'en');
+(1, 3, 'article', 'e2a4ce79-7d19-420e-b352-c62d068716bf', 'en'),
+(2, 6, 'article', 'b0d9251a-4f4b-455b-bd04-63a4ae25d321', 'en'),
+(3, 9, 'article', '676697dc-6743-44c0-b1cb-dfd9ee4ddc8d', 'en'),
+(4, 12, 'article', '347f84da-3e6b-4815-8687-c784d919a719', 'en'),
+(5, 15, 'article', '368ba599-dcfe-4ca9-b2e5-a2620fded847', 'en'),
+(6, 18, 'article', '6f398971-2f1e-4797-8d8b-5d083a765a83', 'en'),
+(7, 21, 'article', '1abc1d4f-321b-4da8-a6de-7ac1b0d54ac2', 'en'),
+(8, 24, 'article', 'e998fb54-ec37-43b3-860a-33658e5e36fc', 'en'),
+(9, 27, 'article', '5587dc1a-d391-4b4f-b868-a291ecc0e727', 'en'),
+(10, 30, 'article', 'bbb559a6-31af-42f9-8d54-bf1c6c7664f7', 'en'),
+(11, 33, 'article', 'ebde172c-aa28-4fcd-8c85-8323a89bab9b', 'en'),
+(12, 36, 'article', 'e87a81ad-5de7-4d9b-a797-85bf4353b868', 'en'),
+(13, 37, 'page', 'cff01713-4f7e-4d4d-bf01-124f8b68e2f1', 'en'),
+(14, 38, 'page', '5d8b7c6d-19f7-4bd2-b1ce-35d475afebaf', 'en'),
+(15, 39, 'page', 'f49c556a-077e-4088-92ef-d7bc091192c0', 'en'),
+(16, 40, 'page', 'ef3a02fe-6625-431b-a43b-cab65baaa022', 'en'),
+(17, 41, 'page', '1014d73a-5c6a-4bdf-ae37-a630edeab94b', 'en');
 
 DROP TABLE IF EXISTS `node__body`;
 CREATE TABLE `node__body` (
@@ -256,18 +258,18 @@ INSERT INTO `node__field_tags` (`bundle`, `deleted`, `entity_id`, `revision_id`,
 ('article', 0, 4, 12, 'en', 1, 4),
 ('article', 0, 4, 12, 'it', 0, 1),
 ('article', 0, 4, 12, 'it', 1, 4),
-('article', 0, 5, 15, 'en', 0, 2),
-('article', 0, 5, 15, 'en', 1, 5),
-('article', 0, 5, 15, 'it', 0, 2),
-('article', 0, 5, 15, 'it', 1, 5),
-('article', 0, 7, 21, 'en', 0, 1),
-('article', 0, 7, 21, 'en', 1, 4),
-('article', 0, 7, 21, 'it', 0, 1),
-('article', 0, 7, 21, 'it', 1, 4),
-('article', 0, 10, 30, 'en', 0, 1),
-('article', 0, 10, 30, 'en', 1, 4),
-('article', 0, 10, 30, 'it', 0, 1),
-('article', 0, 10, 30, 'it', 1, 4),
+('article', 0, 6, 18, 'en', 0, 3),
+('article', 0, 6, 18, 'en', 1, 6),
+('article', 0, 6, 18, 'it', 0, 3),
+('article', 0, 6, 18, 'it', 1, 6),
+('article', 0, 8, 24, 'en', 0, 2),
+('article', 0, 8, 24, 'en', 1, 5),
+('article', 0, 8, 24, 'it', 0, 2),
+('article', 0, 8, 24, 'it', 1, 5),
+('article', 0, 9, 27, 'en', 0, 3),
+('article', 0, 9, 27, 'en', 1, 6),
+('article', 0, 9, 27, 'it', 0, 3),
+('article', 0, 9, 27, 'it', 1, 6),
 ('article', 0, 11, 33, 'en', 0, 2),
 ('article', 0, 11, 33, 'en', 1, 5),
 ('article', 0, 11, 33, 'it', 0, 2),
@@ -649,42 +651,42 @@ INSERT INTO `node_revision__field_tags` (`bundle`, `deleted`, `entity_id`, `revi
 ('article', 0, 4, 12, 'en', 1, 4),
 ('article', 0, 4, 12, 'it', 0, 1),
 ('article', 0, 4, 12, 'it', 1, 4),
-('article', 0, 5, 13, 'en', 0, 2),
-('article', 0, 5, 13, 'en', 1, 5),
-('article', 0, 5, 13, 'it', 0, 2),
-('article', 0, 5, 13, 'it', 1, 5),
-('article', 0, 5, 14, 'en', 0, 2),
-('article', 0, 5, 14, 'en', 1, 5),
-('article', 0, 5, 14, 'it', 0, 2),
-('article', 0, 5, 14, 'it', 1, 5),
-('article', 0, 5, 15, 'en', 0, 2),
-('article', 0, 5, 15, 'en', 1, 5),
-('article', 0, 5, 15, 'it', 0, 2),
-('article', 0, 5, 15, 'it', 1, 5),
-('article', 0, 7, 19, 'en', 0, 1),
-('article', 0, 7, 19, 'en', 1, 4),
-('article', 0, 7, 19, 'it', 0, 1),
-('article', 0, 7, 19, 'it', 1, 4),
-('article', 0, 7, 20, 'en', 0, 1),
-('article', 0, 7, 20, 'en', 1, 4),
-('article', 0, 7, 20, 'it', 0, 1),
-('article', 0, 7, 20, 'it', 1, 4),
-('article', 0, 7, 21, 'en', 0, 1),
-('article', 0, 7, 21, 'en', 1, 4),
-('article', 0, 7, 21, 'it', 0, 1),
-('article', 0, 7, 21, 'it', 1, 4),
-('article', 0, 10, 28, 'en', 0, 1),
-('article', 0, 10, 28, 'en', 1, 4),
-('article', 0, 10, 28, 'it', 0, 1),
-('article', 0, 10, 28, 'it', 1, 4),
-('article', 0, 10, 29, 'en', 0, 1),
-('article', 0, 10, 29, 'en', 1, 4),
-('article', 0, 10, 29, 'it', 0, 1),
-('article', 0, 10, 29, 'it', 1, 4),
-('article', 0, 10, 30, 'en', 0, 1),
-('article', 0, 10, 30, 'en', 1, 4),
-('article', 0, 10, 30, 'it', 0, 1),
-('article', 0, 10, 30, 'it', 1, 4),
+('article', 0, 6, 16, 'en', 0, 3),
+('article', 0, 6, 16, 'en', 1, 6),
+('article', 0, 6, 16, 'it', 0, 3),
+('article', 0, 6, 16, 'it', 1, 6),
+('article', 0, 6, 17, 'en', 0, 3),
+('article', 0, 6, 17, 'en', 1, 6),
+('article', 0, 6, 17, 'it', 0, 3),
+('article', 0, 6, 17, 'it', 1, 6),
+('article', 0, 6, 18, 'en', 0, 3),
+('article', 0, 6, 18, 'en', 1, 6),
+('article', 0, 6, 18, 'it', 0, 3),
+('article', 0, 6, 18, 'it', 1, 6),
+('article', 0, 8, 22, 'en', 0, 2),
+('article', 0, 8, 22, 'en', 1, 5),
+('article', 0, 8, 22, 'it', 0, 2),
+('article', 0, 8, 22, 'it', 1, 5),
+('article', 0, 8, 23, 'en', 0, 2),
+('article', 0, 8, 23, 'en', 1, 5),
+('article', 0, 8, 23, 'it', 0, 2),
+('article', 0, 8, 23, 'it', 1, 5),
+('article', 0, 8, 24, 'en', 0, 2),
+('article', 0, 8, 24, 'en', 1, 5),
+('article', 0, 8, 24, 'it', 0, 2),
+('article', 0, 8, 24, 'it', 1, 5),
+('article', 0, 9, 25, 'en', 0, 3),
+('article', 0, 9, 25, 'en', 1, 6),
+('article', 0, 9, 25, 'it', 0, 3),
+('article', 0, 9, 25, 'it', 1, 6),
+('article', 0, 9, 26, 'en', 0, 3),
+('article', 0, 9, 26, 'en', 1, 6),
+('article', 0, 9, 26, 'it', 0, 3),
+('article', 0, 9, 26, 'it', 1, 6),
+('article', 0, 9, 27, 'en', 0, 3),
+('article', 0, 9, 27, 'en', 1, 6),
+('article', 0, 9, 27, 'it', 0, 3),
+('article', 0, 9, 27, 'it', 1, 6),
 ('article', 0, 11, 31, 'en', 0, 2),
 ('article', 0, 11, 31, 'en', 1, 5),
 ('article', 0, 11, 31, 'it', 0, 2),
@@ -728,6 +730,20 @@ INSERT INTO `paragraph__field_items` (`bundle`, `deleted`, `entity_id`, `revisio
 ('section', 0, 21, 21, 'en', 0, 22, 22),
 ('section', 0, 21, 21, 'en', 1, 23, 23),
 ('section', 0, 21, 21, 'en', 2, 24, 24);
+
+DROP TABLE IF EXISTS `paragraph__field_link`;
+CREATE TABLE `paragraph__field_link` (
+  `bundle` varchar(128) NOT NULL DEFAULT '',
+  `deleted` tinyint(4) NOT NULL DEFAULT 0,
+  `entity_id` int(10) unsigned NOT NULL,
+  `revision_id` int(10) unsigned NOT NULL,
+  `langcode` varchar(32) NOT NULL DEFAULT '',
+  `delta` int(10) unsigned NOT NULL,
+  `field_link_value` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`entity_id`, `deleted`, `delta`, `langcode`),
+  KEY `bundle` (`bundle`),
+  KEY `revision_id` (`revision_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 DROP TABLE IF EXISTS `paragraph__field_text`;
 CREATE TABLE `paragraph__field_text` (
@@ -813,6 +829,20 @@ INSERT INTO `paragraph_revision__field_items` (`bundle`, `deleted`, `entity_id`,
 ('section', 0, 21, 21, 'en', 1, 23, 23),
 ('section', 0, 21, 21, 'en', 2, 24, 24);
 
+DROP TABLE IF EXISTS `paragraph_revision__field_link`;
+CREATE TABLE `paragraph_revision__field_link` (
+  `bundle` varchar(128) NOT NULL DEFAULT '',
+  `deleted` tinyint(4) NOT NULL DEFAULT 0,
+  `entity_id` int(10) unsigned NOT NULL,
+  `revision_id` int(10) unsigned NOT NULL,
+  `langcode` varchar(32) NOT NULL DEFAULT '',
+  `delta` int(10) unsigned NOT NULL,
+  `field_link_value` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`entity_id`, `revision_id`, `deleted`, `delta`, `langcode`),
+  KEY `bundle` (`bundle`),
+  KEY `revision_id` (`revision_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 DROP TABLE IF EXISTS `paragraph_revision__field_text`;
 CREATE TABLE `paragraph_revision__field_text` (
   `bundle` varchar(128) NOT NULL DEFAULT '',
@@ -876,33 +906,33 @@ CREATE TABLE `paragraphs_item` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `paragraphs_item` (`id`, `revision_id`, `type`, `uuid`, `langcode`) VALUES
-(1, 1, 'section', 'cff01713-4f7e-4d4d-bf01-124f8b68e2f1', 'en'),
-(2, 2, 'hero', '87388a47-9d7e-41e1-9db5-aab6786133e5', 'en'),
-(3, 3, 'text', 'b780cf5e-a347-458b-a3bf-159d406e1e33', 'en'),
-(4, 4, 'text', 'bf70dbac-6a9e-468d-a11f-9202eb0e401e', 'en'),
-(5, 5, 'hero', '6319a54a-05ca-4ccb-9470-0b43255418c0', 'en'),
-(6, 6, 'section', '5d8b7c6d-19f7-4bd2-b1ce-35d475afebaf', 'en'),
-(7, 7, 'hero', '7efe4799-f6f9-4967-ba9c-6d9d81b3d156', 'en'),
-(8, 8, 'text', '9d066ccb-970b-4f5d-9e61-dba46cf69762', 'en'),
-(9, 9, 'text', '18c65c15-e7f8-44ea-bd97-74bf4cbb9fea', 'en'),
-(10, 10, 'hero', '29233d81-ef88-49ed-9777-f59d0982ddb2', 'en'),
-(11, 11, 'section', 'f49c556a-077e-4088-92ef-d7bc091192c0', 'en'),
-(12, 12, 'hero', 'c518221e-2c8d-438c-b446-3d20a71e438a', 'en'),
-(13, 13, 'text', 'b1e85ce4-e3b6-43b1-9b8a-4ed449657a6b', 'en'),
-(14, 14, 'text', '77b6e651-cc70-463e-830f-d156a014af61', 'en'),
-(15, 15, 'hero', '19bc2c35-cc94-4ee8-bb16-27db1fe29d45', 'en'),
-(16, 16, 'section', 'ef3a02fe-6625-431b-a43b-cab65baaa022', 'en'),
-(17, 17, 'hero', '1787e278-5db8-408f-85d5-c49e01ddc4e0', 'en'),
-(18, 18, 'text', '67647bda-93cc-4dfc-be31-ad0588ac83a8', 'en'),
-(19, 19, 'text', '19d299d1-0a76-4c38-a540-bae49aad608b', 'en'),
-(20, 20, 'hero', 'db289e2e-6d3e-44a9-8cf1-4d1664eb86f1', 'en'),
-(21, 21, 'section', '1014d73a-5c6a-4bdf-ae37-a630edeab94b', 'en'),
-(22, 22, 'hero', 'a959ae03-6a79-44d0-90ce-85d1c605206c', 'en'),
-(23, 23, 'text', '28c18ccb-ffe0-472c-ab3d-3e8dd8f356d6', 'en'),
-(24, 24, 'text', '27373e42-edb7-4494-ba97-e3f646af4b29', 'en'),
-(25, 25, 'hero', '23ab2511-4f8c-4806-81dd-fab8fac726dc', 'en'),
-(26, 26, 'text', '10b264ae-472c-4887-a775-d80fef971ffe', 'en'),
-(27, 27, 'text', '60e00c2f-9c68-49a5-b634-0adf2cbd159d', 'en');
+(1, 1, 'section', 'b780cf5e-a347-458b-a3bf-159d406e1e33', 'en'),
+(2, 2, 'hero', 'bf70dbac-6a9e-468d-a11f-9202eb0e401e', 'en'),
+(3, 3, 'text', '6319a54a-05ca-4ccb-9470-0b43255418c0', 'en'),
+(4, 4, 'text', '9c291196-8a68-4d58-a418-c629f2e895a3', 'en'),
+(5, 5, 'hero', '42e2cf4d-7e52-4c62-a1c4-0d61588184a8', 'en'),
+(6, 6, 'section', '9d066ccb-970b-4f5d-9e61-dba46cf69762', 'en'),
+(7, 7, 'hero', '18c65c15-e7f8-44ea-bd97-74bf4cbb9fea', 'en'),
+(8, 8, 'text', '29233d81-ef88-49ed-9777-f59d0982ddb2', 'en'),
+(9, 9, 'text', '007cfe56-ee31-4210-9bc9-db6163ba6c0e', 'en'),
+(10, 10, 'hero', 'a739d5e3-d75d-4583-8db2-7dec9fc6858e', 'en'),
+(11, 11, 'section', 'b1e85ce4-e3b6-43b1-9b8a-4ed449657a6b', 'en'),
+(12, 12, 'hero', '77b6e651-cc70-463e-830f-d156a014af61', 'en'),
+(13, 13, 'text', '19bc2c35-cc94-4ee8-bb16-27db1fe29d45', 'en'),
+(14, 14, 'text', '3010972c-4105-4de4-a90d-dba0ba0f1a5b', 'en'),
+(15, 15, 'hero', 'bdce3c90-51e9-473e-b7cc-ef8459280b60', 'en'),
+(16, 16, 'section', '67647bda-93cc-4dfc-be31-ad0588ac83a8', 'en'),
+(17, 17, 'hero', '19d299d1-0a76-4c38-a540-bae49aad608b', 'en'),
+(18, 18, 'text', 'db289e2e-6d3e-44a9-8cf1-4d1664eb86f1', 'en'),
+(19, 19, 'text', '9a16bec1-919f-4219-b340-c3227d996e72', 'en'),
+(20, 20, 'hero', '0692a9e0-6284-464c-8d4a-b6fbc6e984d2', 'en'),
+(21, 21, 'section', '28c18ccb-ffe0-472c-ab3d-3e8dd8f356d6', 'en'),
+(22, 22, 'hero', '27373e42-edb7-4494-ba97-e3f646af4b29', 'en'),
+(23, 23, 'text', '23ab2511-4f8c-4806-81dd-fab8fac726dc', 'en'),
+(24, 24, 'text', '10b264ae-472c-4887-a775-d80fef971ffe', 'en'),
+(25, 25, 'hero', '60e00c2f-9c68-49a5-b634-0adf2cbd159d', 'en'),
+(26, 26, 'text', 'c48c7cf8-440b-40bd-839b-97526c11a716', 'en'),
+(27, 27, 'text', '83f73495-3636-4ec0-a239-ba412eedcf73', 'en');
 
 DROP TABLE IF EXISTS `paragraphs_item_field_data`;
 CREATE TABLE `paragraphs_item_field_data` (
@@ -1046,35 +1076,35 @@ CREATE TABLE `path_alias` (
   KEY `path_alias__alias_langcode_id_status` (`alias`, `langcode`, `id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `path_alias` (`id`, `revision_id`, `uuid`, `langcode`, `path`, `alias`, `status`) VALUES
-(1, 1, 'e6049f0c-a5fc-4b20-aa22-7953793e2c94', 'en', '/node/1', '/articles/article-1', 1),
-(2, 2, 'e2a4ce79-7d19-420e-b352-c62d068716bf', 'it', '/node/1', '/articoli/article-1-it', 1),
-(3, 3, 'd4271eed-e7ba-48ac-afd6-6aa10a50bd82', 'en', '/node/2', '/articles/article-2', 1),
-(4, 4, 'b0d9251a-4f4b-455b-bd04-63a4ae25d321', 'it', '/node/2', '/articoli/article-2-it', 1),
-(5, 5, 'bdccf269-7a5f-4c17-9592-33acea65052a', 'en', '/node/3', '/articles/article-3', 1),
-(6, 6, '676697dc-6743-44c0-b1cb-dfd9ee4ddc8d', 'it', '/node/3', '/articoli/article-3-it', 1),
-(7, 7, '322ab863-bf3c-45db-9ccf-0e905004e481', 'en', '/node/4', '/articles/article-4', 1),
-(8, 8, '347f84da-3e6b-4815-8687-c784d919a719', 'it', '/node/4', '/articoli/article-4-it', 1),
-(9, 9, '6886a06d-05db-4ae7-8070-b66c59b2f9fa', 'en', '/node/5', '/articles/article-5', 1),
-(10, 10, '368ba599-dcfe-4ca9-b2e5-a2620fded847', 'it', '/node/5', '/articoli/article-5-it', 1),
-(11, 11, 'ba8de763-930c-41cc-9e31-fb950a7e2654', 'en', '/node/6', '/articles/article-6', 1),
-(12, 12, '6f398971-2f1e-4797-8d8b-5d083a765a83', 'it', '/node/6', '/articoli/article-6-it', 1),
-(13, 13, 'a69802b4-14f4-48d1-bb8c-8b463317663a', 'en', '/node/7', '/articles/article-7', 1),
-(14, 14, '1abc1d4f-321b-4da8-a6de-7ac1b0d54ac2', 'it', '/node/7', '/articoli/article-7-it', 1),
-(15, 15, 'a556d60c-b3ba-49e1-b5d2-f3b82ef62327', 'en', '/node/8', '/articles/article-8', 1),
-(16, 16, 'e998fb54-ec37-43b3-860a-33658e5e36fc', 'it', '/node/8', '/articoli/article-8-it', 1),
-(17, 17, 'bf1c2da4-236f-4c9d-8668-59b99bd6495b', 'en', '/node/9', '/articles/article-9', 1),
-(18, 18, '5587dc1a-d391-4b4f-b868-a291ecc0e727', 'it', '/node/9', '/articoli/article-9-it', 1),
-(19, 19, 'ef01c06e-1a9c-4a71-8b79-3740353614a5', 'en', '/node/10', '/articles/article-10', 1),
-(20, 20, 'bbb559a6-31af-42f9-8d54-bf1c6c7664f7', 'it', '/node/10', '/articoli/article-10-it', 1),
-(21, 21, 'da98cdb2-2999-44de-8f4d-3174d8d03042', 'en', '/node/11', '/articles/article-11', 1),
-(22, 22, 'ebde172c-aa28-4fcd-8c85-8323a89bab9b', 'it', '/node/11', '/articoli/article-11-it', 1),
-(23, 23, 'c66bd445-2c47-4789-8c2f-c79f2d3180d4', 'en', '/node/12', '/articles/article-12', 1),
-(24, 24, 'e87a81ad-5de7-4d9b-a797-85bf4353b868', 'it', '/node/12', '/articoli/article-12-it', 1),
-(25, 25, '54ec75ea-9189-4d47-a71a-2ccaa30ac469', 'en', '/node/13', '/pages/basic-page-1', 1),
-(26, 26, '42e2cf4d-7e52-4c62-a1c4-0d61588184a8', 'en', '/node/14', '/pages/basic-page-2', 1),
-(27, 27, 'a739d5e3-d75d-4583-8db2-7dec9fc6858e', 'en', '/node/15', '/pages/basic-page-3', 1),
-(28, 28, 'bdce3c90-51e9-473e-b7cc-ef8459280b60', 'en', '/node/16', '/pages/basic-page-4', 1),
-(29, 29, '0692a9e0-6284-464c-8d4a-b6fbc6e984d2', 'en', '/node/17', '/pages/basic-page-5', 1);
+(1, 1, '6eb074d5-ca21-459e-a4ee-f00c105af476', 'en', '/node/1', '/articles/article-1', 1),
+(2, 2, 'd4271eed-e7ba-48ac-afd6-6aa10a50bd82', 'it', '/node/1', '/articoli/article-1-it', 1),
+(3, 3, '6b1fbd11-ff6d-4a54-a7e3-65cbf512a75b', 'en', '/node/2', '/articles/article-2', 1),
+(4, 4, 'bdccf269-7a5f-4c17-9592-33acea65052a', 'it', '/node/2', '/articoli/article-2-it', 1),
+(5, 5, '8753797d-a568-4ff5-88cb-2d7ff8b9beb3', 'en', '/node/3', '/articles/article-3', 1),
+(6, 6, '322ab863-bf3c-45db-9ccf-0e905004e481', 'it', '/node/3', '/articoli/article-3-it', 1),
+(7, 7, 'cb10746b-f9e0-45ff-9e90-f502d78ac8e7', 'en', '/node/4', '/articles/article-4', 1),
+(8, 8, '6886a06d-05db-4ae7-8070-b66c59b2f9fa', 'it', '/node/4', '/articoli/article-4-it', 1),
+(9, 9, '95317793-3d58-43a6-b070-456486ebad32', 'en', '/node/5', '/articles/article-5', 1),
+(10, 10, 'ba8de763-930c-41cc-9e31-fb950a7e2654', 'it', '/node/5', '/articoli/article-5-it', 1),
+(11, 11, 'e6da37f7-efeb-4fc0-8d4b-988fa995fd6f', 'en', '/node/6', '/articles/article-6', 1),
+(12, 12, 'a69802b4-14f4-48d1-bb8c-8b463317663a', 'it', '/node/6', '/articoli/article-6-it', 1),
+(13, 13, 'b01c7253-41fd-4da2-b6b5-d14d03c93bb4', 'en', '/node/7', '/articles/article-7', 1),
+(14, 14, 'a556d60c-b3ba-49e1-b5d2-f3b82ef62327', 'it', '/node/7', '/articoli/article-7-it', 1),
+(15, 15, 'c8e262ae-10e3-4000-a3be-227071625686', 'en', '/node/8', '/articles/article-8', 1),
+(16, 16, 'bf1c2da4-236f-4c9d-8668-59b99bd6495b', 'it', '/node/8', '/articoli/article-8-it', 1),
+(17, 17, '5f70f21e-dcbd-48cd-a014-3571b52eca88', 'en', '/node/9', '/articles/article-9', 1),
+(18, 18, 'ef01c06e-1a9c-4a71-8b79-3740353614a5', 'it', '/node/9', '/articoli/article-9-it', 1),
+(19, 19, 'abf8d62b-1bd0-4ffb-be28-7778655e84da', 'en', '/node/10', '/articles/article-10', 1),
+(20, 20, 'da98cdb2-2999-44de-8f4d-3174d8d03042', 'it', '/node/10', '/articoli/article-10-it', 1),
+(21, 21, '230c9732-a739-41eb-80d0-7aa8c9acfc8e', 'en', '/node/11', '/articles/article-11', 1),
+(22, 22, 'c66bd445-2c47-4789-8c2f-c79f2d3180d4', 'it', '/node/11', '/articoli/article-11-it', 1),
+(23, 23, '71439993-5fc8-43ef-93a2-2b618f448290', 'en', '/node/12', '/articles/article-12', 1),
+(24, 24, '54ec75ea-9189-4d47-a71a-2ccaa30ac469', 'it', '/node/12', '/articoli/article-12-it', 1),
+(25, 25, '87388a47-9d7e-41e1-9db5-aab6786133e5', 'en', '/node/13', '/pages/basic-page-1', 1),
+(26, 26, '7efe4799-f6f9-4967-ba9c-6d9d81b3d156', 'en', '/node/14', '/pages/basic-page-2', 1),
+(27, 27, 'c518221e-2c8d-438c-b446-3d20a71e438a', 'en', '/node/15', '/pages/basic-page-3', 1),
+(28, 28, '1787e278-5db8-408f-85d5-c49e01ddc4e0', 'en', '/node/16', '/pages/basic-page-4', 1),
+(29, 29, 'a959ae03-6a79-44d0-90ce-85d1c605206c', 'en', '/node/17', '/pages/basic-page-5', 1);
 
 DROP TABLE IF EXISTS `path_alias_revision`;
 CREATE TABLE `path_alias_revision` (
@@ -1136,9 +1166,9 @@ CREATE TABLE `redirect` (
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `redirect` (`rid`, `uuid`, `hash`, `type`, `uid`, `redirect_source__path`, `redirect_source__query`, `redirect_redirect__uri`, `redirect_redirect__title`, `redirect_redirect__options`, `status_code`, `language`, `created`) VALUES
-(1, 'c29213d6-879d-4172-9766-7cf8cc18f395', 'fixturehash01', 'redirect', 1, 'old-news', 'a:0:{}', 'internal:/node/1', '', 'a:0:{}', 301, 'und', 1760020001),
-(2, '9941d144-86ab-45e6-a505-a62584bdfac3', 'fixturehash02', 'redirect', 1, 'about-us', 'a:0:{}', 'internal:/node/13', '', 'a:0:{}', 301, 'en', 1760020002),
-(3, '3ed6ac14-a364-4289-8ffd-fbe5b8b8e560', 'fixturehash03', 'redirect', 1, 'vecchie-notizie', 'a:0:{}', 'internal:/node/2', '', 'a:0:{}', 301, 'it', 1760020003);
+(1, 'ed64039b-10d4-42f8-850f-8e1ebe8a8660', 'fixturehash01', 'redirect', 1, 'old-news', 'a:0:{}', 'internal:/node/1', '', 'a:0:{}', 301, 'und', 1760020001),
+(2, '61f6a307-d1e5-454a-b24f-98212d4a9570', 'fixturehash02', 'redirect', 1, 'about-us', 'a:0:{}', 'internal:/node/13', '', 'a:0:{}', 301, 'en', 1760020002),
+(3, '86103e6f-2830-43f2-a06e-bf5d9f8ae22b', 'fixturehash03', 'redirect', 1, 'vecchie-notizie', 'a:0:{}', 'internal:/node/2', '', 'a:0:{}', 301, 'it', 1760020003);
 
 DROP TABLE IF EXISTS `taxonomy_term_data`;
 CREATE TABLE `taxonomy_term_data` (
