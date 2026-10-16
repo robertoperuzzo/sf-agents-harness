@@ -1,0 +1,1 @@
+Can you confirm that we can actually reach the source migration database for this project? Read the project configuration, run a trivial read through the configured runner, and tell me the connection details every later query must use: database key or prefix, the runner command and the read-only method.

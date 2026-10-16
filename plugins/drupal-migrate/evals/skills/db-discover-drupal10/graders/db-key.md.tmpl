@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '\b{{expected.source.db_key|regex}}\b'
+---
+
+The final message names the source database key `{{expected.source.db_key}}`.

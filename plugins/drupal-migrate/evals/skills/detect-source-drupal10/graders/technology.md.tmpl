@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '{{expected.source.technology|regex}}|drupal\s*{{expected.source.drupal_major}}\b'
+---
+
+The final message names the source technology from `expected.json` (`{{expected.source.technology}}`, Drupal major {{expected.source.drupal_major}}).
