@@ -242,15 +242,22 @@
     }
   },
   "modules": {
-    "count": 8,
+    "count": 15,
     "enabled": [
+      "content_translation",
+      "entity_reference_revisions",
       "field",
+      "filter",
       "language",
+      "link",
+      "menu_link_content",
       "node",
       "paragraphs",
+      "path_alias",
       "redirect",
       "system",
       "taxonomy",
+      "text",
       "user"
     ],
     "profile": "standard",

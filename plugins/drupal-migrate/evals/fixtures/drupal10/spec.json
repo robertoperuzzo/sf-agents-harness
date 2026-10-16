@@ -12,21 +12,66 @@
     "drupal_major": 10,
     "base_url": "https://www.drupal10.example",
     "default_langcode": "en",
-    "languages": ["en", "it"]
+    "languages": [
+      "en",
+      "it"
+    ]
   },
   "profile": "standard",
-  "modules": ["system", "user", "node", "field", "language", "paragraphs", "taxonomy", "redirect"],
-  "themes": ["olivero", "claro"],
+  "modules": [
+    "system",
+    "user",
+    "node",
+    "field",
+    "text",
+    "filter",
+    "language",
+    "content_translation",
+    "paragraphs",
+    "entity_reference_revisions",
+    "taxonomy",
+    "redirect",
+    "link",
+    "path_alias",
+    "menu_link_content"
+  ],
+  "themes": [
+    "olivero",
+    "claro"
+  ],
   "users": [
-    {"name": "admin", "mail": "admin@drupal10.example", "status": 1},
-    {"name": "editor", "mail": "editor@drupal10.example", "status": 1},
-    {"name": "writer", "mail": "writer@drupal10.example", "status": 1},
-    {"name": "former-staff", "mail": "former-staff@drupal10.example", "status": 0}
+    {
+      "name": "admin",
+      "mail": "admin@drupal10.example",
+      "status": 1
+    },
+    {
+      "name": "editor",
+      "mail": "editor@drupal10.example",
+      "status": 1
+    },
+    {
+      "name": "writer",
+      "mail": "writer@drupal10.example",
+      "status": 1
+    },
+    {
+      "name": "former-staff",
+      "mail": "former-staff@drupal10.example",
+      "status": 0
+    }
   ],
   "vocabularies": {
     "tags": {
       "label": "Tags",
-      "terms": ["Drupal", "Migration", "Release", "Community", "Events", "Tutorial"]
+      "terms": [
+        "Drupal",
+        "Migration",
+        "Release",
+        "Community",
+        "Events",
+        "Tutorial"
+      ]
     }
   },
   "node_bundles": {
@@ -35,16 +80,32 @@
       "count": 12,
       "revisions": 3,
       "unpublished": 2,
-      "languages": ["en", "it"],
-      "alias_prefix": {"en": "articles", "it": "articoli"},
+      "languages": [
+        "en",
+        "it"
+      ],
+      "alias_prefix": {
+        "en": "articles",
+        "it": "articoli"
+      },
       "fields": {
-        "body": {"type": "text_with_summary", "label": "Body", "population": 1.0},
-        "field_subtitle": {"type": "string", "label": "Subtitle", "population": 0.0},
+        "body": {
+          "type": "text_with_summary",
+          "label": "Body",
+          "population": 1.0
+        },
+        "field_subtitle": {
+          "type": "string",
+          "label": "Subtitle",
+          "population": 0.0
+        },
         "field_tags": {
           "type": "entity_reference",
           "label": "Tags",
           "target_type": "taxonomy_term",
-          "target_bundles": ["tags"],
+          "target_bundles": [
+            "tags"
+          ],
           "cardinality": -1,
           "population": 0.5
         }
@@ -55,17 +116,28 @@
       "count": 5,
       "revisions": 1,
       "unpublished": 1,
-      "languages": ["en"],
-      "alias_prefix": {"en": "pages"},
+      "languages": [
+        "en"
+      ],
+      "alias_prefix": {
+        "en": "pages"
+      },
       "fields": {
-        "body": {"type": "text_with_summary", "label": "Body", "population": 1.0},
+        "body": {
+          "type": "text_with_summary",
+          "label": "Body",
+          "population": 1.0
+        },
         "field_content": {
           "type": "entity_reference_revisions",
           "label": "Content",
           "target_type": "paragraph",
           "cardinality": -1,
           "population": 1.0,
-          "children": ["section", "hero"]
+          "children": [
+            "section",
+            "hero"
+          ]
         }
       }
     }
@@ -74,7 +146,11 @@
     "hero": {
       "label": "Hero",
       "fields": {
-        "field_title": {"type": "string", "label": "Title", "population": 1.0}
+        "field_title": {
+          "type": "string",
+          "label": "Title",
+          "population": 1.0
+        }
       }
     },
     "section": {
@@ -86,30 +162,67 @@
           "target_type": "paragraph",
           "cardinality": -1,
           "population": 1.0,
-          "children": ["hero", "text", "text"]
+          "children": [
+            "hero",
+            "text",
+            "text"
+          ]
         }
       }
     },
     "text": {
       "label": "Text",
       "fields": {
-        "field_text": {"type": "text_long", "label": "Text", "population": 1.0}
+        "field_text": {
+          "type": "text_long",
+          "label": "Text",
+          "population": 1.0
+        }
       },
       "orphans": 2,
-      "orphan_parent": {"type": "paragraph", "bundle": "section", "field": "field_items"}
+      "orphan_parent": {
+        "type": "paragraph",
+        "bundle": "section",
+        "field": "field_items"
+      }
     }
   },
   "redirects": [
-    {"source": "old-news", "nid": 1, "language": "und"},
-    {"source": "about-us", "nid": 13, "language": "en"},
-    {"source": "vecchie-notizie", "nid": 2, "language": "it"}
+    {
+      "source": "old-news",
+      "nid": 1,
+      "language": "und"
+    },
+    {
+      "source": "about-us",
+      "nid": 13,
+      "language": "en"
+    },
+    {
+      "source": "vecchie-notizie",
+      "nid": 2,
+      "language": "it"
+    }
   ],
   "menus": {
     "main": [
-      {"title": "Home", "uri": "internal:/"},
-      {"title": "About", "nid": 13},
-      {"title": "Team", "nid": 14, "parent": "About"},
-      {"title": "News", "nid": 1}
+      {
+        "title": "Home",
+        "uri": "internal:/"
+      },
+      {
+        "title": "About",
+        "nid": 13
+      },
+      {
+        "title": "Team",
+        "nid": 14,
+        "parent": "About"
+      },
+      {
+        "title": "News",
+        "nid": 1
+      }
     ]
   }
 }

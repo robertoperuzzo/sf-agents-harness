@@ -23,7 +23,7 @@ CREATE TABLE `config` (
   PRIMARY KEY (`collection`, `name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `config` (`collection`, `name`, `data`) VALUES
-('', 'core.extension', 'a:3:{s:6:"module";a:8:{s:5:"field";i:0;s:8:"language";i:0;s:4:"node";i:0;s:10:"paragraphs";i:0;s:8:"redirect";i:0;s:6:"system";i:0;s:8:"taxonomy";i:0;s:4:"user";i:0;}s:5:"theme";a:2:{s:7:"olivero";i:0;s:5:"claro";i:0;}s:7:"profile";s:8:"standard";}'),
+('', 'core.extension', 'a:3:{s:6:"module";a:15:{s:19:"content_translation";i:0;s:26:"entity_reference_revisions";i:0;s:5:"field";i:0;s:6:"filter";i:0;s:8:"language";i:0;s:4:"link";i:0;s:17:"menu_link_content";i:0;s:4:"node";i:0;s:10:"paragraphs";i:0;s:10:"path_alias";i:0;s:8:"redirect";i:0;s:6:"system";i:0;s:8:"taxonomy";i:0;s:4:"text";i:0;s:4:"user";i:0;}s:5:"theme";a:2:{s:7:"olivero";i:0;s:5:"claro";i:0;}s:7:"profile";s:8:"standard";}'),
 ('', 'system.site', 'a:9:{s:4:"uuid";s:36:"83c9e5db-8f89-497f-ba6d-d33e22266a0b";s:4:"name";s:17:"Drupal 10 fixture";s:4:"mail";s:21:"site@drupal10.example";s:6:"slogan";s:0:"";s:4:"page";a:3:{s:3:"403";s:0:"";s:3:"404";s:0:"";s:5:"front";s:7:"/node/1";}s:18:"admin_compact_mode";b:0;s:17:"weight_select_max";i:100;s:16:"default_langcode";s:2:"en";s:17:"mail_notification";N;}'),
 ('', 'language.entity.en', 'a:9:{s:4:"uuid";s:36:"8c39d2ee-6903-43a8-ae5b-7a7da9f7e03c";s:8:"langcode";s:2:"en";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:2:"en";s:5:"label";s:7:"English";s:9:"direction";s:3:"ltr";s:6:"weight";i:0;s:6:"locked";b:0;}'),
 ('', 'language.entity.it', 'a:9:{s:4:"uuid";s:36:"1939b017-2c97-4fa5-b1ad-04cf4be4be01";s:8:"langcode";s:2:"it";s:6:"status";b:1;s:12:"dependencies";a:0:{}s:2:"id";s:2:"it";s:5:"label";s:7:"Italian";s:9:"direction";s:3:"ltr";s:6:"weight";i:1;s:6:"locked";b:0;}'),
@@ -58,14 +58,21 @@ CREATE TABLE `key_value` (
   PRIMARY KEY (`collection`, `name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 INSERT INTO `key_value` (`collection`, `name`, `value`) VALUES
-('system.schema', 'field', 'i:8000;'),
-('system.schema', 'language', 'i:8001;'),
-('system.schema', 'node', 'i:8002;'),
-('system.schema', 'paragraphs', 'i:8003;'),
-('system.schema', 'redirect', 'i:8004;'),
-('system.schema', 'system', 'i:8005;'),
-('system.schema', 'taxonomy', 'i:8006;'),
-('system.schema', 'user', 'i:8007;'),
+('system.schema', 'content_translation', 'i:8000;'),
+('system.schema', 'entity_reference_revisions', 'i:8001;'),
+('system.schema', 'field', 'i:8002;'),
+('system.schema', 'filter', 'i:8003;'),
+('system.schema', 'language', 'i:8004;'),
+('system.schema', 'link', 'i:8005;'),
+('system.schema', 'menu_link_content', 'i:8006;'),
+('system.schema', 'node', 'i:8007;'),
+('system.schema', 'paragraphs', 'i:8008;'),
+('system.schema', 'path_alias', 'i:8009;'),
+('system.schema', 'redirect', 'i:8010;'),
+('system.schema', 'system', 'i:8011;'),
+('system.schema', 'taxonomy', 'i:8012;'),
+('system.schema', 'text', 'i:8013;'),
+('system.schema', 'user', 'i:8014;'),
 ('state', 'system.cron_last', 'i:1760000000;'),
 ('state', 'install_time', 'i:1759913600;');
 
