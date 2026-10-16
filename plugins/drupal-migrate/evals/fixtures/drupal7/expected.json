@@ -81,10 +81,12 @@
     "paragraph": {
       "slide": {
         "active": 7,
+        "active_children": 0,
         "attached": 8,
         "child_bundles": [],
         "distinct": 9,
         "fields": {},
+        "inactive": 2,
         "is_container": false,
         "label": "Slide",
         "orphans": 1,

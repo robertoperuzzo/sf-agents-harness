@@ -810,11 +810,16 @@ def build_drupal8(spec, rng):
         parent_bundles.sort(key=lambda d: (d["parent_type"], d["parent_bundle"], d["field"]))
         root_bundles = sorted({nodes_by_nid[p["root_nid"]]["bundle"] for p in instances if p["root_nid"]})
         children = sorted({c for f in bspec["fields"].values() if f["type"] == "entity_reference_revisions" for c in f["children"]})
+        active_ids = {p["id"] for p in active}
+        active_children = [c for c in paragraphs if c["parent_type"] == "paragraph" and c["parent_id"] in {p["id"] for p in instances}
+                           and c["attached"] and c["root_nid"] and nodes_by_nid[c["root_nid"]]["status"] == 1]
         expected["entities"]["paragraph"][bundle] = {
             "label": bspec["label"],
             "distinct": len(ids),
             "attached": len(ids) - len(orphans),
             "active": len(active),
+            "inactive": len(ids) - len(active),
+            "active_children": len(active_children) if children else 0,
             "orphans": len(orphans),
             "is_container": bool(children),
             "fields": fields_expected,
@@ -1382,8 +1387,11 @@ def build_drupal7(spec, rng):
                 parent_bundles.append(pb)
         parent_bundles.sort(key=lambda d: (d["parent_type"], d["parent_bundle"], d["field"]))
         children = sorted({c for f, fd in bspec["fields"].items() if field_defs[f]["type"] == "paragraphs" for c in fd["children"]})
+        active_children = [c for c in paragraphs if c["host_type"] == "paragraphs_item" and c["host_id"] in set(ids)
+                           and c["attached"] and c["root_nid"] and nodes_by_nid[c["root_nid"]]["status"] == 1]
         expected["entities"]["paragraph"][bundle] = {
             "label": bspec["label"], "distinct": len(ids), "attached": len(ids) - len(orphans), "active": len(active),
+            "inactive": len(ids) - len(active), "active_children": len(active_children) if children else 0,
             "orphans": len(orphans), "is_container": bool(children), "fields": fields_expected, "parent_bundles": parent_bundles,
             "root_node_bundles": sorted({nodes_by_nid[p["root_nid"]]["bundle"] for p in instances if p["root_nid"]}),
             "child_bundles": children,

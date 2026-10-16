@@ -94,6 +94,7 @@
     "paragraph": {
       "hero": {
         "active": 8,
+        "active_children": 0,
         "attached": 10,
         "child_bundles": [],
         "distinct": 10,
@@ -104,6 +105,7 @@
             "type": "string"
           }
         },
+        "inactive": 2,
         "is_container": false,
         "label": "Hero",
         "orphans": 0,
@@ -125,6 +127,7 @@
       },
       "section": {
         "active": 4,
+        "active_children": 12,
         "attached": 5,
         "child_bundles": [
           "hero",
@@ -143,6 +146,7 @@
             "type": "entity_reference_revisions"
           }
         },
+        "inactive": 1,
         "is_container": true,
         "label": "Section",
         "orphans": 0,
@@ -159,6 +163,7 @@
       },
       "text": {
         "active": 8,
+        "active_children": 0,
         "attached": 10,
         "child_bundles": [],
         "distinct": 12,
@@ -169,6 +174,7 @@
             "type": "text_long"
           }
         },
+        "inactive": 4,
         "is_container": false,
         "label": "Text",
         "orphans": 2,
