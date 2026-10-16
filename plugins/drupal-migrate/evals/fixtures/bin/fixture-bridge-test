@@ -114,12 +114,23 @@ printf 'SELECT 1' >"$queue/req.bbbbbb.sql"
 # symlinked .sql
 ln -s "$secret" "$queue/req.cccccc.sql"
 printf 'drupal10\n' >"$queue/req.cccccc.fixture"
+# refused request (bad fixture name) with a planted .out link: only queue_write protects this path
+victim2="$work/victim2.rc"
+printf 'original line 2\n' >"$victim2"
+ln -s "$victim2" "$queue/req.eeeeee.out"
+printf 'nosuchfixture\n' >"$queue/req.eeeeee.fixture"
+printf 'SELECT 1' >"$queue/req.eeeeee.sql"
+# hard link to a host file as .sql
+secret2="$work/secret2.sql"
+printf 'SELECT %s AS leaked' "'HARDLINKED-SECRET'" >"$secret2"
+ln "$secret2" "$queue/req.ffffff.sql"
+printf 'drupal10\n' >"$queue/req.ffffff.fixture"
 # id outside the pattern
 printf 'drupal10\n' >"$queue/evil.fixture"
 printf 'SELECT 1' >"$queue/evil.sql"
 tick=0
 while [ "$tick" -lt 50 ]; do
-  [ -e "$queue/req.aaaaaa.exit" ] && [ -e "$queue/req.bbbbbb.exit" ] && [ -e "$queue/req.cccccc.exit" ] && break
+  [ -e "$queue/req.aaaaaa.exit" ] && [ -e "$queue/req.bbbbbb.exit" ] && [ -e "$queue/req.cccccc.exit" ] && [ -e "$queue/req.eeeeee.exit" ] && [ -e "$queue/req.ffffff.exit" ] && break
   sleep 0.2; tick=$((tick + 1))
 done
 if [ "$(cat "$victim")" = "original line" ]; then echo "ok   host file not overwritten through a planted .out link"; else echo "FAIL host file overwritten: $(cat "$victim")"; failures=$((failures + 1)); fi
@@ -134,9 +145,22 @@ case "$cout" in
   *"must be regular files"*) echo "ok   symlinked .sql refused before being read ($cout)" ;;
   *) echo "FAIL symlinked .sql was read (its content reached the statement check): $cout"; failures=$((failures + 1)) ;;
 esac
+if [ "$(cat "$victim2")" = "original line 2" ]; then echo "ok   refused request did not write through a planted .out link"; else echo "FAIL host file overwritten on the refusal path: $(cat "$victim2")"; failures=$((failures + 1)); fi
+eout=$(cat "$queue/req.eeeeee.out" 2>/dev/null || echo "<no .out>")
+case "$eout" in
+  *nosuchfixture*) echo "FAIL fixture name echoed back: $eout"; failures=$((failures + 1)) ;;
+  *"unknown fixture name"*) echo "ok   unknown fixture answered with the fixed message" ;;
+  *) echo "FAIL unexpected answer for the unknown fixture: $eout"; failures=$((failures + 1)) ;;
+esac
+fout=$(cat "$queue/req.ffffff.out" 2>/dev/null || echo "<no .out>")
+case "$fout" in
+  *HARDLINKED-SECRET*) echo "FAIL hard-linked .sql was executed: $fout"; failures=$((failures + 1)) ;;
+  *"must be regular files"*) echo "ok   hard-linked .sql refused" ;;
+  *) echo "FAIL unexpected answer for the hard-linked .sql: $fout"; failures=$((failures + 1)) ;;
+esac
 sleep 1
 if [ -e "$queue/evil.exit" ] || [ -e "$queue/evil.working" ]; then echo "FAIL request with an invalid id was served"; failures=$((failures + 1)); else echo "ok   request with an invalid id ignored"; fi
-rm -f "$queue"/req.aaaaaa.* "$queue"/req.bbbbbb.* "$queue"/req.cccccc.* "$queue"/evil.*
+rm -f "$queue"/req.aaaaaa.* "$queue"/req.bbbbbb.* "$queue"/req.cccccc.* "$queue"/req.eeeeee.* "$queue"/req.ffffff.* "$queue"/evil.* "$secret2"
 # queue reached through a symlink
 ws2="$work/ws2"
 mkdir -p "$ws2/.agents" "$work/elsewhere/queue"

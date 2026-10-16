@@ -379,8 +379,9 @@ queue_is_safe() {
 }
 
 regular_file() {
-  # true for a regular, non-symlink file owned by the operator
-  [ ! -L "$1" ] && [ -f "$1" ] && owned_by_me "$1"
+  # true for a regular, non-symlink, single-link file owned by the operator: a hard
+  # link to a host file is a regular file too, so the link count must be 1.
+  [ ! -L "$1" ] && [ -f "$1" ] && [ -n "$(find "$1" -prune -links 1 -user "$(id -un)" 2>/dev/null)" ]
 }
 
 queue_write() {
@@ -392,10 +393,12 @@ queue_write() {
 }
 
 serve_request() {
-  # $1 = queue dir, $2 = request id (already validated against req.[A-Za-z0-9]{6})
+  # $1 = queue dir (resolved, see cmd_serve), $2 = request id (validated)
   queue=$1
   id=$2
   base="$queue/$id"
+  req_name=""
+  req_sql=""
   queue_write "$queue" "$base.working" "" || return 0
   code=1
   out=""
@@ -444,7 +447,10 @@ cmd_serve() {
         continue
       fi
       queue_is_safe "$ws" || continue
-      queue="$ws/.agents/queue"
+      # Resolve the queue once per poll (cd -P) so a directory swapped for a link
+      # after the check cannot redirect the files this iteration creates.
+      queue=$(cd -P "$ws/.agents/queue" 2>/dev/null && pwd -P) || continue
+      [ -L "$queue" ] && continue
       for sqlf in "$queue"/req.??????.sql; do
         [ -e "$sqlf" ] || [ -L "$sqlf" ] || continue
         id=$(basename "$sqlf" .sql)
