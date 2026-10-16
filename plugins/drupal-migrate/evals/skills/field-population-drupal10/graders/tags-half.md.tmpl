@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: 'field_tags[^\n]{0,160}\b(49|{{expected.entities.node.article.fields.field_tags.population_pct}}|51)(\.\d+)?\s*%'
+---
+
+`field_tags` is reported at {{expected.entities.node.article.fields.field_tags.population_pct}} % within one point.

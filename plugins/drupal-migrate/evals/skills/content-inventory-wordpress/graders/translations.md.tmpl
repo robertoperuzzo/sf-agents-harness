@@ -1,0 +1,10 @@
+---
+type: regex
+target:
+  source: file
+  path: doc/Migrate/as-is/content-inventory.md
+flags: i
+pattern: '(\bit\b|italian)[^\n]{0,120}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.language_coverage.rows_by_language.it}}(?![\w.,]?\d)'
+---
+
+WPML coverage: {{expected.language_coverage.rows_by_language.it}} Italian rows in `wp_icl_translations`.

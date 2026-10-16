@@ -1,0 +1,10 @@
+---
+type: regex
+target:
+  source: file
+  path: doc/Migrate/as-is/platform.md
+flags: i
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.modules.count}}(?![\w.,]?\d)'
+---
+
+The enabled-module count {{expected.modules.count}} from `core.extension` appears in the document.

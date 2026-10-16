@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: resolve-examples-drupal7
+description: Case for the drupal-migrate-resolve-examples skill on the drupal7 fixture.
+tags: [phase1, drupal7]
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill]
+context:
+  scaffold_script: scaffold.sh

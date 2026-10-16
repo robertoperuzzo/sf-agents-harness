@@ -1,0 +1,10 @@
+---
+type: regex
+target:
+  source: file
+  path: doc/Migrate/as-is/content-inventory.md
+flags: i
+pattern: 'article[^\n]*(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.node.article.distinct}}(?![\w.,]?\d)'
+---
+
+The inventory row for `article` carries the distinct total {{expected.entities.node.article.distinct}}.

@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '\bbody\b[^\n]{0,120}\b{{expected.entities.node.article.fields.body.type}}\b'
+---
+
+The field table lists `body` with its type `{{expected.entities.node.article.fields.body.type}}`.

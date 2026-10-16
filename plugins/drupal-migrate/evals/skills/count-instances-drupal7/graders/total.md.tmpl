@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.node.article.distinct}}(?![\w.,]?\d)'
+---
+
+Distinct `article` nodes: {{expected.entities.node.article.distinct}}.

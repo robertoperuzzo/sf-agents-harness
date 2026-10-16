@@ -1,0 +1,10 @@
+---
+type: regex
+target:
+  source: file
+  path: doc/Migrate/as-is/content-inventory.md
+flags: i
+pattern: 'post[^\n]*(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.post_types.post.publish}}(?![\w.,]?\d)'
+---
+
+The `post` row carries {{expected.post_types.post.publish}} published rows: this is `wp_posts` grouped by type and status, so it counts the {{expected.post_types.post.originals}} originals' published subset plus the {{expected.post_types.post.translations.it}} published Italian translation posts (design D3: 15 published originals plus 10 `it` translation posts).

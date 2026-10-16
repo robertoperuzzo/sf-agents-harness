@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.text.active}}(?![\w.,]?\d)'
+---
+
+Active `text` paragraphs: {{expected.entities.paragraph.text.active}} (attached to the current revision of a published page).

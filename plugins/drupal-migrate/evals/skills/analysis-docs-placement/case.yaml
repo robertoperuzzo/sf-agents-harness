@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: analysis-docs-placement
+description: Case for the drupal-migrate-analysis-docs skill.
+tags: [phase2]
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill]

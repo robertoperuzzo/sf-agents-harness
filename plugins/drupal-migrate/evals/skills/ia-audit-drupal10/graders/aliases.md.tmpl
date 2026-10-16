@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.path_aliases.count}}(?![\w.,]?\d)'
+---
+
+The alias count {{expected.path_aliases.count}} from `path_alias` is reported.

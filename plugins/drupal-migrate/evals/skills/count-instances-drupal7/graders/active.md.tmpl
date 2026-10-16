@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.node.article.active}}(?![\w.,]?\d)'
+---
+
+Published `article` nodes: {{expected.entities.node.article.active}}.

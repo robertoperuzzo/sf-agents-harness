@@ -1,0 +1,1 @@
+I have drafted the mapping from the old site's content types to our new Drupal content types, with the open questions the client still has to approve. Where in the project should this document live, and in which form?

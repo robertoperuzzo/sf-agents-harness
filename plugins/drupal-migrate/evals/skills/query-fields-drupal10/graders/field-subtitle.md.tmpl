@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: 'field_subtitle[^\n]{0,120}\b{{expected.entities.node.article.fields.field_subtitle.type}}\b'
+---
+
+The field table lists `field_subtitle` with its type `{{expected.entities.node.article.fields.field_subtitle.type}}`.
