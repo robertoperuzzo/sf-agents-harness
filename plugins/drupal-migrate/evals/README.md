@@ -29,11 +29,16 @@ evals/
 - Docker, Python 3, Claude Code 2.1.269 or later, an Anthropic credential.
 - The fixture of each case must be running: `fixtures/bin/fixture up drupal10`. A case
   whose fixture is down scores 0 with a scaffold error naming `fixture up <name>`.
+- `fixtures/bin/fixture serve` must be running in another terminal for the whole run:
+  it executes the agents' queries on the host, because the eval sandbox gives the agent
+  no network and no Docker (see `fixtures/README.md`, "Inside an eval run"). A case
+  started without it scores 0 with a scaffold error naming `fixture serve`.
 
 ## Smoke run
 
 ```bash
 fixtures/bin/fixture up drupal10
+fixtures/bin/fixture serve          # in a second terminal, leave it running
 claude plugin eval plugins/drupal-migrate --tag smoke --runs 1 --ablation none \
   --scaffold --allow-tools Bash Write --no-publish --trust-plugin --json results/smoke.json
 ```
@@ -52,15 +57,14 @@ per-case delta.
 - `prompt.md`: the request as a user would phrase it. It never names the skill.
 - `scaffold.sh`: sources `scripts/scaffold-lib.sh` and calls `dm_scaffold <fixture>`
   (`dm_scaffold <fixture> phase1` also creates `doc/`). The library checks that
-  `dm-fixture-<name>` is running, copies the fixture `project-config.md` and the
-  plugin `entity-type-context.md` to `.agents/references/migrate/`, copies the fixture
-  script itself to `.agents/bin/fixture` with the fixture `spec.json` beside it at
-  `.agents/<name>/spec.json`, and rewrites the `fixture ...` commands in the installed
-  config to that relative path. The copy is needed because the agent's shell runs in
-  a sandbox that cannot read the plugin checkout (a wrapper pointing there fails with
-  `Operation not permitted`) and does not inherit a `PATH` with the script. The
-  runner executes the scaffold with a minimal environment and a 120 s limit, so the
-  library resolves everything from the case directory.
+  `dm-fixture-<name>` is running and that `fixture serve` has a live pid, copies the
+  fixture `project-config.md` and the plugin `entity-type-context.md` to
+  `.agents/references/migrate/`, installs the file-queue client as
+  `.agents/bin/fixture`, creates `.agents/queue/`, registers the workspace path for
+  `serve`, and rewrites the `fixture ...` commands in the installed config to the
+  relative client path. The runner executes the scaffold unsandboxed with a minimal
+  environment (temporary `HOME`) and a 120 s limit, so the library resolves the
+  registry from the login name, not from `HOME`.
 - `graders/`: see the policy below. Files ending in `.md.tmpl` are templates;
   `scripts/render-cases.py` renders them to `.md` next to them, resolving
   `{{expected.<dotted.path>}}` (and `{{expected.<path>|regex}}` for an escaped value)
@@ -82,7 +86,11 @@ per-case delta.
   and `SHOW CREATE TABLE` or `REPLACE(` do not match. Written with character classes
   because the runner's regexes are JavaScript and do not accept an inline `(?i)`.
 - Process checks: `tool_used` on `Bash` with `input_match` for a pattern the skill
-  prescribes (`COUNT(DISTINCT`) or forbids (`COUNT(*)`, `max: 0`).
+  prescribes (`SELECT 1`, `COUNT(DISTINCT`). No grader forbids `COUNT(*)` in the trace:
+  the trap is the reported number, which the exact-count grader catches.
+- Numeric patterns stand alone: `(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])N(?![\w.,]?\d)`,
+  so `Drupal 10`, `MariaDB 10.11`, `drupal10` or `10,000` never satisfy a count of 10.
+  Every numeric grader is checked against a transcript where the agent got no data.
 - Files: `file_exists` with the as-is paths; prose: at most one `llm` grader per agent
   case (later groups).
 
@@ -116,6 +124,7 @@ No per-run token counts are present; cost is the list-price `costUsd` per run pl
 python3 -I evals/fixtures/generate.py --check
 python3 -I evals/scripts/render-cases.py --check
 evals/fixtures/bin/fixture-parser-test
+evals/fixtures/bin/fixture-bridge-test      # needs Docker and the drupal10 fixture up
 python3 scripts/validate-plugins.py          # from the repository root
 ```
 

@@ -3,7 +3,10 @@
 type: regex
 target: last_message
 flags: i
-pattern: '\b12\b'
+pattern: '(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])12(?![\w.,]?\d)'
 ---
 
-The final message states the revision-safe total of distinct `article` nodes, 12, from `expected.json`.
+The final message states the revision-safe total of distinct `article` nodes,
+12, from `expected.json`. The number must stand alone:
+not part of a version string (`Drupal 10`, `MariaDB 10.11`), not glued to a word or digit
+(`drupal10`, `node10`), not a decimal or thousands group.
