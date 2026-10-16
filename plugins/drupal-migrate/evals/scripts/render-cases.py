@@ -22,7 +22,8 @@ Path lookups: ``expected.entities.node.article.distinct``. Dict keys and list
 indexes are separated by dots; a key containing a dot is not supported (none
 does). Numbers render as JSON would print them (``12``, ``50.0``); lists and
 objects render as compact JSON. ``{{expected.<path>|regex}}`` renders the value
-escaped for use inside a regular expression.
+escaped for use inside a regular expression; ``{{expected.<path>|int}}`` renders a
+number rounded to an integer (``50.0`` becomes ``50``), for percentages in patterns.
 
 Usage:
     render-cases.py [--check] [--evals-dir DIR] [CASE_DIR ...]
@@ -41,7 +42,7 @@ from pathlib import Path
 EVALS_DIR = Path(__file__).resolve().parent.parent
 FIXTURES_DIR = EVALS_DIR / "fixtures"
 SHARED_DIR_NAME = "graders-shared"
-PLACEHOLDER = re.compile(r"\{\{\s*expected\.([A-Za-z0-9_.\-]+)\s*(?:\|\s*(regex)\s*)?\}\}")
+PLACEHOLDER = re.compile(r"\{\{\s*expected\.([A-Za-z0-9_.\-]+)\s*(?:\|\s*(regex|int)\s*)?\}\}")
 
 
 def fixture_names():
@@ -79,6 +80,8 @@ def lookup(data, dotted):
 
 
 def render_value(value, mode):
+    if mode == "int" and isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(int(round(value)))
     if isinstance(value, bool):
         text = "true" if value else "false"
     elif isinstance(value, (int, float)):
