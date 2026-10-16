@@ -10,7 +10,8 @@
 #   fixture status                container state and host port of every fixture
 #   fixture query NAME 'SQL'      run one read-only statement as the `reader` user
 #
-# Exit status: 0 ok, 1 usage or environment error, 2 statement refused as a write.
+# Exit status: 0 ok, 1 usage or environment error, 2 statement refused (write,
+# more than one statement, client command or executable comment).
 #
 # Defaults: image mariadb:10.11, container dm-fixture-NAME, host port from the
 # table below bound to 127.0.0.1. Override a port with FIXTURE_PORT_<NAME>
@@ -36,7 +37,8 @@ done
 FIXTURES_DIR=$(cd "$(dirname "$self")/.." && pwd)
 
 usage() {
-  sed -n '2,20p' "$self" | sed 's/^# \{0,1\}//'
+  # The header comment up to the first blank line, without the leading `# `.
+  awk 'NR > 1 && !/^#/ { exit } NR > 1 { sub(/^# ?/, ""); print }' "$self"
 }
 
 die() {
@@ -103,7 +105,7 @@ container_state() {
 }
 
 is_imported() {
-  docker exec "$1" test -f "$IMPORT_MARKER" >/dev/null 2>&1
+  docker exec -u mysql "$1" test -f "$IMPORT_MARKER" >/dev/null 2>&1
 }
 
 wait_ready() {
@@ -111,7 +113,7 @@ wait_ready() {
   # a TCP connection succeeds only once the final server is up.
   waited=0
   while [ "$waited" -lt "$READY_TIMEOUT" ]; do
-    if docker exec "$1" mariadb -uroot -p"$ROOT_PASSWORD" -h127.0.0.1 --protocol=TCP -e 'SELECT 1' >/dev/null 2>&1; then
+    if docker exec -u mysql "$1" mariadb -uroot -p"$ROOT_PASSWORD" -h127.0.0.1 --protocol=TCP -e 'SELECT 1' >/dev/null 2>&1; then
       return 0
     fi
     sleep 1
@@ -126,8 +128,8 @@ import_dump() {
   dump="$FIXTURES_DIR/$name/dump.sql"
   [ -f "$dump" ] || die "$dump missing; run 'fixture generate $name' first"
   printf 'fixture: importing %s/dump.sql into %s\n' "$name" "$container"
-  docker exec -i "$container" mariadb -uroot -p"$ROOT_PASSWORD" <"$dump"
-  docker exec "$container" touch "$IMPORT_MARKER"
+  docker exec -i -u mysql "$container" mariadb -uroot -p"$ROOT_PASSWORD" <"$dump"
+  docker exec -u mysql "$container" touch "$IMPORT_MARKER"
 }
 
 cmd_generate() {
@@ -228,26 +230,62 @@ first_keyword() {
   printf '%s\n' "$rest" | sed -n '1s/^\([A-Za-z_]*\).*/\1/p' | tr '[:lower:]' '[:upper:]'
 }
 
+refuse() {
+  printf 'fixture: statement refused %s\n' "$*" >&2
+  exit 2
+}
+
+strip_comments() {
+  # Drop `-- ...` and `# ...` to end of line, join lines, drop /* ... */ blocks.
+  printf '%s\n' "$1" | awk '{ sub(/--.*$/, ""); sub(/#.*$/, ""); printf "%s ", $0 } END { print "" }' |
+    awk '{ while (match($0, /\/\*([^*]|\*+[^*\/])*\*+\//)) $0 = substr($0, 1, RSTART - 1) " " substr($0, RSTART + RLENGTH); print }'
+}
+
+check_statement() {
+  # Exit 2 unless $1 is exactly one read-only SQL statement with no client escape.
+  sql=$1
+  # 1. mariadb client commands: short form `\x` anywhere, long form at a line start.
+  case "$sql" in
+    *\\[.!?#A-Za-z]*) refuse "as a client command: backslash commands such as \\! \\. \\T \\P \\G are not allowed" ;;
+  esac
+  if printf '%s\n' "$sql" | grep -iqE '^[[:space:]]*(system|source|tee|use|delimiter|pager|nopager|notee|prompt|connect|status|warnings|nowarning|edit|print|rehash|charset|resetconnection|exit|quit|clear|go|ego|help)([[:space:]]|$)'; then
+    refuse "as a client command: system, source, tee and other client commands are not allowed at a line start"
+  fi
+  # 2. executable comments are run by the server, not ignored.
+  case "$sql" in
+    *'/*!'* | *'/*M!'* | *'/*m!'*) refuse "as an executable comment: /*! and /*M! are not allowed" ;;
+  esac
+  # 3. one statement per call: a `;` may appear only at the very end.
+  body=$(strip_comments "$sql")
+  body=$(printf '%s' "$body" | sed 's/[[:space:]]*$//')
+  case "$body" in
+    *';') body=${body%;} ;;
+  esac
+  case "$body" in
+    *';'*) refuse "as more than one statement: one statement per call (a trailing ';' is fine)" ;;
+  esac
+  # 4. first keyword allow-list.
+  keyword=$(first_keyword "$sql")
+  case "$keyword" in
+    SELECT | SHOW | DESCRIBE | DESC | EXPLAIN | WITH) ;;
+    *) refuse "as a write (first keyword ${keyword:-<none>}); allowed: SELECT, SHOW, DESCRIBE, DESC, EXPLAIN, WITH" ;;
+  esac
+}
+
 cmd_query() {
   require_fixture "${1:-}"
   name=$1
   sql=${2:-}
   [ -n "$sql" ] || die "usage: fixture query $name 'SELECT ...'"
-  keyword=$(first_keyword "$sql")
-  case "$keyword" in
-    SELECT | SHOW | DESCRIBE | DESC | EXPLAIN | WITH) ;;
-    *)
-      printf 'fixture: statement refused as a write (first keyword %s); allowed: SELECT, SHOW, DESCRIBE, EXPLAIN, WITH\n' "${keyword:-<none>}" >&2
-      exit 2
-      ;;
-  esac
+  check_statement "$sql"
   require_docker
   container=$(container_for "$name")
   if [ "$(container_state "$container")" != running ]; then
     die "$container is not running; start it with: fixture up $name"
   fi
-  # No -t: a non-tty client prints tab-separated rows with a header line.
-  docker exec "$container" mariadb -u"$READER_USER" -p"$READER_PASSWORD" -D "$(database_for "$name")" --batch -e "$sql"
+  # Unprivileged OS user, client sandbox (no \! \. tee system), no tty: the client
+  # prints tab-separated rows with a header line.
+  docker exec -u mysql "$container" mariadb --sandbox -u"$READER_USER" -p"$READER_PASSWORD" -D "$(database_for "$name")" --batch -e "$sql"
 }
 
 command=${1:-}
