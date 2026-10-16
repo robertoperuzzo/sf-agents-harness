@@ -1,0 +1,1 @@
+We're migrating this site to Drupal and I was handed only a database dump; it is already imported and reachable through the runner named in the project config. Before anything else, tell me what the source system is and how we should proceed.

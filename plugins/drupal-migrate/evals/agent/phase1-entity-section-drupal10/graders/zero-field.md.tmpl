@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: 'field_link[^\n]{0,160}(\b{{expected.entities.paragraph.hero.fields.field_link.populated}}\s*%|\b0\s*/|\bempty\b|\bunused\b|\bnever\b|\bno values\b|not populated|zero|exclu|leave out|drop)'
+---
+
+The empty field `field_link` on the `hero` child ({{expected.entities.paragraph.hero.fields.field_link.population_pct}} %) is flagged.

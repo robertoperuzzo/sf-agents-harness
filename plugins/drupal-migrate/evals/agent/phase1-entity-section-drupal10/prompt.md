@@ -1,0 +1,1 @@
+Run the Phase 1 entity analysis of the section paragraph type on the source with the migration analyst: everything we need to know about that paragraph type before we map it, including whatever it contains, and give me the report.

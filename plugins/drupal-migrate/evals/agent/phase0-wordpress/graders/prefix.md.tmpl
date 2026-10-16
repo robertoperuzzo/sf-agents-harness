@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '\b{{expected.source.table_prefix|regex}}'
+---
+
+The table prefix `{{expected.source.table_prefix}}` is reported.

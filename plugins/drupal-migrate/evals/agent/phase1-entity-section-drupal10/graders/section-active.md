@@ -1,0 +1,9 @@
+---
+# Rendered by evals/scripts/render-cases.py from section-active.md.tmpl; edit the template, not this file.
+type: regex
+target: last_message
+flags: i
+pattern: '(?:active|live|published|in use)[^\n]{0,80}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])4(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)|(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])4(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)[^\n]{0,80}(?:active|live|published|in use)'
+---
+
+Active `section` instances: 4.

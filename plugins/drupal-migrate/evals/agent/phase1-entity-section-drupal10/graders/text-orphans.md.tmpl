@@ -1,0 +1,8 @@
+---
+type: regex
+target: last_message
+flags: i
+pattern: '(?:orphan(ed)?|inactive|not (live|active|published)|detached|excluded|stale)[^\n]{0,80}(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.text.inactive}}(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)|(?<!drupal\s)(?<!mariadb\s)(?<![\w.,]){{expected.entities.paragraph.text.inactive}}(?![\w.,]?\d|\s?(s|sec|secs|seconds|ms|min|minutes|h|hours|px|kb|mb|gb)\b)[^\n]{0,80}(?:orphan(ed)?|inactive|not (live|active|published)|detached|excluded|stale)'
+---
+
+The recursive analysis of the `text` child reports {{expected.entities.paragraph.text.inactive}} orphaned or inactive instances ({{expected.entities.paragraph.text.distinct}} total, {{expected.entities.paragraph.text.active}} active).

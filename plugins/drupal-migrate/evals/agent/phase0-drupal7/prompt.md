@@ -1,0 +1,1 @@
+Run the Phase 0 source identification for this migration project with the migration analyst and give me its report: what the source is, whether it is one site or many, what was delivered, and the exact command the later analysis must use to query it read-only. Do not start any analysis beyond that.

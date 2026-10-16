@@ -1,0 +1,1 @@
+Run the Phase 1 as-is analysis of the source for this migration project with the migration analyst and write the as-is documentation set: the platform as it is today, the content inventory, the external integrations, and the index that ties them together. Then give me the report.
