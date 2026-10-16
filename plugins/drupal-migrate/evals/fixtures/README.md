@@ -97,10 +97,21 @@ Start it in a terminal before an eval run and stop it with Ctrl-C afterwards; th
 scaffold refuses to run (exit 1, hint `fixture serve`) when no live pid is recorded.
 `DM_FIXTURE_STATE_DIR` relocates the pid file and registry.
 
+`serve` runs unsandboxed as the operator while the agent controls the workspace, so it
+trusts nothing it finds there: a workspace is skipped unless `.agents` and
+`.agents/queue` are real directories owned by the operator; only ids matching
+`req.[A-Za-z0-9]{6}` are served; `<id>.sql` and `<id>.fixture` must be regular files
+owned by the operator (a symlink is refused before it is read); `.working`, `.out` and
+`.exit` are written through `mktemp` inside the queue and renamed into place, so a
+planted link is replaced, never followed; an unknown fixture name is answered with a
+fixed message, and the serve log never echoes request content.
+
 `bin/fixture-bridge-test` round-trips the bridge with a private state dir: scaffold
 without and with serve, `SELECT 1`, a count, a refused `UPDATE` and client command,
-two concurrent requests, an empty queue afterwards, and the client failure with serve
-stopped. It needs Docker and the drupal10 fixture running.
+two concurrent requests, an empty queue afterwards, the planted-symlink and bad-id
+scenarios above, and the client's fast failure (under 15 s, "not picked up") with
+serve stopped. It needs Docker and the drupal10 fixture running;
+`FIXTURE_UNDER_TEST` points it at another copy of the script.
 
 ```bash
 fixtures/bin/fixture-bridge-test

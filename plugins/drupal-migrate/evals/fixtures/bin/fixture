@@ -361,18 +361,66 @@ serve_log() {
   printf '%s serve: %s\n' "$(date '+%H:%M:%S')" "$*"
 }
 
+owned_by_me() {
+  # POSIX test has no -O; `find -prune -user` prints the path only when owned by us.
+  [ -n "$(find "$1" -prune -user "$(id -un)" 2>/dev/null)" ]
+}
+
+queue_is_safe() {
+  # $1 = workspace path. The agent controls the workspace, so `serve` (which runs
+  # unsandboxed as the operator) must not follow anything the agent could plant:
+  # .agents and .agents/queue must be real directories owned by the operator.
+  for dir in "$1/.agents" "$1/.agents/queue"; do
+    [ -L "$dir" ] && return 1
+    [ -d "$dir" ] || return 1
+    owned_by_me "$dir" || return 1
+  done
+  return 0
+}
+
+regular_file() {
+  # true for a regular, non-symlink file owned by the operator
+  [ ! -L "$1" ] && [ -f "$1" ] && owned_by_me "$1"
+}
+
+queue_write() {
+  # queue_write QUEUE TARGET CONTENT: write through a fresh temp file in the queue
+  # and rename it into place; mv replaces a planted link, it never follows one.
+  qw_tmp=$(mktemp "$1/.serve.XXXXXX") || return 1
+  printf '%s' "$3" >"$qw_tmp"
+  mv -f "$qw_tmp" "$2"
+}
+
 serve_request() {
-  # $1 = request base path (without extension) inside a workspace queue
-  base=$1
-  : >"$base.working"
-  req_name=$(head -n 1 "$base.fixture" 2>/dev/null || true)
-  req_sql=$(cat "$base.sql" 2>/dev/null || true)
-  # `set -e` is on: capture the subshell status without letting it stop serve.
-  code=0
-  (run_query "$req_name" "$req_sql") >"$base.out" 2>&1 || code=$?
-  printf '%s\n' "$code" >"$base.exit.tmp"
-  mv "$base.exit.tmp" "$base.exit"
-  serve_log "$(basename "$base") fixture=$req_name exit=$code: $(printf '%s' "$req_sql" | tr '\n' ' ' | cut -c1-100)"
+  # $1 = queue dir, $2 = request id (already validated against req.[A-Za-z0-9]{6})
+  queue=$1
+  id=$2
+  base="$queue/$id"
+  queue_write "$queue" "$base.working" "" || return 0
+  code=1
+  out=""
+  if ! regular_file "$base.sql" || ! regular_file "$base.fixture"; then
+    out="fixture: request refused: request files must be regular files"
+  else
+    req_name=$(head -n 1 "$base.fixture" 2>/dev/null || true)
+    req_sql=$(cat "$base.sql" 2>/dev/null || true)
+    if [ ! -f "$FIXTURES_DIR/$req_name/spec.json" ] || ! printf '%s' "$req_name" | grep -qE '^[a-z0-9-]+$'; then
+      # fixed text: the name came from the workspace and must not be echoed back
+      out="fixture: request refused: unknown fixture name in request"
+      req_name=""
+    else
+      out_tmp=$(mktemp "$queue/.serve.XXXXXX")
+      code=0
+      (run_query "$req_name" "$req_sql") >"$out_tmp" 2>&1 || code=$?
+      mv -f "$out_tmp" "$base.out"
+      out=""
+    fi
+  fi
+  [ -n "$out" ] && queue_write "$queue" "$base.out" "$out
+"
+  queue_write "$queue" "$base.exit" "$code
+"
+  serve_log "$id fixture=${req_name:-?} exit=$code"
 }
 
 cmd_serve() {
@@ -395,14 +443,15 @@ cmd_serve() {
         serve_log "dropped registration $(basename "$reg") (workspace gone)"
         continue
       fi
+      queue_is_safe "$ws" || continue
       queue="$ws/.agents/queue"
-      [ -d "$queue" ] || continue
-      for sqlf in "$queue"/*.sql; do
-        [ -f "$sqlf" ] || continue
-        base=${sqlf%.sql}
-        [ -f "$base.exit" ] && continue
-        [ -f "$base.working" ] && continue
-        serve_request "$base"
+      for sqlf in "$queue"/req.??????.sql; do
+        [ -e "$sqlf" ] || [ -L "$sqlf" ] || continue
+        id=$(basename "$sqlf" .sql)
+        printf '%s' "$id" | grep -qE '^req\.[A-Za-z0-9]{6}$' || continue
+        [ -e "$queue/$id.exit" ] || [ -L "$queue/$id.exit" ] && continue
+        [ -e "$queue/$id.working" ] || [ -L "$queue/$id.working" ] && continue
+        serve_request "$queue" "$id"
       done
     done
     sleep "$SERVE_POLL"

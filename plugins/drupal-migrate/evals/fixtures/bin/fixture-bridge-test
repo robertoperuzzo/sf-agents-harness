@@ -9,15 +9,23 @@
 #   2. a write is refused with the executor's message, exit 2
 #   3. two concurrent requests both get their own answer
 #   4. with `serve` stopped the client fails within its pickup timeout, exit 1,
-#      and the message names `fixture serve`
+#      the message names `fixture serve` and says the request was not picked up,
+#      and the wall clock stays under 15 s
 #   5. the scaffold refuses to run when `serve` is not alive
+#   6. `serve` never follows what the agent could plant in its writable workspace:
+#      a request whose .out is a symlink to a host file does not overwrite that file,
+#      a request whose .fixture is a symlink to a host file does not leak its first
+#      line, a request whose .sql is a symlink is refused, a request id outside
+#      req.[A-Za-z0-9]{6} is ignored, and a queue reached through a symlinked
+#      .agents/queue is ignored
+# FIXTURE_UNDER_TEST=<path> tests another copy of the fixture script (mutation runs).
 # Exit 0 when every check holds, 1 otherwise. Everything it creates is removed.
 
 set -u
 
 here=$(cd "$(dirname "$0")" && pwd)
 evals_dir=$(cd "$here/../.." && pwd)
-fixture="$here/fixture"
+fixture="${FIXTURE_UNDER_TEST:-$here/fixture}"
 work=$(mktemp -d "${TMPDIR:-/tmp}/fixture-bridge-test.XXXXXX")
 state="$work/state"
 ws="$work/ws"
@@ -90,13 +98,72 @@ check "concurrent request 2" "0" "$(cat "$work/c2.exit")" "second" "$(cat "$work
 leftover=$(find "$ws/.agents/queue" -type f | wc -l | tr -d ' ')
 if [ "$leftover" -eq 0 ]; then echo "ok   queue empty after requests"; else echo "FAIL $leftover file(s) left in the queue"; failures=$((failures + 1)); fi
 
+echo "# planted symlinks in the queue (serve runs unsandboxed as the operator)"
+victim="$work/victim.rc"
+printf 'original line\n' >"$victim"
+secret="$work/secret.txt"
+printf 'TOPSECRET-line1\nline2\n' >"$secret"
+queue="$ws/.agents/queue"
+# overwrite: .out points at a host file
+ln -s "$victim" "$queue/req.aaaaaa.out"
+printf 'drupal10\n' >"$queue/req.aaaaaa.fixture"
+printf "SELECT 'echo attacker-controlled-line' AS x" >"$queue/req.aaaaaa.sql"
+# leak: .fixture points at a host file
+ln -s "$secret" "$queue/req.bbbbbb.fixture"
+printf 'SELECT 1' >"$queue/req.bbbbbb.sql"
+# symlinked .sql
+ln -s "$secret" "$queue/req.cccccc.sql"
+printf 'drupal10\n' >"$queue/req.cccccc.fixture"
+# id outside the pattern
+printf 'drupal10\n' >"$queue/evil.fixture"
+printf 'SELECT 1' >"$queue/evil.sql"
+tick=0
+while [ "$tick" -lt 50 ]; do
+  [ -e "$queue/req.aaaaaa.exit" ] && [ -e "$queue/req.bbbbbb.exit" ] && [ -e "$queue/req.cccccc.exit" ] && break
+  sleep 0.2; tick=$((tick + 1))
+done
+if [ "$(cat "$victim")" = "original line" ]; then echo "ok   host file not overwritten through a planted .out link"; else echo "FAIL host file overwritten: $(cat "$victim")"; failures=$((failures + 1)); fi
+[ -L "$queue/req.aaaaaa.out" ] && echo "FAIL .out link still in place (serve wrote through it or skipped the request)" && failures=$((failures + 1))
+bout=$(cat "$queue/req.bbbbbb.out" 2>/dev/null || echo "<no .out>")
+case "$bout" in
+  *TOPSECRET*) echo "FAIL secret line leaked into the workspace: $bout"; failures=$((failures + 1)) ;;
+  *) echo "ok   planted .fixture link leaks nothing ($bout)" ;;
+esac
+cout=$(cat "$queue/req.cccccc.out" 2>/dev/null || echo "<no .out>")
+case "$cout" in
+  *"must be regular files"*) echo "ok   symlinked .sql refused before being read ($cout)" ;;
+  *) echo "FAIL symlinked .sql was read (its content reached the statement check): $cout"; failures=$((failures + 1)) ;;
+esac
+sleep 1
+if [ -e "$queue/evil.exit" ] || [ -e "$queue/evil.working" ]; then echo "FAIL request with an invalid id was served"; failures=$((failures + 1)); else echo "ok   request with an invalid id ignored"; fi
+rm -f "$queue"/req.aaaaaa.* "$queue"/req.bbbbbb.* "$queue"/req.cccccc.* "$queue"/evil.*
+# queue reached through a symlink
+ws2="$work/ws2"
+mkdir -p "$ws2/.agents" "$work/elsewhere/queue"
+ln -s "$work/elsewhere/queue" "$ws2/.agents/queue"
+printf '%s\n' "$ws2" >"$state/workspaces/ws2"
+printf 'drupal10\n' >"$work/elsewhere/queue/req.dddddd.fixture"
+printf 'SELECT 1' >"$work/elsewhere/queue/req.dddddd.sql"
+sleep 1
+if [ -e "$work/elsewhere/queue/req.dddddd.exit" ]; then echo "FAIL queue behind a symlinked .agents/queue was served"; failures=$((failures + 1)); else echo "ok   symlinked .agents/queue ignored"; fi
+rm -f "$state/workspaces/ws2"
+out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 'SELECT 1' 2>&1); code=$?
+check "normal request still answered after the planted ones" 0 "$code" "1" "$out"
+
 echo "# serve still alive after the refusals"
 if kill -0 "$serve_pid" 2>/dev/null; then echo "ok   serve alive (pid $serve_pid)"; else echo "FAIL serve died during the requests"; failures=$((failures + 1)); fi
 
 echo "# stop serve, client must fail quickly"
 kill "$serve_pid" 2>/dev/null; wait "$serve_pid" 2>/dev/null; serve_pid=""
+started=$(date +%s)
 out=$(cd "$ws" && minimal_env .agents/bin/fixture query drupal10 'SELECT 1' 2>&1); code=$?
+elapsed=$(( $(date +%s) - started ))
 check "client with serve stopped" 1 "$code" "fixture serve" "$out"
+case "$out" in
+  *"not picked up"*) echo "ok   client reports the request was not picked up" ;;
+  *) echo "FAIL client did not report a pickup timeout: $out"; failures=$((failures + 1)) ;;
+esac
+if [ "$elapsed" -lt 15 ]; then echo "ok   client gave up after ${elapsed}s (< 15 s)"; else echo "FAIL client took ${elapsed}s to give up"; failures=$((failures + 1)); fi
 
 echo
 if [ "$failures" -eq 0 ]; then echo "fixture-bridge-test: all checks passed"; exit 0; fi
