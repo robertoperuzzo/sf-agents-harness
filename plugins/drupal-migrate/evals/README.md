@@ -96,7 +96,12 @@ per-case delta.
   the trap is the reported number, which the exact-count grader catches.
 - Numeric patterns stand alone: `(?<!drupal\s)(?<!mariadb\s)(?<![\w.,])N(?![\w.,]?\d)`,
   so `Drupal 10`, `MariaDB 10.11`, `drupal10` or `10,000` never satisfy a count of 10.
-  Every numeric grader is checked against a transcript where the agent got no data.
+  A number below 10 is additionally anchored to its label word within the same line
+  (`(?:published|active)[^\n]{0,80}N|N[^\n]{0,80}(?:published|active)`). Every numeric
+  grader is checked against a transcript where the agent got no data.
+- Case selection: `--case` matches the case `name` (the directory name), not its path,
+  so `--case 'skills/*'` matches nothing; use `--case '*'`, `--case '*-drupal7'` or
+  `--tag`.
 - Files: `file_exists` with the as-is paths; prose: at most one `llm` grader per agent
   case (later groups).
 
@@ -123,6 +128,13 @@ Per grader result (`graders[]`): `name` (grader filename without `.md`), `passed
 
 No per-run token counts are present; cost is the list-price `costUsd` per run plus
 `judgeCostUsd`.
+
+## Tags
+
+`smoke` (the three fast drupal10 cases), `phase0`, `phase1`, `phase2`, `phase3`,
+`agent`, `negative`, `drupal10`, `drupal7`, `wordpress`. Every case carries a phase tag
+and, when fixture-backed, its fixture tag. Start the fixtures a selection needs
+(`fixture up drupal7`, `fixture up wordpress`) before running it.
 
 ## Pre-commit checklist
 
