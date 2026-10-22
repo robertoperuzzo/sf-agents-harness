@@ -14,13 +14,16 @@ post-launch regression, not a migration bug.
 
 - `drupal-migrate-detect-source` + `drupal-migrate-db-discover` have run (topology +
   access method).
+- For a Drupal source, `drupal-migrate-detect-version` has run. Menu, alias and redirect
+  tables differ by version (see the table below); never assume the Drupal 8.8+ names.
 - Read `drupal-migrate-analysis-docs` before writing.
 
 ## Steps
 
 ### Step 1 — Read config + recover
 
-Read `project-config.md` (including any URL Scope Support Table / liveness data source).
+Read `project-config.md` (including the URL Scope Support Table and Liveness Data
+sections, when present).
 Check for an existing IA/liveness doc; update/cite rather than rewrite.
 
 ### Step 2 — Navigation menus
@@ -33,7 +36,19 @@ Extract the menu structure:
   menu). Order comes from `posts.menu_order`, hierarchy from the
   `_menu_item_menu_item_parent` row in `{prefix}postmeta`. Join all three to place each
   item in the right menu before rebuilding the tree.
-- **Drupal:** `menu_link_content` + menu config.
+- **Drupal:** branch on the source version:
+
+  | Source            | Menus                                | Menu items                                                                                              | Aliases                                                     | Redirects                                                                                 |
+  | ----------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+  | Drupal 7          | `menu_custom` (`menu_name`, `title`) | `menu_links` (`menu_name`, `link_path`, `link_title`, `plid`, `depth`, `weight`, `hidden`, `module`)    | `url_alias` (`source`, `alias`, `language`; no leading `/`) | `redirect` (`source`, `redirect`, `language`, `status_code`)                              |
+  | Drupal 8.0 to 8.7 | `config` rows `system.menu.*`        | `menu_link_content_data` (`menu_name`, `title`, `link__uri`, `parent`, `weight`, `enabled`, `langcode`) | `url_alias` (`source`, `alias`, `langcode`; leading `/`)    | `redirect` (`redirect_source__path`, `redirect_redirect__uri`, `language`, `status_code`) |
+  | Drupal 8.8+       | `config` rows `system.menu.*`        | `menu_link_content_data` (same columns)                                                                 | `path_alias` (`path`, `alias`, `langcode`)                  | `redirect` (same as 8.0 to 8.7)                                                           |
+
+  On D7, keep only `menu_links` rows with `module = 'menu'` (editor-built links) and
+  `hidden = 0`; system router entries are not navigation. On D8, menu links built from
+  module routes (`*.links.menu.yml`) are not in `menu_link_content_data`; note them as
+  code-defined. When the version is only `drupal8+`, pick the alias table by existence
+  (`path_alias` first, else `url_alias`).
 
 Record the top-level structure and depth — enough to rebuild navigation, not every leaf.
 
@@ -43,7 +58,9 @@ Record how URLs are formed:
 
 - **WordPress:** the permalink structure (`{prefix}options` `permalink_structure`), and
   any per-content overrides (custom permalink plugin — note whether enabled).
-- **Drupal:** path-alias patterns (Pathauto) and the `path_alias` table.
+- **Drupal:** path-alias patterns (Pathauto: `pathauto_pattern` rows in `config` on
+  D8+, `pathauto_*` variables in `variable` on D7) and the alias table for the version
+  (above).
 
 This determines the alias-migration and pattern-mapping work later.
 

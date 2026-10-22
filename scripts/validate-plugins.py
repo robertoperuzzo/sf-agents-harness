@@ -9,8 +9,9 @@ Checks, in order:
    name and version; the plugin has a `README.md`.
 3. Every `skills/*/SKILL.md` in a plugin has frontmatter with a `name` equal to
    its folder and a non-empty `description`.
-4. Every `agents/*.agent.md` in a plugin has frontmatter with a non-empty `name`
-   and `description`.
+4. Every `agents/*.md` in a plugin (Claude Code loads each one as an agent, with
+   or without the `.agent.md` suffix) has frontmatter with a non-empty `name` and
+   `description`.
 
 Exit status is 1 when any check fails; every failure is printed.
 """
@@ -119,7 +120,7 @@ def check_plugin(entry):
             check_skill(skill_dir)
     agents_dir = plugin_dir / "agents"
     if agents_dir.is_dir():
-        for agent_md in sorted(agents_dir.glob("*.agent.md")):
+        for agent_md in sorted(agents_dir.glob("*.md")):
             check_agent(agent_md)
 
 

@@ -30,6 +30,7 @@ do not guess:
 | `{dest_base_url}`                         | Content Verification                      | `https://<new-site>.loc`                                                                                                                                                       |
 | `{internal_http_host}`                    | Content Verification                      | `http://<web-container>`                                                                                                                                                       |
 | `{languages}` + URL rule                  | Content Verification                      | base lang + secondary lang (path prefix or separate domain)                                                                                                                    |
+| `{dest_lang_rule}`                        | Content Verification                      | destination language URL rule: `none`, `path prefix` (which languages carry one), or `domain per language`                                                                     |
 | `{scope_table}` + columns + status values | URL Scope Support Table                   | table `<scope_table>`; columns `<url_col>`, `<langcode_col>`, `<action_col>` ∈ {migrate, no-migrate}, `<status_col>`, `<node_id_col>`, `<content_type_col>`, `<final_url_col>` |
 | `{url_map_table}` + columns _(optional)_  | Source URL Map Table                      | table `<url_map_table>`; columns `<map_source_url_col>`, `<map_langcode_col>`, `<map_dest_id_col>`, `<map_dest_type_col>`, `<map_dest_url_col>`                                |
 
@@ -59,15 +60,22 @@ should be gone, and confirm redirects/aliases against the live destination.
 
 ## Prerequisites
 
-1. **Old site reachable**: every base in `{source_bases}` responds.
-2. **New site reachable**: `{dest_base_url}` resolved (discovery command or user).
-3. **Source lookups reachable** (only if `{scope_table}`/`{url_map_table}` are used):
+Always required:
+
+1. **Source lookups reachable** (only if `{scope_table}`/`{url_map_table}` are used):
    run `{source_query}` with `SELECT 1`.
-4. **Destination runner works**: `{dest_runner} "drush status --field=bootstrap"`
+2. **Destination runner works**: `{dest_runner} "drush status --field=bootstrap"`
    reports `Successful`.
+
+Required only when Phase 2 or Phase 3 runs (a migrate URL with content comparison):
+
+3. **Old site reachable**: every base in `{source_bases}` responds.
+4. **New site reachable**: `{dest_base_url}` resolved (discovery command or user).
 5. **Browser tool available**: resolve it per "Selecting the browser tool" below.
 
-If any prerequisite fails, inform the user and stop. Do not work around missing infra.
+Check 3 to 5 after Phase 0, once the intent is known. A no-migrate URL (Phase 4 only)
+needs neither the browser nor the old site. If a required prerequisite fails, inform the
+user and stop. Do not work around missing infra.
 
 ### Selecting the browser tool
 
@@ -109,7 +117,8 @@ commands. Never substitute a raw value. For every URL:
    does not match `https://example.com` even though the string starts with it. When the
    base carries a language path prefix (`/en`), the pathname must equal it or continue
    with `/` right after it (`/en/news` matches, `/english` does not). Reject any URL that
-   matches none of the bases and tell the user. Reject as well any URL that carries
+   matches none of the bases and tell the user. The base it matched is `{source_base}`
+   for this URL. Reject as well any URL that carries
    userinfo (`user:pass@`), a query string (`?…`) or a fragment (`#…`): only the
    origin and the pathname take part in verification, and nothing from the raw string is
    ever substituted. `{source_url}` below is always rebuilt as
@@ -155,10 +164,14 @@ Pass each completed URL to `curl` and to the browser tool as one single-quoted a
 (or as the MCP tool's URL parameter) and build the inner `{dest_runner}` command the same
 way, so no shell layer re-interprets it.
 
-**Node IDs are untrusted too.** `{nid}` and `{dest_nid}` come from `<node_id_col>` and
-`<map_dest_id_col>` and are interpolated into `drush php:eval` and SQL below. Accept a
-value only if it matches `^[0-9]+$`; otherwise stop for that URL and record
-`FAIL — unsafe node id`.
+**Entity IDs are untrusted too.** `{source_nid}` (from `<node_id_col>`) and `{dest_id}`
+(see Phase 1a) are interpolated into `drush php:eval` and SQL below. Accept a value only
+if it matches `^[0-9]+$`; otherwise stop for that URL and record `FAIL — unsafe entity id`.
+
+**Two ids, never swapped.** `{source_nid}` is the node id on the **old** site and is
+used only for reporting and for matching scope-table rows. `{dest_id}` is the entity id
+on the **new** site and is the only id used in destination commands. The two are
+unrelated numbers: a source nid used as a destination id inspects an unrelated entity.
 
 ---
 
@@ -167,8 +180,8 @@ value only if it matches `^[0-9]+$`; otherwise stop for that URL and record
 ```
 Phase 0: Resolve intent     -- What SHOULD have happened to this URL?
 Phase 1: Redirect checks    -- Do all old paths land correctly?
-Phase 2: Base-lang compare  -- Is the base-language content preserved?
-Phase 3: Translations       -- Are other-language versions correct?
+Phase 2: Input-lang compare -- Is the input URL's content preserved?
+Phase 3: Translations       -- Are the other languages correct?
 Phase 4: Non-migrate check  -- Do out-of-scope URLs return Gone?
 Phase 5: Produce report     -- Structured verification output
 ```
@@ -189,7 +202,8 @@ LIMIT 5;
 ```
 
 Select only the columns project-config.md declares; drop a column from the list when the
-table has no equivalent (for example no `<content_type_col>`).
+table has no equivalent (for example no `<content_type_col>`). `<node_id_col>` is
+`{source_nid}`, the old site's node id.
 
 Interpret using the status values from project-config.md:
 
@@ -221,21 +235,55 @@ LIMIT 5;
 Drop the `<map_langcode_col>` predicate only when project-config.md declares that column
 as `none`. Without it, languages that share a stored path return each other's row.
 
-Otherwise resolve via the `<final_url_col>` / `<node_id_col>` values from Phase 0, or ask
-the user. The result is the destination entity: `{nid}` (its numeric id, validated as
-above) and `{dest_type}` from `<map_dest_type_col>`. When the map has no type column, or
-the id came from the scope table, `{dest_type}` is `node`. The type drives every later
-alias, redirect and translation step:
+`{dest_id}` comes from one place only:
 
-| `{dest_type}`   | `{entity_path}`        | Data table, id column             |
-| --------------- | ---------------------- | --------------------------------- |
-| `node`          | `/node/{nid}`          | `node_field_data`, `nid`          |
-| `taxonomy_term` | `/taxonomy/term/{nid}` | `taxonomy_term_field_data`, `tid` |
-| `media`         | `/media/{nid}`         | `media_field_data`, `mid`         |
+1. **The URL map.** `{dest_id}` is `<map_dest_id_col>` and `{dest_type}` is
+   `<map_dest_type_col>` (`node` when the map has no type column).
+2. **Without a URL map**, resolve `<final_url_col>` from Phase 0 on the destination.
+   Validate it like any database-derived path, then ask the destination which internal
+   path the alias points to:
+
+   ```bash
+   {dest_runner} "drush php:eval \"print \\Drupal::service('path_alias.manager')->getPathByAlias('/{final_path}', '{langcode}');\""
+   ```
+
+   The output must be `/node/N`, `/taxonomy/term/N` or `/media/N`; `N` is `{dest_id}` and
+   the prefix gives `{dest_type}`. Any other output means the final URL resolves to no
+   entity: record `FAIL — final URL not found on destination`.
+
+3. **Neither available**: stop for this URL and record `FAIL — no destination entity
+mapping`. Never use `<node_id_col>` as `{dest_id}`; it is the source nid.
+
+The type drives every later alias, redirect and translation step:
+
+| `{dest_type}`   | `{entity_path}`            | Data table, id column             |
+| --------------- | -------------------------- | --------------------------------- |
+| `node`          | `/node/{dest_id}`          | `node_field_data`, `nid`          |
+| `taxonomy_term` | `/taxonomy/term/{dest_id}` | `taxonomy_term_field_data`, `tid` |
+| `media`         | `/media/{dest_id}`         | `media_field_data`, `mid`         |
 
 Any other value: stop for this URL and record `FAIL — unsupported destination entity
-type <type>`. Never fall back to `/node/{nid}`, which can inspect an unrelated node that
-happens to share the numeric id.
+type <type>`. Never fall back to `/node/{dest_id}`, which can inspect an unrelated node
+that happens to share the numeric id.
+
+### Destination language URLs
+
+`path_alias.manager` returns aliases without a language prefix, and the Redirect module
+stores source paths without one too. The page a visitor reaches for language `L` depends
+on `{dest_lang_rule}` from project-config.md:
+
+| `{dest_lang_rule}`    | `{dest_lang_base:L}`                                                                | `{dest_lang_prefix:L}`                                                |
+| --------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `none`                | `{dest_base_url}`                                                                   | empty                                                                 |
+| `path prefix`         | `{dest_base_url}/L` (or `{dest_base_url}` for a language configured without prefix) | `L/` (empty when that language has no prefix)                         |
+| `domain per language` | the domain configured for `L`                                                       | empty; send that domain as the `Host` header on container-side `curl` |
+
+Browser navigation for language `L` uses `{dest_lang_base:L}/{alias}`. Container-side
+checks for a path in language `L` request
+`{internal_http_host}/{dest_lang_prefix:L}{path}`, adding `-H 'Host: <domain of L>'` for
+a domain-per-language rule. A redirect row whose `language` is `und` or `zxx` uses the
+base language. When a stored redirect source path already starts with the prefix, do
+not add it twice.
 
 ### 1b. Destination URL alias
 
@@ -247,15 +295,16 @@ Drush core ships no path-alias command, so resolve the alias through the
 ```
 
 It prints the alias, or `{entity_path}` itself when no alias exists for that language —
-treat the latter as "alias missing" in the report. If project-config.md declares a
-project-specific alias command (for example a custom Drush command), use that instead.
+treat the latter as "alias missing" in the report. If project-config.md → "Content
+Verification" declares an alias command (for example a custom Drush command), use that
+instead.
 Normalize the printed alias like every database-derived path (leading `/` stripped,
 allow-list applied); it is `{destination_alias}` below.
 
 ### 1c. Collect redirects for this entity
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri IN ('internal:{entity_path}', 'entity:{dest_type}/{nid}', 'internal:/{destination_alias}') ORDER BY language, redirect_source__path\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code, language FROM redirect WHERE redirect_redirect__uri IN ('internal:{entity_path}', 'entity:{dest_type}/{dest_id}', 'internal:/{destination_alias}') ORDER BY language, redirect_source__path\""
 ```
 
 > The Redirect module stores the target in one of three forms: `internal:/node/N`,
@@ -272,8 +321,9 @@ allow-list applied); it is `{destination_alias}` below.
 
 For each redirect path plus the original `{source_pathname}` (the full old path,
 language prefix included), check the response on the **new site** from inside the
-container network (avoids SSL/DNS issues). Run two requests: the first hop alone, then
-the chain followed to its end:
+container network (avoids SSL/DNS issues). Build each redirect path's URL per
+"Destination language URLs" with the row's `language`; `{source_pathname}` is requested
+as is. Run two requests: the first hop alone, then the chain followed to its end:
 
 ```bash
 {dest_runner} "curl -sI -o /dev/null -w '%{http_code} %{redirect_url}' '{internal_http_host}/{redirect_path}'"
@@ -289,18 +339,21 @@ code and `Location`, final code, effective URL, PASS/FAIL. Without `-L` a `301` 
 
 ---
 
-## Phase 2 — Base-Language Content Verification (migrate only)
+## Phase 2 — Input-Language Content Verification (migrate only)
 
-LLM comparison. Navigate both pages and compare substance, not structure.
+Compares the page in the language of the input URL (`{langcode}`), which is not
+necessarily the base language. LLM comparison: navigate both pages and compare
+substance, not structure.
 
 ### 2a. Source page (old site)
 
-Navigate to `{source_base}/{relative_path}` with the selected browser tool and capture an
-accessibility snapshot of the page. With the `playwright-cli` skill:
+Navigate to `{source_url}` (the validated input page, rebuilt from `{source_base}`) with
+the selected browser tool and capture an accessibility snapshot of the page. With the
+`playwright-cli` skill:
 
 ```bash
-playwright-cli open '{source_base}/{relative_path}'
-playwright-cli snapshot --filename=.playwright-cli/verify-source-base.yaml
+playwright-cli open '{source_url}'
+playwright-cli snapshot --filename=.playwright-cli/verify-source-{langcode}.yaml
 ```
 
 Note: page title (`<h1>`/main heading), body text (main content area; ignore nav/footer/
@@ -309,15 +362,17 @@ meta info (dates, categories).
 
 ### 2b. Destination page (new site)
 
-Navigate to `{dest_base_url}/{destination_alias}` in the same browser session and
-capture a snapshot. With the `playwright-cli` skill:
+Navigate to `{dest_lang_base:{langcode}}/{destination_alias}` (see "Destination language
+URLs") in the same browser session and capture a snapshot. With the `playwright-cli`
+skill:
 
 ```bash
-playwright-cli goto '{dest_base_url}/{destination_alias}'
-playwright-cli snapshot --filename=.playwright-cli/verify-dest-base.yaml
+playwright-cli goto '{dest_lang_base:{langcode}}/{destination_alias}'
+playwright-cli snapshot --filename=.playwright-cli/verify-dest-{langcode}.yaml
 ```
 
-> The browser tool runs on the **host**, so it must use `{dest_base_url}`.
+> The browser tool runs on the **host**, so it must use `{dest_base_url}` or a
+> configured language domain.
 > `{internal_http_host}` (for example `http://web-container`) resolves only inside the
 > tools container and is reserved for the container-side `curl` checks.
 
@@ -356,7 +411,9 @@ tool's close/disconnect call).
 
 ## Phase 3 — Translation Verification
 
-For each non-base language in `{languages}`:
+For each language in `{languages}` other than `{langcode}` (the input URL's language,
+already covered by Phase 2). When the input URL is in a secondary language, this
+includes the base language.
 
 ### 3a. Is a translation expected?
 
@@ -364,15 +421,11 @@ From Phase 0 you know whether an other-language row exists in `{scope_table}` (o
 table, whether the user expects a translation). If not expected, confirm none was created:
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT langcode FROM <data table> WHERE <id column>={dest_nid} AND langcode='<lang>'\""
+{dest_runner} "drush sql:query \"SELECT langcode FROM <data table> WHERE <id column>={dest_id} AND langcode='<lang>'\""
 ```
 
 `<data table>` and `<id column>` come from the `{dest_type}` table in Phase 1a
 (`node_field_data`/`nid`, `taxonomy_term_field_data`/`tid`, `media_field_data`/`mid`).
-
-```
-
-```
 
 - not expected AND absent → **PASS**
 - not expected BUT present → **WARN** (investigate)
@@ -381,13 +434,13 @@ table, whether the user expects a translation). If not expected, confirm none wa
 ### 3b. Source URL for the language
 
 Translated pages do not share a slug (`/it/chi-siamo` ↔ `/en/about-us`), so never derive
-`{lang_source_url}` by swapping the domain or language prefix on the base-language path.
+`{lang_source_url}` by swapping the domain or language prefix on the input page's path.
 Resolve the real one, in this order:
 
 1. The other-language row(s) fetched in Phase 0 from `{scope_table}` (same
    `<node_id_col>`, `<langcode_col> = '<lang>'`): its `<url_col>` is the translation's
    source URL.
-2. The `{url_map_table}` row whose `<map_dest_id_col>` is `{dest_nid}` and whose
+2. The `{url_map_table}` row whose `<map_dest_id_col>` is `{dest_id}` and whose
    `<map_langcode_col>` matches.
 3. If neither exists, ask the user for the translated source URL; do not guess it.
 
@@ -400,6 +453,9 @@ before using it.
 {dest_runner} "drush php:eval \"print \\Drupal::service('path_alias.manager')->getAliasByPath('{entity_path}', '<lang>');\""
 ```
 
+Normalize and validate the result like `{destination_alias}`; it is
+`{lang_destination_alias}`.
+
 ### 3d. Navigate + compare
 
 Same process as Phase 2, adapted to the language — navigate and snapshot both pages with
@@ -408,7 +464,7 @@ the selected browser tool. With the `playwright-cli` skill:
 ```bash
 playwright-cli open '{lang_source_url}'
 playwright-cli snapshot --filename=.playwright-cli/verify-source-<lang>.yaml
-playwright-cli goto '{dest_base_url}/{lang_destination_alias}'
+playwright-cli goto '{dest_lang_base:<lang>}/{lang_destination_alias}'
 playwright-cli snapshot --filename=.playwright-cli/verify-dest-<lang>.yaml
 ```
 
@@ -417,10 +473,11 @@ Apply the Phase 2 checklist.
 ### 3e. Language-specific redirects
 
 ```bash
-{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri IN ('internal:{entity_path}', 'entity:{dest_type}/{dest_nid}', 'internal:/{lang_destination_alias}') AND language = '<lang>'\""
+{dest_runner} "drush sql:query \"SELECT redirect_source__path, status_code FROM redirect WHERE redirect_redirect__uri IN ('internal:{entity_path}', 'entity:{dest_type}/{dest_id}', 'internal:/{lang_destination_alias}') AND language = '<lang>'\""
 ```
 
-HTTP-check each like Phase 1d. If the `redirect` table is absent (see Phase 1c), skip this step.
+HTTP-check each like Phase 1d, at `{internal_http_host}/{dest_lang_prefix:<lang>}{redirect_path}`
+(see "Destination language URLs"). If the `redirect` table is absent (see Phase 1c), skip this step.
 
 ---
 
@@ -457,8 +514,8 @@ The old URL is checked as the server saw it, language prefix included:
 ```markdown
 ## Migration Verification: {source_url}
 
-**Source node ID:** {node_id}
-**Destination:** /node/{dest_nid} ({content_type})
+**Source node ID:** {source_nid}
+**Destination:** {entity_path} ({content_type})
 **Action:** {action_value}
 **Date:** {current_date}
 

@@ -55,7 +55,7 @@ bundles differently, so don't guess:
 The `{config_prefix}` (field instance configs) and `{storage_prefix}` (field
 storage configs) per entity type come from the shared reference — read it
 instead of hardcoding the prefix pattern:
-**`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Variable Resolution Table".
 
 The config sync directory itself is a project value — read it from
 `.agents/references/migrate/project-config.md` → **Migration Infrastructure — Where To
@@ -76,7 +76,7 @@ method and fall back to the document/config resolution — note that you did.
 ### A — Resolve a representative source URL
 
 Prefer a **local copy** of the source site to avoid hitting production (e.g. the DDEV /
-local URL in `project-config.md` → Source System). Otherwise use the live URL:
+local URL in `project-config.md` → Source System Overview → Source local URL). Otherwise use the live URL:
 
 - Resolve one representative page for the source bundle with
   `drupal-migrate-resolve-examples` (it returns one live URL per parent bundle).
@@ -130,6 +130,12 @@ A declared mapping in an analysis document still outranks a visual match — if 
 disagree, surface the conflict rather than silently overriding the document.
 
 ## Steps
+
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
 
 ### Step 1 — Read destination field configs
 

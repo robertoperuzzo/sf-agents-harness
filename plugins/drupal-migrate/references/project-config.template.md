@@ -6,9 +6,10 @@ The skills read this file to adapt their behavior to your project.
 **Install location**: copy this template to `.agents/references/migrate/project-config.md`
 in your project and fill in the real values. Delete sections that do not apply, but
 keep the headings the skills look for: Source System Overview, Database Connection,
-Issue Tracker, Live URL Resolution, Content Verification, URL Scope Support Table,
-Source URL Map Table, Migration Infrastructure — Where To Look, Reference Documentation,
-Migration Patterns, Scope Exclusions, Base Content Language, Output Language.
+Bundle Entity Types, Issue Tracker, Live URL Resolution, Content Verification, URL Scope
+Support Table, Liveness Data, Source URL Map Table, Migration Infrastructure — Where To
+Look, Reference Documentation, Migration Patterns, Scope Exclusions, Base Content
+Language, Output Language.
 
 > **Living codebase**: migration modules evolve (plugins, derivers, migrations get
 > added/renamed). Do **not** enumerate them here — point to the folders where they
@@ -28,7 +29,8 @@ Migration Patterns, Scope Exclusions, Base Content Language, Output Language.
 | Delivery             | `<full codebase + DB / DB-only / codebase-only>`             |
 | DB access method     | `<drush sql:query / ddev wp db query / wp db query / mysql>` |
 | Source codebase path | `<path, or "not delivered (DB-only)">`                       |
-| Target stack         | `<e.g. Drupal 11>`                                           |
+| Source local URL     | `<https://old-site.ddev.site, or "none">`                    |
+| Target stack         | `<e.g. Drupal 11>` (the destination Drupal version)          |
 
 Example:
 
@@ -92,9 +94,32 @@ if (getenv('MIGRATE_ENABLE') === '1') {
 <DRUSH_RUNNER> "drush sql:query --database=<DB_KEY> 'SELECT 1'"
 ```
 
+### Write guard (required)
+
+The access methods above run any SQL. `drupal-migrate-db-discover` refuses to continue
+unless the database itself blocks writes. Say which guard applies:
+
+- **Guard**: `<read-only account / read-only session>`
+- **Read-only account**: `<account name, granted SELECT and SHOW VIEW only>` (preferred;
+  set its credentials in the source connection above)
+- **Read-only session**: every query starts with `SET SESSION TRANSACTION READ ONLY;`
+  (use only when no read-only account is available)
+
 ### Enabling migration mode (optional)
 
 <!-- Steps to start the source DB container / set the feature flag, if any. -->
+
+---
+
+## Bundle Entity Types (optional)
+
+Consumed by `drupal-migrate-count-instances` and the analyst agent when a request names a
+bundle without its entity type. Bundle names do not reveal the entity type reliably, so
+list the ambiguous ones:
+
+| Source bundle | Entity type                                  |
+| ------------- | -------------------------------------------- |
+| `<bundle>`    | `<node / paragraph / taxonomy_term / media>` |
 
 ---
 
@@ -130,14 +155,16 @@ Pick the strategy your project uses and delete the others:
 Consumed by `drupal-migrate-verify-content`. Without these values the non-interactive
 analyst cannot verify migrated pages.
 
-| Setting                | Value                                                                                                           |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Source base URL (base) | `<https://www.example.com>`                                                                                     |
-| Language URL rule      | `<separate domain / path prefix>`                                                                               |
-| Other-language bases   | `<lang: https://en.example.com>` or `<lang: https://www.example.com/en>`                                        |
-| Destination base URL   | `<https://new-site.loc>` or the discovery command that prints it (used by `playwright-cli` on the host)         |
-| Internal HTTP host     | `<http://web-container>` (destination reachable from the tools container; `curl` only)                          |
-| Destination runner     | `<docker compose run --rm <tools> ash -c>` (runs `drush` and `curl` against the **new** site; no source DB key) |
+| Setting                       | Value                                                                                                           |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Source base URL (base)        | `<https://www.example.com>`                                                                                     |
+| Language URL rule             | `<separate domain / path prefix>`                                                                               |
+| Other-language bases          | `<lang: https://en.example.com>` or `<lang: https://www.example.com/en>`                                        |
+| Destination base URL          | `<https://new-site.loc>` or the discovery command that prints it (used by `playwright-cli` on the host)         |
+| Internal HTTP host            | `<http://web-container>` (destination reachable from the tools container; `curl` only)                          |
+| Destination runner            | `<docker compose run --rm <tools> ash -c>` (runs `drush` and `curl` against the **new** site; no source DB key) |
+| Destination language URL rule | `<none / path prefix (list the languages that carry one) / domain per language (list the domains)>`             |
+| Alias command (optional)      | `<custom drush command that prints a destination alias, or "none">`                                             |
 
 ---
 
@@ -176,6 +203,17 @@ Document only if your migration scope is driven by a support/lookup table.
 
 ---
 
+## Liveness Data (optional)
+
+Consumed by `drupal-migrate-ia-audit` to classify paths or subsites as live, redirected,
+or gone. Document only if such data exists:
+
+- **Source**: `<probe CSV path / support table / none>`
+- **Probe date**: `<YYYY-MM-DD>`
+- **Columns**: `<path or subsite>`, `<HTTP status>`, `<redirect target>`
+
+---
+
 ## Source URL Map Table (optional)
 
 Document only if the migration writes a source→destination URL map (a table the
@@ -198,8 +236,10 @@ migrations fill with the destination entity for each source URL). Consumed by
 
 ## Source Database Entity Tables
 
-Default Drupal 8+ table/column mapping lives in `entity-type-context.md` and needs no
-copying. Override here only if your source is **Drupal 7** or uses non-standard tables.
+The default table/column mapping ships with the plugin (`references/entity-type-context.md`)
+and needs no copying. Only when your source uses non-standard tables, place an edited
+copy at `.agents/references/migrate/entity-type-context.md`; the skills then read that
+copy instead of the plugin's.
 
 ---
 

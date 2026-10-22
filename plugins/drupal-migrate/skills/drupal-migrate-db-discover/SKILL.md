@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-db-discover
-description: 'Discover and validate the source database connection for a migration into Drupal. Use after drupal-migrate-detect-source, at the start of any source-database analysis, when a query against the old site''s DB fails, or whenever a later drupal-migrate-* step needs to confirm the source DB is reachable. Reads the project config for the connection and the read-only access method (drush for a Drupal source; wp db query / ddev / mysql for WordPress; generic for another CMS), then tests connectivity. Source-agnostic — does not assume drush.'
+description: "Discover and validate the source database connection for a migration into Drupal. Use after drupal-migrate-detect-source, at the start of any source-database analysis, when a query against the old site's DB fails, or whenever a later drupal-migrate-* step needs to confirm the source DB is reachable. Reads the project config for the connection and the read-only access method (drush for a Drupal source; wp db query / ddev / mysql for WordPress; generic for another CMS), then tests connectivity. Source-agnostic — does not assume drush."
 ---
 
 # Discover Source Database Connection
@@ -36,6 +36,30 @@ to drush, and never use a read-write `mysql` invocation.**
 
 Every later skill that queries the source uses the method confirmed here. Substitute it
 wherever the skills below show a `drush sql:query` example for a Drupal source.
+
+## Read-only enforcement (required)
+
+None of these methods is read-only by itself: `drush sql:query`, `wp db query` and the
+`mysql` client run any SQL they receive. A prompt rule is not enough, so the database
+must refuse writes. Use one of these, in order of preference:
+
+1. **A read-only database user.** The source connection (the `$databases` entry, the
+   WordPress DB credentials, or the client login) uses an account granted only `SELECT`
+   (and `SHOW VIEW`) on the source schema. This is the only option that also blocks DDL.
+2. **A read-only session.** When no such account exists, start every query with
+   `SET SESSION TRANSACTION READ ONLY;` in the same client call, so the session refuses
+   `INSERT`, `UPDATE`, `DELETE` and `REPLACE` on the source tables:
+
+   ```bash
+   <runner> "drush sql:query --database=<db_key> 'SET SESSION TRANSACTION READ ONLY; <SELECT>'"
+   ddev wp db query 'SET SESSION TRANSACTION READ ONLY; <SELECT>'
+   mysql --init-command='SET SESSION TRANSACTION READ ONLY' <schema> -e '<SELECT>'
+   ```
+
+   Record in the report that only the session guard is in place.
+
+The query command template this skill outputs includes the guard, so every later skill
+inherits it.
 
 ## Defaults (used only when project-config has no Database Connection section)
 
@@ -102,6 +126,19 @@ project's runner:
 ddev wp db query 'SELECT 1'
 ```
 
+Then confirm the write guard. With a read-only account, list the grants (they hold no
+password):
+
+```bash
+<runner> "drush sql:query --database=<db_key> 'SHOW GRANTS FOR CURRENT_USER()'"
+```
+
+Any privilege beyond `SELECT`, `SHOW VIEW` or `USAGE` on the source schema means the
+account is not read-only; fall back to the session guard. With the session guard, check
+it holds in the same call: `SET SESSION TRANSACTION READ ONLY; SELECT @@session.transaction_read_only`
+(`@@session.tx_read_only` on MySQL before 5.7.20 and on MariaDB before 11.1) must return
+`1`. If neither guard can be confirmed, report it and **STOP**.
+
 If the connection fails, the source DB may require enabling (e.g. a `MIGRATE_ENABLE`
 flag, a separate DB container, or starting the DDEV project). Check project-config for
 the enable steps before reporting failure.
@@ -115,7 +152,8 @@ the enable steps before reporting failure.
 - Source: <wordpress | drupal7 | drupal8+ | other>
 - Identifier: <db_key (Drupal) | table prefix (WordPress)>
 - Access method: <drush sql:query | ddev wp db query | wp db query | mysql>
-- Query command template: <the exact read-only command to run a SELECT>
+- Write guard: <read-only account | read-only session>
+- Query command template: <the exact read-only command to run a SELECT, guard included>
 ```
 
 **If connection fails**, report the error and ask the user:
@@ -131,6 +169,7 @@ Then **STOP** — do not proceed with analysis until the database is reachable.
 - **drush_option**: the drush CLI option (`--database=<db_key>`)
 - **connection_command_template**: template for running queries against the source DB
 - **connection_status**: `connected` or `failed`
+- **write_guard**: `read-only account` or `read-only session`
 
 ## Guardrails
 
@@ -138,6 +177,7 @@ Then **STOP** — do not proceed with analysis until the database is reachable.
   `drupal-migrate-detect-source` / project-config): `drush sql:query` for Drupal,
   `wp db query` / `ddev wp db query` for WordPress, a read-only `mysql` client only for a
   raw dump. Never run a read-write `mysql` invocation against the source.
+- **Never run a query without the write guard** confirmed in Step 3.
 - **Never assume drush** — a WordPress or other-CMS source uses a different runner.
 - If settings/config files are not found, ask the user for the connection details.
 - If multiple non-default database keys exist and the project config is silent, ask the user which one to use.

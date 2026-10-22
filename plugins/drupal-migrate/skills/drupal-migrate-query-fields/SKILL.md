@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-query-fields
-description: 'Query the field definitions of a source entity bundle from a migration database — base fields plus configurable fields, with label, machine name, type, cardinality, required, and translatable. Use when migration planning needs a bundle''s field list, e.g. "what fields does X have", "list the fields on the Y paragraph", "what''s the structure of this content type", or before mapping a bundle to its destination. Drupal 7 (field_config_instance) and Drupal 8+ (config table) sources only.'
+description: 'Query the field definitions of a source entity bundle from a migration database — base fields plus configurable fields, with label, machine name, type, cardinality, required, and translatable. Use when migration planning needs a bundle''s field list, e.g. "what fields does X have in the source", "list the fields on the old site''s Y paragraph", "what''s the structure of this source content type", or before mapping a bundle to its destination. Drupal 7 (field_config_instance) and Drupal 8+ (config table) sources only.'
 ---
 
 # Query Source Entity Fields
@@ -35,7 +35,7 @@ overrides. Run all queries via `drush sql:query` with that database option — n
 ## Entity-Type Context
 
 Before running any query, resolve entity-type-specific variables from:
-**`.agents/references/migrate/entity-type-context.md`**
+**`<skill base directory>/../../references/entity-type-context.md`**
 
 Use `{main_table}`, `{base_table}`, `{id_column}`, `{field_data_prefix}`, `{config_prefix}`, and `{storage_prefix}` from that reference.
 
@@ -45,13 +45,19 @@ Use `{main_table}`, `{base_table}`, `{id_column}`, `{field_data_prefix}`, `{conf
 
 ## Steps
 
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
+
 ### Step 0 — Enumerate base fields
 
 Before querying configurable fields, list the **base fields** for the entity type.
 Branch on `source_version`:
 
 - **Drupal 8+**: from the Entity-Type Context reference
-  (`.agents/references/migrate/entity-type-context.md`, section "Base Fields Per Entity
+  (`<skill base directory>/../../references/entity-type-context.md`, section "Base Fields Per Entity
   Type").
 - **Drupal 7**: that reference does not apply (no `langcode`, `uuid`, `parent_id` or
   `created` on a D7 paragraph, for example). Use the real columns of the D7 entity tables:
@@ -139,7 +145,13 @@ Parse `instance_data` to extract `label` (`s:5:"label";s:N:"..."`) and `required
 
 ### Step 2 — Cross-check with INFORMATION_SCHEMA (D8+ fallback)
 
-If parsing serialized data is ambiguous, verify field types by inspecting column names:
+If parsing serialized data is ambiguous, verify field types by inspecting column names.
+Field tables are per entity type, not per bundle: `{entity_type}__field_x` exists as soon
+as any bundle of that type has `field_x`. Restrict the inspection to this bundle's
+fields, or the report lists fields of other bundles.
+
+**Field names known from Step 1** (the `field.field.{entity_type}.{bundle}.*` config rows
+listed, only their `data` failed to parse): inspect exactly those tables.
 
 ```sql
 SELECT
@@ -147,14 +159,25 @@ SELECT
   GROUP_CONCAT(COLUMN_NAME ORDER BY ORDINAL_POSITION SEPARATOR ', ') AS value_columns
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = DATABASE()
-  AND TABLE_NAME LIKE CONCAT('{entity_type}', '__field_%')
+  AND TABLE_NAME IN ('{entity_type}__{field_1}', '{entity_type}__{field_2}')
   AND COLUMN_NAME NOT IN ('bundle','deleted','entity_id','revision_id','langcode','delta')
 GROUP BY TABLE_NAME
 ORDER BY TABLE_NAME;
 ```
 
+**No usable config rows**: list every candidate table with the query above, replacing
+the `IN (...)` predicate with `TABLE_NAME LIKE CONCAT('{entity_type}', '\_\_%')`,
+then keep a table only when it holds rows for this bundle:
+
+```sql
+SELECT 1 FROM {entity_type}__{field_name} WHERE bundle = '{bundle}' LIMIT 1;
+```
+
+A field attached to the bundle but never filled has no rows and cannot be found this
+way. Say so in the report: the list may miss empty fields.
+
 Map the resulting column suffixes to field types using the **"Value Column Suffix
-Patterns"** table in `.agents/references/migrate/entity-type-context.md` — don't
+Patterns"** table in `<skill base directory>/../../references/entity-type-context.md` — don't
 duplicate it here.
 
 ### Step 3 — Report results

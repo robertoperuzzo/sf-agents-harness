@@ -3,6 +3,32 @@
 Shared reference for all `drupal-migrate-*` skills. When a skill requires entity-type-specific
 table names, column names, or logic, resolve variables from the tables below.
 
+**Where skills read it.** The plugin ships this file at `references/entity-type-context.md`,
+two levels above each skill's base directory (`<skill base directory>/../../references/`).
+Skills read that copy. A project that needs different tables (a Drupal 7 source with
+custom tables, renamed entity tables) places its own copy at
+`.agents/references/migrate/entity-type-context.md`; when that file exists it overrides
+the plugin copy. Do not copy this file into a project only to keep it unchanged: the
+copy would stop receiving plugin fixes.
+
+---
+
+## Input validation (every skill that builds SQL or shell commands)
+
+Bundle names, entity types, field names and ids come from the user, issue text, project
+config or the database, and are substituted into SQL and shell commands. Never
+substitute a raw value. Check each one before use and stop with an error naming the
+value when it fails:
+
+| Value                                                                                                                         | Allowed pattern                           |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `{entity_type}`, `{bundle}`, `{field_name}`, `{parent_field_name}`, `{child_ref_field}`, `{node_bundle}`, any table or column | `^[a-z0-9_]+$`                            |
+| `{nid}`, `{id}`, `{tid}`, `{mid}`, `{uid}` and every other numeric id                                                         | `^[0-9]+$`                                |
+| `{langcode}`, `{base_langcode}`                                                                                               | `^[a-z]{2,3}(-[a-z]+)?$` or `und` / `zxx` |
+
+Drupal machine names never contain anything else, so a value that fails is either a
+typo or an injection attempt; do not try to escape or repair it.
+
 ---
 
 ## Variable Resolution Table
@@ -122,7 +148,24 @@ Use these to infer field types from `INFORMATION_SCHEMA` column inspection:
 | `_uri` + `_title` + `_options`               | `link`                                                            |
 | `_target_id` + `_alt` + `_width` + `_height` | `image`                                                           |
 | `_date` or `_value` (datetime storage)       | `datetime`                                                        |
-| `_lat` + `_lng`                              | `geofield`                                                        |
+| `_lat` + `_lon`                              | `geofield`                                                        |
+
+**Drupal 7 suffixes.** D7 field columns follow the field module that defines them, not
+the D8+ names above. Use these on a D7 source (`field_data_{field_name}` tables):
+
+| D7 field type                                                 | Value column suffix(es)                                   |
+| ------------------------------------------------------------- | --------------------------------------------------------- |
+| `text`, `text_long`, `number_*`, `list_*`, `datetime`, `date` | `_value` (`_format` for text)                             |
+| `text_with_summary`                                           | `_value` + `_summary` + `_format`                         |
+| `file`, `image`                                               | `_fid` (image adds `_alt`, `_title`, `_width`, `_height`) |
+| `taxonomy_term_reference`                                     | `_tid`                                                    |
+| `node_reference`                                              | `_nid`                                                    |
+| `user_reference`                                              | `_uid`                                                    |
+| `entityreference`                                             | `_target_id`                                              |
+| `link_field`                                                  | `_url` + `_title` + `_attributes`                         |
+| `email`                                                       | `_email`                                                  |
+| `paragraphs`, `field_collection`                              | `_value` + `_revision_id`                                 |
+| `geofield`                                                    | `_lat` + `_lon` (+ `_geom`)                               |
 
 ---
 

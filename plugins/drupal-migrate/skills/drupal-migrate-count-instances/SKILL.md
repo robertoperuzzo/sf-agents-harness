@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-count-instances
-description: 'Count how many instances of a Drupal entity bundle (node, paragraph, taxonomy term, media, or user) exist in a source migration database, using revision-safe COUNT(DISTINCT) queries that avoid inflation from revisions and language variants. Use whenever migration planning needs a count — "how many X are there", "count the Y paragraphs", sizing a bundle before migrating it, or checking whether a bundle has any data at all. Reports total and active (published) counts. Drupal 7 and Drupal 8+ sources only. For a paragraph''s real in-use count, follow up with drupal-migrate-verify-active; for whole-site volumes use drupal-migrate-content-inventory.'
+description: 'Count how many instances of a Drupal entity bundle (node, paragraph, taxonomy term, media, or user) exist in a source migration database, using revision-safe COUNT(DISTINCT) queries that avoid inflation from revisions and language variants. Use only in a migration context, when planning needs a count from the source — "how many X are there in the source", "count the Y paragraphs in the old site", sizing a bundle before migrating it, or checking whether a source bundle has any data at all. Not for counting content on the site being developed. Reports total and active (published) counts. Drupal 7 and Drupal 8+ sources only. For a paragraph''s real in-use count, follow up with drupal-migrate-verify-active; for whole-site volumes use drupal-migrate-content-inventory.'
 ---
 
 # Count Source Entity Instances
@@ -32,7 +32,7 @@ differently, so don't guess from a fixed word list:
 All D8+ table/column variables (`{main_table}`, `{base_table}`, `{id_column}`,
 `{bundle_column}`, `{status_column}`) come from the shared reference — read it
 instead of hardcoding:
-**`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Variable Resolution Table".
 
 Check `.agents/references/migrate/project-config.md` for any project-specific
 table-name overrides.
@@ -49,6 +49,12 @@ The shared reference is D8+. On a D7 source, substitute these instead:
 | `user`          | `users`              | `uid`     | —                                               |
 
 ## Steps
+
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
 
 ### Step 1 — Count total instances (revision-safe)
 
@@ -92,6 +98,28 @@ FROM taxonomy_term_data td
 JOIN taxonomy_vocabulary v ON td.vid = v.vid
 WHERE v.machine_name = '{bundle}' GROUP BY v.name;
 ```
+
+**Drupal 7 languages.** D7 names the column `language` (not `langcode`) and uses `und`
+for language-neutral content. Two translation models exist, and they count differently:
+
+- **Content translation** (core `translation` module): each translation is a separate
+  node linked through `node.tnid` (the source node's nid; `0` when untranslated). A
+  plain `COUNT(DISTINCT nid)` counts every language. Report both the node count and
+  the translation-set count:
+
+  ```sql
+  SELECT COUNT(DISTINCT nid) AS nodes,
+    COUNT(DISTINCT CASE WHEN tnid > 0 THEN tnid ELSE nid END) AS translation_sets
+  FROM node WHERE type = '{bundle}';
+  ```
+
+- **Entity translation** (`entity_translation` module): one node, with translated field
+  rows per `language` in `field_data_*` and one row per language in the
+  `entity_translation` table. `COUNT(DISTINCT nid)` is already correct.
+
+Check which model applies with `SELECT COUNT(*) FROM node WHERE tnid > 0` and whether
+the `entity_translation` table exists, and add a per-language breakdown
+(`GROUP BY language`) to the report.
 
 If the query errors with an unknown table, the name may be customized — list candidates and retry:
 

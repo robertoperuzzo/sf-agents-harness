@@ -19,7 +19,7 @@ This is the **canonical source of the paragraph "active" count**. `drupal-migrat
 
 All D8+ table/column variables come from the shared reference — read it instead
 of hardcoding:
-**`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Variable Resolution Table".
 `{main_table}` resolves per entity type, so the queries below use the **`node`**
 column for the parent (`node_field_data`, `nid`, `vid`) and the **`paragraph`**
 column for the paragraph (`{para_table}` = `{main_table}` of `paragraph`).
@@ -39,6 +39,37 @@ option and any project-specific table-name overrides before querying.
 - **total_instances**: total count from `drupal-migrate-count-instances`
 
 ## Steps
+
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
+
+### Step 0 — Split instances by host entity type
+
+Paragraphs can live on nodes, block content, taxonomy terms, users or other entity
+types. This skill evaluates node hosts (directly or through nested paragraphs) only.
+Count the rest separately so they are never reported as orphaned:
+
+```sql
+SELECT parent_type, COUNT(DISTINCT id) AS instances
+FROM {para_table}
+WHERE type = '{bundle}'
+GROUP BY parent_type;
+```
+
+- `node` → Step 1.
+- `paragraph` → Step 2; the chain must end at a node. A chain whose top host is not a
+  node counts as not evaluated, under that host's type.
+- any other type (`block_content`, `taxonomy_term`, `user`, …) → **not evaluated**:
+  `not_evaluated = SUM(instances)` for these rows, reported per host type.
+
+**Drupal 7:** `paragraphs_item` has no `parent_type`. Group by the `entity_type` of the
+host field rows instead, once per host field from `drupal-migrate-parent-context`:
+`SELECT ref.entity_type, COUNT(DISTINCT p.item_id) FROM paragraphs_item p JOIN field_data_{parent_field_name} ref ON ref.{parent_field_name}_value = p.item_id WHERE p.bundle = '{bundle}' GROUP BY ref.entity_type;`
+(`paragraphs_item` hosts are nested paragraphs; anything other than `node` and
+`paragraphs_item` is not evaluated).
 
 ### Step 1 — Count active instances against published content
 
@@ -112,27 +143,39 @@ next level's field table on the `*_target_revision_id` selected one level up.
 ### Step 3 — Compute orphaned count
 
 ```
-orphaned = total_instances - SUM(active_instances across all parent fields)
+orphaned = total_instances - SUM(active_instances across all parent fields) - not_evaluated
 ```
+
+Instances on non-node hosts are neither active nor orphaned: this skill does not judge
+whether their host is published. Report them in their own column so they stay in the
+migration scope discussion.
 
 ### Step 4 — Report results
 
 ```
 #### Active vs orphaned — `{bundle}`
 
-| | Total in DB | Active (published) | Orphaned |
-|---|---|---|---|
-| `{bundle}` | {total} | **{active}** | {orphaned} |
+| | Total in DB | Active (published) | Orphaned | Other hosts (not evaluated) |
+|---|---|---|---|---|
+| `{bundle}` | {total} | **{active}** | {orphaned} | {not_evaluated} ({host types}) |
 ```
+
+Omit the last column when `not_evaluated = 0`.
 
 If orphaned > 0:
 
 > ⚠️ {orphaned} orphaned instances from old or detached node revisions — excluded from migration scope.
 
+If not_evaluated > 0:
+
+> ℹ️ {not_evaluated} instances live on non-node hosts ({host types}) and were not
+> evaluated. Decide their scope separately; they are not orphans.
+
 ## Output
 
 - **active_instances**: paragraph instances in currently published node revisions
-- **orphaned_instances**: paragraph instances NOT in current published revisions
+- **orphaned_instances**: node-hosted paragraph instances NOT in current published revisions
+- **not_evaluated_instances**: instances on non-node hosts, per host entity type
 - **breakdown_by_node_type**: active instances per parent node bundle
 
 ## Guardrails

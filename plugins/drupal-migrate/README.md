@@ -89,26 +89,22 @@ table, scope rules) from a single file in the **host project**:
 .agents/references/migrate/project-config.md
 ```
 
-The skills read two files from this host path — copy both there. After
-`/plugin install`, the plugin files live under the marketplace checkout in your home
-directory (`PLUGIN_DIR` below); adjust the path if you installed from a local clone:
+Copy the template there and fill in your project's values. After `/plugin install`, the
+plugin files live under the marketplace checkout in your home directory (`PLUGIN_DIR`
+below); adjust the path if you installed from a local clone:
 
 ```bash
 PLUGIN_DIR=~/.claude/plugins/marketplaces/sf-agents-harness/plugins/drupal-migrate
 mkdir -p .agents/references/migrate
-
-# 1. project-config.md — fill in your project's values (template provided)
 cp "$PLUGIN_DIR/references/project-config.template.md" \
    .agents/references/migrate/project-config.md
 # then edit project-config.md
-
-# 2. entity-type-context.md — generic Drupal 8+ table/column maps, copy verbatim
-cp "$PLUGIN_DIR/references/entity-type-context.md" \
-   .agents/references/migrate/entity-type-context.md
 ```
 
-`entity-type-context.md` is project-agnostic — copy it as-is (override only for a
-Drupal 7 source). `project-config.md` is per-project.
+The table and column reference the skills share, `entity-type-context.md`, ships with
+the plugin and is read from there, so it needs no copy. Only a source with non-standard
+tables needs an edited copy at `.agents/references/migrate/entity-type-context.md`,
+which then overrides the plugin's.
 
 A third file, `.agents/references/migrate/issue-requirements.md`, is needed only by the
 "generate migration issue" flow of the analyst agent. It holds the project's migration
@@ -131,9 +127,22 @@ the root of this repository), then install:
 
 For a local checkout, pass the repository path instead of the GitHub slug.
 
-## Dependencies (host project provides)
+## Dependencies
 
-- A read-only-reachable source database. The access method depends on the source:
+Skills from outside this plugin, available through the sparkdock skill sync
+(`sjust sf-agents-refresh`) or installed by hand:
+
+- **`playwright-cli`** — browser tool for `drupal-migrate-verify-content` (content
+  comparison) and `drupal-migrate-live-screenshots`. A Playwright or other browser MCP
+  server works instead. Without any of them, content comparison stops and screenshots are
+  skipped; redirect and 410 checks still run.
+- **`mermaid-diagrams`** — diagram guidance for the analysis docs. Optional: without it
+  the agent still writes the diagrams.
+
+The host project provides:
+
+- A read-only source database: a SELECT-only account, or a read-only session that
+  `drupal-migrate-db-discover` sets up and confirms. The access method depends on the source:
   `drush sql:query` for a Drupal source, `wp db query` / `ddev wp db query` for
   WordPress, a read-only `mysql` client for a raw dump — declared in `project-config.md`
   and confirmed by `drupal-migrate-detect-source`. The plugin never issues a read-write

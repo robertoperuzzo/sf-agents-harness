@@ -15,7 +15,7 @@ Read `.agents/references/migrate/project-config.md` first — it supplies every 
 - **Migration Infrastructure — Where To Look** → where custom migration modules, migration YAML, and destination config live (paths vary per project)
 - **Output Language → Issue body** → the language to write the TO DO list in
 - **Migration Patterns** / **Scope Exclusions** → project conventions and fields/bundles to exclude
-- the **destination Drupal version** (the new site; D8+)
+- **Source System Overview → Target stack** → the destination Drupal version (the new site; D8+)
 
 If that file is absent, ask the user for the issue tracker (GitLab or GitHub), the repository identifier, and the relevant code paths before proceeding. Do not hardcode another project's paths.
 
@@ -79,23 +79,25 @@ Summarise each section. Focus on:
 
 ### Step 3 — Explore the codebase
 
-Resolve the project's code locations from project-config.md → **Migration Infrastructure — Where To Look**, then run bash/glob/grep in parallel. Below, the `{…_dir}` placeholders are those project paths:
+Resolve the project's code locations from project-config.md → **Migration Infrastructure — Where To Look**, then run bash/glob/grep in parallel. Below, the `{…_dir}` placeholders are those project paths.
+
+**Validate before substituting.** `{bundle}` and `{entity_type}` come from issue text or the database. Accept each only if it matches `^[a-z0-9_]+$` (Drupal machine names allow nothing else) and stop otherwise; a quote or `$(` in an unchecked value would break out of the commands below. Derive `{bundle_slug}` only from a validated `{bundle}`. Pass every value as a single-quoted argument, as shown.
 
 ```bash
 # 3a — existing migration plugins + YAML
-grep -rl "MigrateSource\|MigrateDestination\|MigrateProcessPlugin" {custom_module_dir} --include="*.php" 2>/dev/null
-find {config_sync_dir} -name "migrate_plus.migration*.yml" 2>/dev/null
+grep -rl 'MigrateSource\|MigrateDestination\|MigrateProcessPlugin' '{custom_module_dir}' --include='*.php' 2>/dev/null
+find '{config_sync_dir}' -name 'migrate_plus.migration*.yml' 2>/dev/null
 
 # 3b — destination content type / paragraph / component
-ls {config_sync_dir}/core.entity_form_display.{entity_type}.{bundle}.*.yml 2>/dev/null
-ls {config_sync_dir}/field.field.{entity_type}.{bundle}.*.yml 2>/dev/null
-ls -d {theme_components_dir}/*{bundle_slug}*/ 2>/dev/null   # {bundle_slug} = {bundle} with "_" replaced by "-"
+find '{config_sync_dir}' -maxdepth 1 -name 'core.entity_form_display.{entity_type}.{bundle}.*.yml' 2>/dev/null
+find '{config_sync_dir}' -maxdepth 1 -name 'field.field.{entity_type}.{bundle}.*.yml' 2>/dev/null
+find '{theme_components_dir}' -maxdepth 1 -type d -name '*{bundle_slug}*' 2>/dev/null   # {bundle_slug} = {bundle} with "_" replaced by "-"
 
 # 3c — existing tests
-grep -rl "{bundle}" {custom_module_dir} --include="*.php" 2>/dev/null
+grep -rlF -- '{bundle}' '{custom_module_dir}' --include='*.php' 2>/dev/null
 
 # 3d — existing mock / base content
-find {custom_module_dir} -name "*.yml" -path "*/content/*" 2>/dev/null | xargs grep -l "{bundle}" 2>/dev/null
+find '{custom_module_dir}' -name '*.yml' -path '*/content/*' -exec grep -lF -- '{bundle}' {} + 2>/dev/null
 ```
 
 Also read the **Reference Documentation** and **Migration Patterns** sections of project-config.md for project-specific files and conventions to consult (reference-doc directory, component naming, test framework, access-control model — all project-defined).

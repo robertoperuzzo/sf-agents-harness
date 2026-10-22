@@ -101,7 +101,7 @@ by reading:
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `.agents/references/migrate/project-config.md`      | **Config.** Source system (technology, single/multisite, codebase-available vs DB-only), DB connection + access method, URL resolution, custom SQL, reference paths, default language. Overrides skill defaults. |
 | `.agents/references/migrate/issue-requirements.md`  | Migration **issue description template** (structure + the fixed Definition of Done). Written per project by the team; the plugin ships no template because the Definition of Done differs between projects.      |
-| `.agents/references/migrate/entity-type-context.md` | Entity-type context reference for source bundles (Drupal source).                                                                                                                                                |
+| `.agents/references/migrate/entity-type-context.md` | _Optional override._ The skills read the plugin's own copy of this table/column reference; a project copy here replaces it.                                                                                      |
 
 Browse the rest of `.agents/references/migrate/` for additional insight when a question
 isn't covered above. If `project-config.md` is missing, skills fall back to their
@@ -243,8 +243,18 @@ analysis applies, single vs multisite scope).
 
 > There is no monolithic phase skill — always orchestrate the atomic skills above.
 >
-> **If a skill is not loaded**, perform its documented logic inline (Bash/Read)
-> following the skill's steps.
+> **Skill names.** Claude Code exposes plugin skills as `drupal-migrate:<skill>`. The
+> bare names above resolve while they are unique; if another plugin or a local skill
+> uses the same name, invoke the prefixed form (`drupal-migrate:drupal-migrate-detect-source`).
+>
+> **If a skill cannot be loaded**, read its `SKILL.md` and perform the steps inline
+> (Bash/Read). The files sit next to any skill of this plugin that did load: its base
+> directory is `<plugin root>/skills/<skill>`, so the missing one is
+> `<plugin root>/skills/<missing skill>/SKILL.md`. With no skill loaded at all, find
+> the plugin root with
+> `find ~/.claude/plugins -path '*/skills/drupal-migrate-detect-source/SKILL.md'`
+> (the installed copy lives under `cache/<marketplace>/drupal-migrate/<version>/`; use
+> the highest version).
 
 ---
 
@@ -439,9 +449,9 @@ illustrative only.
 
 #### Instance counts
 
-| | Total in DB | Active (published) | Orphaned |
-|---|---|---|---|
-| `{bundle}` | N | **N** | N |
+| | Total in DB | Active (published) | Orphaned | Other hosts (not evaluated) |
+|---|---|---|---|---|
+| `{bundle}` | N | **N** | N | N _(paragraphs on non-node hosts; omit when 0)_ |
 
 #### Parent context _(paragraphs only)_
 

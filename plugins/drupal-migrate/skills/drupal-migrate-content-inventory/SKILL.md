@@ -47,7 +47,12 @@ translation plugin is installed):
 
 - **WordPress + WPML:** translated-content rows in `{prefix}icl_translations`; coverage
   per language and, for multisite, per blog.
-- **Drupal:** `langcode` distribution and content-translation rows per bundle.
+- **Drupal 8+:** `langcode` distribution in each `*_field_data` table, per bundle.
+- **Drupal 7:** the column is `language` (`und` = language neutral), and the translation
+  model decides what a translation is. With core content translation, translations are
+  separate nodes linked by `node.tnid`; with `entity_translation`, one node carries one
+  `entity_translation` row per language. Use the "Drupal 7 languages" queries in
+  `drupal-migrate-count-instances`.
 
 State coverage as numbers ("it/en on the main site + 133 subsites; per-subsite
 translated-content volume unmeasured") — an unmeasured gap is itself a finding.

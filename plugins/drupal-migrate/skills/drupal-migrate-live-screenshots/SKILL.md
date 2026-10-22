@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-live-screenshots
-description: 'Take browser screenshots of the live example pages that drupal-migrate-resolve-examples found, so a reviewer sees how a source bundle renders today. Optional step: run only when the user asks for screenshots ("screenshot the example pages", "show me what X looks like on the live site") or the invocation explicitly requests them. Browser-tool-agnostic — uses the playwright-cli skill if enabled, else a Playwright (or other browser) MCP server, else asks the user which browser tool to use. Does not resolve URLs itself.'
+description: 'Take browser screenshots of the live example pages that drupal-migrate-resolve-examples found, so a reviewer sees how a source bundle renders today. Optional step: run only when the user asks for screenshots ("screenshot the example pages", "show me what X looks like on the live site") or the invocation explicitly requests them. Browser-tool-agnostic — uses the playwright-cli skill if enabled, else a Playwright (or other browser) MCP server; with none, it asks the user in an interactive run and skips in a non-interactive one. Does not resolve URLs itself.'
 ---
 
 # Live screenshots of example pages
@@ -12,8 +12,8 @@ user has confirmed it, or when the invocation prompt explicitly asks for screens
 cannot ask mid-run).
 
 The skill does not hardcode a browser engine. It selects whatever browser tool the
-environment actually has, in a fixed preference order, and asks the user if none is
-detected.
+environment actually has, in a fixed preference order. When none is detected it asks
+the user in an interactive run, and skips screenshots in a non-interactive one.
 
 ---
 
@@ -32,7 +32,10 @@ Pick the first available, in this order, and use it for every screenshot in the 
    tools for a `playwright`-named navigate/screenshot tool), use it.
 3. **Another browser MCP server** — e.g. `chrome-devtools`. If present, use its
    navigate + screenshot tools.
-4. **None detected** — do not guess or invent a mechanism. Ask the user:
+4. **None detected** — do not guess or invent a mechanism. In a non-interactive run
+   (the `drupal-migration-analyst` agent), do not ask: skip screenshots, record
+   "screenshots skipped: no browser tool enabled", and continue. In an interactive run,
+   ask the user:
 
    > "I need a browser tool to capture screenshots and don't see one enabled. Which
    > should I use — the `playwright-cli` skill, a Playwright MCP, or another browser MCP?
@@ -77,8 +80,9 @@ so — never block the analysis waiting for an answer.
 
 ### 2. Select the browser tool
 
-Resolve the tool per "Selecting the browser tool". If none is available and the user
-does not name one, skip screenshots and say so — do not block the analysis.
+Resolve the tool per "Selecting the browser tool". If none is available (and, in an
+interactive run, the user does not name one), skip screenshots and say so; do not block
+the analysis.
 
 ### 3. Take screenshots
 
@@ -109,9 +113,9 @@ filename (e.g., `404 Not Found`, `Timeout`).
 
 ## Error Handling
 
-- **No browser tool available**: ask the user which to use (see step 2). If none is
-  provided, skip screenshots and continue with the field analysis — do not invent a
-  mechanism.
+- **No browser tool available**: interactive run, ask the user which to use (see
+  step 2); non-interactive run, skip without asking. Either way, continue with the field
+  analysis and never invent a mechanism.
 - **Page returns 4xx/5xx**: note the HTTP status in the Screenshot column. Do not retry.
 - **Page times out**: note `Timeout` in the Screenshot column. Continue with remaining
   URLs.
@@ -122,6 +126,6 @@ filename (e.g., `404 Not Found`, `Timeout`).
 - **Optional and gated** — never run without the step-1 gate (user confirmation or an
   explicit request in the invocation); never block the field analysis on screenshots.
 - **Browser-tool-agnostic** — select by availability in the fixed order; never hardcode a
-  single engine, and ask the user when none is detected.
+  single engine. Ask the user when none is detected only in an interactive run.
 - **Read-only navigation** — navigate and capture only; never submit forms or trigger
   writes on the live site.

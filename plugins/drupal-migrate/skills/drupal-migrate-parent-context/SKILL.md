@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-parent-context
-description: 'Find where a Drupal source paragraph bundle is embedded: which entity types and fields reference it, which node bundles contain it, and whether it sits in a top-level node field or nested inside another paragraph. Use after drupal-migrate-count-instances when planning a paragraph migration, or when asked "where is paragraph X used", "which content types use Y", or "is Z nested". Paragraph bundles on Drupal 7 and Drupal 8+ sources only.'
+description: 'Find where a Drupal source paragraph bundle is embedded: which entity types and fields reference it, which node bundles contain it, and whether it sits in a top-level node field or nested inside another paragraph. Use after drupal-migrate-count-instances when planning a paragraph migration, or when asked "where is paragraph X used in the source", "which source content types use Y", or "is Z nested in the old site". Paragraph bundles on Drupal 7 and Drupal 8+ sources only.'
 ---
 
 # Identify Paragraph Parent Context
@@ -18,7 +18,7 @@ This is paragraph-specific: paragraphs have no public URL and no bundle-level st
 
 Paragraph table/column variables (`paragraphs_item_field_data`, `id`, `type`) follow
 the shared reference — read it instead of hardcoding:
-**`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Variable Resolution Table".
 
 Check `.agents/references/migrate/project-config.md` for the drush database
 option and any project-specific table-name overrides.
@@ -28,6 +28,12 @@ option and any project-specific table-name overrides.
 - **bundle**: The paragraph bundle machine name (e.g., the value queried in `drupal-migrate-count-instances`)
 
 ## Steps
+
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
 
 ### Step 1 — Identify parent types and fields
 

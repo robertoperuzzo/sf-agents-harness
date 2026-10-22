@@ -22,7 +22,7 @@ Required context (available from prior skills in the analysis workflow):
 ## Entity-Type Context
 
 Before running any query, resolve entity-type-specific variables from:
-**`.agents/references/migrate/entity-type-context.md`**
+**`<skill base directory>/../../references/entity-type-context.md`**
 
 Use `{has_direct_url}` and `{base_table}` from that reference to determine the resolution strategy.
 
@@ -30,10 +30,16 @@ Use `{has_direct_url}` and `{base_table}` from that reference to determine the r
 
 ## Steps
 
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
+
 ### Step 0 — Entity-type guard
 
 Pick the resolution strategy for the entity type from
-**`.agents/references/migrate/entity-type-context.md`** → "URL Resolution Strategy
+**`<skill base directory>/../../references/entity-type-context.md`** → "URL Resolution Strategy
 Per Entity Type". In short: `node` is direct, `paragraph` / `taxonomy_term` / `media`
 resolve indirectly via parent/referencing nodes, and `user` is skipped (no public URL).
 
@@ -41,7 +47,7 @@ If `user`, output "N/A — no public URL" and stop. For all other types, continu
 
 ### 1. Check for project-specific URL resolution
 
-Read `.agents/references/migrate/project-config.md`. If it defines a `## Live URL Resolution` section with a custom method (e.g., `endpoint`, `json_file`, `url_pattern`), **follow those instructions instead of the default steps below**.
+Read `.agents/references/migrate/project-config.md`. If it defines a `## Live URL Resolution` section with a custom method (the template documents `endpoint`; a project may document its own), **follow those instructions instead of the default steps below**.
 
 If no custom method is defined, proceed with the **default Drupal path_alias strategy**.
 
@@ -51,7 +57,8 @@ If no custom method is defined, proceed with the **default Drupal path_alias str
 
 #### 2. Select representative node IDs
 
-**For `node` entity type** — pick one published node per bundle:
+**For `node` entity type** — pick up to three published candidates per bundle, then
+use the first one whose alias resolves in step 3:
 
 ```sql
 SELECT DISTINCT n.nid
@@ -59,7 +66,7 @@ FROM node_field_data n
 WHERE n.type = '{node_bundle}'
   AND n.status = 1
 ORDER BY n.nid ASC
-LIMIT 1;
+LIMIT 3;
 ```
 
 **For `paragraph` entity type** — use the parent node IDs already identified by `drupal-migrate-parent-context` / `drupal-migrate-verify-active`. Pick one published parent node per parent bundle.
@@ -141,7 +148,24 @@ ORDER BY id DESC
 LIMIT 1;
 ```
 
-If no alias is found in the base language, retry with `langcode = 'en'`, then fall back to the canonical path `/node/{nid}`.
+If no alias is found in the base language, retry with the other languages in
+project-config.md → "Content Verification" (any language the node has a row for in
+`node_field_data`), then fall back to the canonical path `/node/{nid}`. Keep the
+langcode of the alias you used: step 4 needs it.
+
+**Drupal 8.0 to 8.7:** `path_alias` does not exist yet; aliases live in `url_alias`
+with columns `source`, `alias`, `langcode` (leading `/` on both paths):
+
+```sql
+SELECT alias
+FROM url_alias
+WHERE source = '/node/{nid}'
+  AND langcode IN ('{base_langcode}', 'und')
+ORDER BY pid DESC
+LIMIT 1;
+```
+
+Pick the table by existence when the version is only known as `drupal8+`.
 
 **Drupal 7:** there is no `path_alias` table; query `url_alias` instead:
 
@@ -154,7 +178,8 @@ ORDER BY pid DESC
 LIMIT 1;
 ```
 
-D7 aliases have no leading slash; prepend `/` before building the URL.
+D7 aliases have no leading slash; prepend `/` before building the URL. An alias with
+language `und` belongs to the base language for step 4.
 
 > **UUID query** (when needed): Always use `{base_table}`, not `{main_table}`:
 >
@@ -164,13 +189,18 @@ D7 aliases have no leading slash; prepend `/` before building the URL.
 
 #### 4. Build the full URL
 
-Combine the **site base URL** (from project config, or ask the user if unknown) with the resolved alias:
+Aliases carry no language prefix and no domain. Pick the base for the alias's langcode
+from project-config.md → "Content Verification": the **source base URL** for the base
+language, and the matching **other-language base** for any other language (a path
+prefix such as `https://www.example.com/en`, or a separate domain). Then combine:
 
 ```
-{base_url}{alias}
+{lang_base_url}{alias}
 ```
 
-Example: `https://example.com/path/to/page`
+Example: `https://example.com/path/to/page`, or `https://example.com/en/path/to/page`
+for an English alias on a site that prefixes English. Without a configured base for
+that language, keep the alias as a path and note "base URL for `<langcode>` unknown".
 
 If no alias is resolved after 3 candidate node IDs, mark the entry as `URL not found` and continue.
 
@@ -197,6 +227,9 @@ This table populates the **Live examples** section of the Source Analysis Report
 
 - **`path_alias` table missing**: On a D7 source use `url_alias` (see step 3). Otherwise fall back to canonical `/node/{nid}` paths and note the fallback in the output.
 - **No alias found after 3 attempts**: Mark entry as `URL not found`. Do not block the analysis.
-- **Base URL unknown**: Ask the user once: _"What is the base URL of the production source site?"_
+- **Base URL unknown**: in an interactive run, ask the user once: _"What is the base URL
+  of the production source site?"_ In a non-interactive run (the
+  `drupal-migration-analyst` agent), do not ask: report the aliases as paths, note
+  "source base URL not configured", and let the agent list it under inputs needed.
 - **No active parent nodes**: Skip URL resolution for that bundle and note it in the output.
 - **No referencing nodes found** (taxonomy_term/media): Note "No published nodes reference this entity" and continue.

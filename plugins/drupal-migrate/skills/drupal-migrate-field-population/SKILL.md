@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-field-population
-description: 'Measure how full each field of a Drupal source bundle actually is: for every field, the share of active instances that hold data, so empty (0%) and near-empty fields can be flagged as non-migration candidates. Use after drupal-migrate-query-fields, when asked "which fields are actually used", "which fields are empty", "is field_x worth migrating", or when trimming a bundle''s field mapping. Drupal 7 and Drupal 8+ sources only.'
+description: 'Measure how full each field of a Drupal source bundle actually is: for every field, the share of active instances that hold data, so empty (0%) and near-empty fields can be flagged as non-migration candidates. Use in a migration context only: after drupal-migrate-query-fields, when asked "which fields of the source bundle are actually used", "which source fields are empty", "is field_x worth migrating", or when trimming a bundle''s field mapping. Not for checking empty fields on the site being developed. Drupal 7 and Drupal 8+ sources only.'
 ---
 
 # Measure Field Population
@@ -24,18 +24,25 @@ For each field on a source bundle, measure what percentage of active instances a
 
 All D8+ table/column variables (`{main_table}`, `{id_column}`, `{bundle_column}`,
 `{field_data_prefix}`) come from the shared reference — read it instead of hardcoding:
-**`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Variable Resolution Table".
 
 Check `.agents/references/migrate/project-config.md` → "Database Connection"
 for the drush database option and any project-specific table-name overrides.
 
 ## Steps
 
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
+
 ### Step 1 — Query population for each field
 
 For each field, pick the value column for its type, then count populated rows.
 Field-type → value-suffix mapping lives in the shared reference — read it instead of guessing:
-**`.agents/references/migrate/entity-type-context.md`** → "Value Column Suffix Patterns".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Value Column Suffix Patterns"
+(D8+ table, then "Drupal 7 suffixes" for a D7 source).
 
 **Parameterized query (all entity types, D8+):**
 
@@ -113,10 +120,45 @@ the entity tables differ too: take `{main_table}`, `{id_column}` and `{bundle_co
 from the Drupal 7 table in `drupal-migrate-count-instances` → "Drupal 7 differences"
 (`node`/`nid`/`type`, `paragraphs_item`/`item_id`/`bundle`,
 `taxonomy_term_data`/`tid`/`vid`, `users`/`uid`), not from the D8+ reference.
-Join on `field_data_{field_name}.entity_id = m.{id_column}` and filter
-`entity_type = '{d7_entity_type}'`, where `{d7_entity_type}` is the D7 name:
-`paragraph` → `paragraphs_item`; `node`, `taxonomy_term` and `user` are unchanged
-(`media` does not exist on D7). The value-suffix logic is otherwise the same.
+`{d7_entity_type}` is the D7 name: `paragraph` → `paragraphs_item`; `node`,
+`taxonomy_term` and `user` are unchanged (`media` does not exist on D7).
+
+**Value columns differ on D7.** Take `{value_suffix}` from the "Drupal 7 suffixes" table
+in `entity-type-context.md`, not from the D8+ table: `_fid` for file and image, `_tid`
+for taxonomy, `_url` for link, `_nid` for node reference, `_target_id` only for
+`entityreference`. The D8+ names fail with an unknown-column error on D7. The field type
+comes from `field_config.type` (see `drupal-migrate-query-fields`).
+
+Put the `entity_type` filter in the `LEFT JOIN` condition, not in `WHERE`, or entities
+without a row disappear from the denominator:
+
+```sql
+SELECT
+  COUNT(DISTINCT m.{id_column}) AS total_instances,
+  COUNT(DISTINCT CASE WHEN f.{field_name}_{value_suffix} IS NOT NULL THEN m.{id_column} END) AS populated
+FROM {main_table} m
+LEFT JOIN field_data_{field_name} f
+  ON f.entity_type = '{d7_entity_type}' AND f.entity_id = m.{id_column} AND f.deleted = 0
+WHERE m.{bundle_column} = '{bundle}';
+```
+
+**Taxonomy terms (D7):** `taxonomy_term_data.vid` is a numeric vocabulary id, while
+`{bundle}` is the vocabulary machine name; comparing the two returns 0 rows. Join the
+vocabulary table and filter on its machine name:
+
+```sql
+SELECT
+  COUNT(DISTINCT m.tid) AS total_instances,
+  COUNT(DISTINCT CASE WHEN f.{field_name}_{value_suffix} IS NOT NULL THEN m.tid END) AS populated
+FROM taxonomy_term_data m
+JOIN taxonomy_vocabulary v ON v.vid = m.vid
+LEFT JOIN field_data_{field_name} f
+  ON f.entity_type = 'taxonomy_term' AND f.entity_id = m.tid AND f.deleted = 0
+WHERE v.machine_name = '{bundle}';
+```
+
+**Users (D7):** the `users` table has no bundle; use `WHERE m.uid > 0` instead of the
+bundle predicate.
 
 **Paragraphs (D7):** the generic query counts detached and archived `paragraphs_item`
 rows too, while the denominator is the active count, so the same >100% error applies.

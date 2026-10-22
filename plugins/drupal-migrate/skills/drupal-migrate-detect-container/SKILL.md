@@ -1,6 +1,6 @@
 ---
 name: drupal-migrate-detect-container
-description: 'Detect whether a source paragraph bundle is a group/container that holds child paragraph entities via entity_reference_revisions fields, and list its child bundles. Use before analysing a paragraph''s fields when planning a migration — to discover nested paragraph hierarchies, e.g. "is X a container", "does the Y paragraph hold children", "what''s inside this paragraph", or to decide whether the full analysis must be repeated for child bundles. Paragraph bundles on Drupal 7 and Drupal 8+ sources only.'
+description: 'Detect whether a source paragraph bundle is a group/container that holds child paragraph entities via entity_reference_revisions fields, and list its child bundles. Use before analysing a paragraph''s fields when planning a migration — to discover nested paragraph hierarchies, e.g. "is source paragraph X a container", "does the old site''s Y paragraph hold children", or to decide whether the full analysis must be repeated for child bundles. Paragraph bundles on Drupal 7 and Drupal 8+ sources only.'
 ---
 
 # Detect Group / Container Pattern
@@ -27,7 +27,7 @@ Check whether a paragraph bundle acts as a container for child paragraph entitie
 
 The D8+ variables used below (`{config_prefix}`, `{field_data_prefix}`, `{main_table}`,
 `{id_column}`) come from the shared reference — read it instead of hardcoding:
-**`.agents/references/migrate/entity-type-context.md`** → "Variable Resolution Table".
+**`<skill base directory>/../../references/entity-type-context.md`** → "Variable Resolution Table".
 
 For paragraphs: `{config_prefix}` = `field.field.paragraph.`, `{field_data_prefix}` = `paragraph__`.
 Check `.agents/references/migrate/project-config.md` for any project-specific
@@ -36,6 +36,12 @@ table-name overrides.
 ---
 
 ## Steps
+
+**Validate inputs first.** Check every value substituted into the queries below (entity
+type, bundle, field names, ids, langcode) against the patterns in
+`entity-type-context.md` → "Input validation", and stop on any mismatch. Values read from
+the database (field names from `config` or `INFORMATION_SCHEMA`, ids from a previous
+query) are checked the same way before reuse.
 
 ### Step 1 — Detect container and extract child bundles (Drupal 8+)
 
