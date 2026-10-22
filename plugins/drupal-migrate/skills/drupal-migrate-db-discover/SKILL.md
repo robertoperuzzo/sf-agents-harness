@@ -70,8 +70,9 @@ Read `.agents/references/migrate/project-config.md` if it exists. Extract:
 **Drupal source** — confirm the `$databases` array entries that define the source DB:
 
 ```bash
-grep -n "databases\[" web/sites/default/settings.local.php 2>/dev/null
-grep -n "databases\[" web/sites/default/settings.php 2>/dev/null
+# Print only the array keys, never the whole line: a single-line entry holds the password.
+grep -noE "databases\[[^]]+\]" web/sites/default/settings.local.php 2>/dev/null | sort -u
+grep -noE "databases\[[^]]+\]" web/sites/default/settings.php 2>/dev/null | sort -u
 ```
 
 Look for any `$databases['<key>']` entry whose key is **not** `default` — the

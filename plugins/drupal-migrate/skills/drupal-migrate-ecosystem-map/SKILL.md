@@ -33,7 +33,8 @@ Find integrations from three sources, not from assumption:
   client-credential config, embedded SDKs (e.g. Stripe.js, FilePond), iframe embeds.
 
   ```bash
-  grep -rEi "https?://[a-z0-9.-]+\.(com|net|io|azurewebsites\.net)" <codebase> --include="*.php" --include="*.js" 2>/dev/null | sort -u
+  # Print only the scheme and host, never the whole line: keys and query strings stay out of the log.
+  grep -rhoEi "https?://[a-z0-9.-]+\.(com|net|io|azurewebsites\.net)" <codebase> --include="*.php" --include="*.js" 2>/dev/null | sort -u
   # Filenames only: never print the matching lines, they can contain the secret values.
   grep -rEil "client_id|client_secret|api_key|oauth|odata|webhook" <codebase> 2>/dev/null | sort -u
   ```
